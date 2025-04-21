@@ -1,16 +1,19 @@
 import { BrowserRouter , Routes, Route } from "react-router-dom"
 import MainLayout from "./layout/MainLayout.jsx";
 import Home from "./components/home/Home.jsx";
+import ProductList from "./components/ProductList.jsx";
 
-const App = () => {
+function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<MainLayout />}>
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="produits/:category" element={<ProductList />} />
         </Route>
       </Routes>
-  </BrowserRouter>
+    </BrowserRouter>
   );
-};
+}
 
 export default App;

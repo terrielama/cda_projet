@@ -1,0 +1,132 @@
+[
+  {
+    "id": 1,
+    "name": "Board ENJOY - KITTEN RIPPER HYBRID - 8.25",
+    "price": 65.0,
+    "image": "enjoyKitten",
+    "category": "planche",
+    "stock": 5,
+    "description": "Planche haute performance pour les skateurs avancés.",
+    "available": true
+  },
+  {
+    "id": 2,
+    "name": "Board ELEMENT - SWXE X WING - 7.75",
+    "price": 69.0,
+    "image": "element",
+    "category": "planche",
+    "stock": 2,
+    "description": "Légère et durable, parfaite pour le street skating.",
+    "available": true
+  },
+  {
+    "id": 3,
+    "name": "Board ALMOST - GRADIENT RINGS - 8.25",
+    "price": 75.0,
+    "image": "almost",
+    "category": "planche",
+    "stock": 4,
+    "description": "Idéale pour les rampes et bowls avec un design innovant.",
+    "available": true
+  },
+  {
+    "id": 4,
+    "name": "Board Chocolate - Lifted Chunk Roberts",
+    "price": 80.0,
+    "image": "chocolate",
+    "category": "planche",
+    "stock": 10,
+    "description": "Planche pro conçue pour des atterrissages en douceur et une grande durabilité.",
+    "available": true
+  },
+  {
+    "id": 5,
+    "name": "Board Girl - Spike Jonze Photo Series 2.0 Kim Deal",
+    "price": 85.0,
+    "image": "girlspike",
+    "category": "planche",
+    "stock": 7,
+    "description": "Planche en édition limitée avec un design frappant.",
+    "available": true
+  },
+  {
+    "id": 6,
+    "name": "Board Magenta - Brush Team Board",
+    "price": 60.0,
+    "image": "magenta",
+    "category": "planche",
+    "stock": 6,
+    "description": "Une planche idéale pour les tricks techniques et les environnements urbains.",
+    "available": true
+  },
+  {
+    "id": 7,
+    "name": "Board Baker Brand Logo Black",
+    "price": 90.0,
+    "image": "baker",
+    "category": "planche",
+    "stock": 2,
+    "description": "Design classique avec une forme polyvalente pour tous les types de skate.",
+    "available": true
+  },
+  {
+    "id": 8,
+    "name": "Board Krooked - Team Staten Slick",
+    "price": 80.0,
+    "image": "krooked",
+    "category": "planche",
+    "stock": 5,
+    "description": "Durable avec un excellent pop pour le street et le skatepark.",
+    "available": true
+  },
+  {
+    "id": 9,
+    "name": "Board Poetic Collective - Earth",
+    "price": 70.0,
+    "image": "poeticcollective",
+    "category": "planche",
+    "stock": 2,
+    "description": "Planche écologique avec un design épuré et une grande performance.",
+    "available": true
+  },
+  {
+    "id": 10,
+    "name": "Board Polar - Everything Is Normal C",
+    "price": 80.0,
+    "image": "polar",
+    "category": "planche",
+    "stock": 6,
+    "description": "Une planche polyvalente avec un design unique pour un cruising agréable.",
+    "available": true
+  },
+  {
+    "id": 11,
+    "name": "Board Quasi De Keyzer Mental",
+    "price": 110.0,
+    "image": "quasi",
+    "category": "planche",
+    "stock": 12,
+    "description": "Une planche haut de gamme conçue pour les skateurs professionnels.",
+    "available": true
+  },
+  {
+    "id": 12,
+    "name": "Board Rassvet - Titaev Pro F24",
+    "price": 89.0,
+    "image": "rassvet",
+    "category": "planche",
+    "stock": 3,
+    "description": "Modèle pro avec un parfait équilibre entre flexibilité et pop.",
+    "available": true
+  },
+  {
+    "id": 13,
+    "name": "Sweatshirt homme Obey",
+    "price": 140.0,
+    "image": "obeySweat",
+    "category": "sweat-shirts",
+    "stock": 8,
+    "description": "Un sweatshirt stylé pour un look décontracté et streetwear.",
+    "available": true
+  }
+]
