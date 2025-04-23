@@ -47,7 +47,6 @@ def add_item(request):
         # Sérialise l'objet CartItem pour le renvoyer
         serializer = CartItemSerializer(cartitem)
 
-        # ✅ CORRECTION : il manquait un return ici !
         return Response({"data": serializer.data, "message": "Cart item created successfully"}, status=201)
 
     except Exception as e:

@@ -24,7 +24,7 @@ class Product(models.Model):
      # Slug généré automatiquement à partir du nom, peut être vide ou null
     slug = models.SlugField(blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    image = models.ImageField(upload_to="img")
+    image = models.ImageField( null=True, blank=True)
     category = models.CharField(max_length=191, choices=CATEGORY, blank=True, null=True)
     stock = models.PositiveIntegerField(default=0)  
     description = models.TextField(blank=True, null=True)  
@@ -86,6 +86,10 @@ class CartItem(models.Model):
  
   # Quantité du produit dans le panier. Par défaut : 1
     quantity = models.IntegerField(default=1)
+
+   
+
+
 
     def __str__(self):
         return f"{self.quantity} x {self.product.name} in cart {self.cart.id}"

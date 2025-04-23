@@ -6,24 +6,35 @@ from .models import Product, Cart, CartItem
 # -----  Serializer pour le modèle Product --------
 
 class ProductSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = Product  # Spécifie le modèle lié à ce serializer
         fields = [ "id", "name", "slug", "image", "description", "category", "price"]
 
-
+    def get_image(self, obj):
+        # Retourne l'URL de l'image ou None si elle n'existe pas
+        if obj.image:
+            return obj.image.url
+        return None
 
 # ------ Serializer pour le modèle CartItem  ---------
 
 class CartItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)   # read_only=True signifie qu’on ne peut pas modifier ce champ via l’API avec ce serializer.
     total =  serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField() 
     class Meta:
         model = CartItem  # Spécifie le modèle lié à ce serializer
-        fields = [ "id", "quantity","product", "total"]
+        fields = [ "id", "quantity","product", "total", "image"  ]
 
     def get_total(self, cartitem):
         price = cartitem.product.price * cartitem.quantity
         return price
+    
+    def get_image(self, cartitem):
+        # Récupère l'URL de l'image du produit
+        return cartitem.product.image.url if cartitem.product.image else None
 
 # ------ Serializer pour le modèle   ---------
 
