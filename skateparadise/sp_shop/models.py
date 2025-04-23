@@ -1,9 +1,11 @@
 from django.db import models
 from django.utils.text import slugify
+from django.conf import settings  # settings est utilisé pour référencer des paramètres globaux du projet, comme le modèle utilisateur
+
 
 # Create your models here.
 
-# Définition du modèle Product
+#----------- Définition du modèle Product --------
 class Product(models.Model):
 # Définition des catégories possibles avec un tuple de tuples (valeur stockée, valeur affichée)
     CATEGORY = (("Boards" , "BOARDS"),
@@ -48,3 +50,44 @@ class Product(models.Model):
             self.slug = unique_slug
  # Appelle la méthode save originale pour enregistrer le produit
         super().save(*args, **kwargs)
+
+
+#----------- Définition du modèle Cart (Panier) ------------
+
+class Cart(models.Model):
+    cart_code = models.CharField(max_length=11, unique=True)
+   
+  # settings.AUTH_USER_MODEL permet de référencer dynamiquement le modèle User personnalisé défini dans les settings.py
+  # on_delete pour que si  l'utilisateur est supprimé, son panier l'est aussi
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, blank=True, null=True)
+ 
+  # Indique si le panier a été payé. Par défaut, c'est False (non payé).
+    paid = models.BooleanField(default=False)
+  # Date de création automatique du panier. auto_now_add le remplit à la création.
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+  # Date de dernière modification.
+    modified_at = models.DateTimeField(auto_now=True, blank=True, null=True)
+
+    def __str__(self):
+        return self.cart_code
+
+
+#----------- Définition du modèle CartItem ( Les produits qui sont dans le panier ) ----
+
+class CartItem(models.Model):
+  # Référence au panier auquel l'article appartient
+  # related_name='items'  Permet d'accéder aux articles depuis un panier via   cart.items.all()
+  # on_delete=models.CASCADE supprime les articles si le panier est supprimé
+    cart= models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)  
+ 
+  # Référence au produit ajouté au panier 
+  # on_delete=models.CASCADE  supprime l'entrée si le produit est supprimé
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+ 
+  # Quantité du produit dans le panier. Par défaut : 1
+    quantity = models.IntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.quantity} x {self.product.name} in cart {self.cart.id}"
+
+#----------- Définition du modèle 
