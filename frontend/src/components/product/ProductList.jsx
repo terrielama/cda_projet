@@ -1,21 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from "axios";
-
-
-// Import des images
-import enjoyKitten from "../../assets/img/img_galerie/skateboard/Boards/enjoykitten.jpg";
-import almost from '../../assets/img/img_galerie/skateboard/Boards/almost.jpg';
-import chocolate from '../../assets/img/img_galerie/skateboard/Boards/chocolate.jpg';
-import girlspike from '../../assets/img/img_galerie/skateboard/Boards/girlspike.jpg';
-import magenta from '../../assets/img/img_galerie/skateboard/Boards/magenta.jpg';
-import baker from '../../assets/img/img_galerie/skateboard/Boards/baker.jpg';
-import krooked from '../../assets/img/img_galerie/skateboard/Boards/krooked.jpg';
-import poeticcollective from '../../assets/img/img_galerie/skateboard/Boards/poeticcollective.jpg';
-import polar from '../../assets/img/img_galerie/skateboard/Boards/polar.jpg';
-import quasi from '../../assets/img/img_galerie/skateboard/Boards/quasi.jpg';
-import rassvet from '../../assets/img/img_galerie/skateboard/Boards/rassvet.jpg';
-import obeySweat from '../../assets/img/img_galerie/vet/Sweat/obey.png';
+import images from '../../importImages.js';
+import axios from 'axios';
 
 function generateRandomAlphanumeric(length = 10) {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -27,28 +13,28 @@ function generateRandomAlphanumeric(length = 10) {
 }
 
 const ProductList = () => {
-  const { category } = useParams(); 
+  const { category } = useParams();
   const [products, setProducts] = useState([]);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
     const fetchedProducts = {
       planche: [
-        { id: 1, name: 'Board ENJOY -  KITTEN RIPPER HYBRID - 8.25', price: 65.00, image: enjoyKitten },
-        { id: 2, name: 'Board ELEMENT - SWXE X WING - 7.75', price: 69.00, image: almost },
-        { id: 3, name: 'Board ALMOST - GRADIENT RINGS - 8.25', price: 75.00, image: chocolate},
-        { id: 4, name: 'Board Chocolate - Lifted Chunk Roberts', price: 80.00, image: girlspike },
-        { id: 5, name: 'Board Girl - Spike Jonze Photo Series 2.0 Kim Deal', price: 85.00, image: almost },
-        { id: 6, name: 'Board Magenta - Brush Team Board', price: 60.00 ,image: magenta },
-        { id: 7, name: 'Board Baker Brand Logo Black', price: 90.00 , image: baker },
-        { id: 8, name: 'Board Krooked - Team Staten Slick', price: 80.00 , image: krooked },
-        { id: 9, name: 'Board Poetic Collective - Earth', price: 70.00, image:poeticcollective },
-        { id: 10, name: 'Board Polar - Everything Is Normal C', price: 80.00 , image: polar  },
-        { id: 11, name: 'Board Quasi De Keyzer Mental', price: 110.00 , image: quasi  },
-        { id: 12, name: 'Board Rassvet - Titaev Pro F24', price: 89.00, image: rassvet  },
+        { id: 1, name: 'Board ENJOY - KITTEN RIPPER HYBRID - 8.25', price: 65.00, image: images['enjoykitten.jpg'] },
+        { id: 2, name: 'Board ELEMENT - SWXE X WING - 7.75', price: 69.00, image: images['almost.jpg'] },
+        { id: 3, name: 'Board ALMOST - GRADIENT RINGS - 8.25', price: 75.00, image: images['chocolate.jpg'] },
+        { id: 4, name: 'Board Chocolate - Lifted Chunk Roberts', price: 80.00, image: images['girlspike.jpg'] },
+        { id: 5, name: 'Board Girl - Spike Jonze Photo Series 2.0 Kim Deal', price: 85.00, image: images['almost.jpg'] },
+        { id: 6, name: 'Board Magenta - Brush Team Board', price: 60.00, image: images['magenta.jpg'] },
+        { id: 7, name: 'Board Baker Brand Logo Black', price: 90.00, image: images['baker.jpg'] },
+        { id: 8, name: 'Board Krooked - Team Staten Slick', price: 80.00, image: images['krooked.jpg'] },
+        { id: 9, name: 'Board Poetic Collective - Earth', price: 70.00, image: images['poeticcollective.jpg'] },
+        { id: 10, name: 'Board Polar - Everything Is Normal C', price: 80.00, image: images['polar.jpg'] },
+        { id: 11, name: 'Board Quasi De Keyzer Mental', price: 110.00, image: images['quasi.jpg'] },
+        { id: 12, name: 'Board Rassvet - Titaev Pro F24', price: 89.00, image: images['rassvet.jpg'] },
       ],
       "sweat-shirts": [
-        { id: 13, name: 'Sweatshirt homme Obey', price: 140.00, image: obeySweat },
+        { id: 13, name: 'Sweatshirt homme Obey', price: 140.00, image: images['obey.png'] },
       ],
     };
 
@@ -57,16 +43,16 @@ const ProductList = () => {
     }
   }, [category]);
 
-  const add_item = async (product) => {
-    let cart_code = localStorage.getItem("cart_code");
-    if (!cart_code) {
-      cart_code = generateRandomAlphanumeric();
-      localStorage.setItem("cart_code", cart_code);
+  const addItem = async (product) => {
+    let cartCode = localStorage.getItem("cart_code");
+    if (!cartCode) {
+      cartCode = generateRandomAlphanumeric();
+      localStorage.setItem("cart_code", cartCode);
     }
 
     try {
-      const response = await axios.post("http://localhost:8001/add_item", {
-        cart_code: cart_code,
+      await axios.post("http://localhost:8001/add_item", {
+        cart_code: cartCode,
         product_id: product.id,
       });
       setMessage("Produit ajouté au panier !");
@@ -75,7 +61,7 @@ const ProductList = () => {
       setMessage("Erreur lors de l'ajout au panier.");
     }
 
-    setTimeout(() => setMessage(""), 3000); // message disparaît après 3 sec
+    setTimeout(() => setMessage(""), 3000); // Efface le message après 3 secondes
   };
 
   return (
@@ -91,7 +77,7 @@ const ProductList = () => {
               <div className="card-body text-center">
                 <h5 className="card-title">{product.name}</h5>
                 <p className="card-text text-primary fw-bold">{product.price.toFixed(2)}€</p>
-                <button className="btn btn-dark" onClick={() => add_item(product)}>
+                <button className="btn btn-dark" onClick={() => addItem(product)}>
                   Ajouter au panier
                 </button>
               </div>

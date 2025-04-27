@@ -2,7 +2,7 @@ import { BrowserRouter , Routes, Route } from "react-router-dom"
 import MainLayout from "./layout/MainLayout.jsx";
 import Home from "./components/home/Home.jsx";
 import ProductList from "./components/product/ProductList.jsx";
-import Cart from "./components/Cart.jsx";
+import Cart from "./components/cart/Cart.jsx";
 
 
 function App() {

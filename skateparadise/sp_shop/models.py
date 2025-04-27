@@ -24,7 +24,7 @@ class Product(models.Model):
      # Slug généré automatiquement à partir du nom, peut être vide ou null
     slug = models.SlugField(blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    image = models.ImageField( null=True, blank=True)
+    image = models.ImageField(upload_to='products/', null=False, default='products/default-image.png')  # Add a default image here
     category = models.CharField(max_length=191, choices=CATEGORY, blank=True, null=True)
     stock = models.PositiveIntegerField(default=0)  
     description = models.TextField(blank=True, null=True)  
@@ -50,6 +50,7 @@ class Product(models.Model):
             self.slug = unique_slug
  # Appelle la méthode save originale pour enregistrer le produit
         super().save(*args, **kwargs)
+
 
 
 #----------- Définition du modèle Cart (Panier) ------------
