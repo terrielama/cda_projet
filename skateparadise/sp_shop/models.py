@@ -106,6 +106,8 @@ class Order(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)  # Utiliser AUTH_USER_MODEL
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    payment_method = models.CharField(max_length=20, choices=[('card', 'Carte Bancaire'), ('paypal', 'PayPal')], default='card')
+
 
     def __str__(self):
         cart_code = self.cart.cart_code if self.cart else "No cart"

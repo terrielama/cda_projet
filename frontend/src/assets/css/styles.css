@@ -621,6 +621,78 @@ h1 {
   background-color: #018849;
 }
 
+/* -------- Page commande ------------- */
+  .order-page {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 30px;
+    margin-top: 150px;
+    background-color: #f8f8f8;
+    min-height: 100vh;
+  }
+  .order-summary {
+    width: 50%;
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    overflow-y: auto;
+    max-height: 80vh;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  .order-page h1{
+    position: absolute;
+    top: 100px;
+    font-size: 32px;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .order-items {
+    margin-top: 20px;
+  }
+
+  .item {
+    display: flex;
+    align-items : center;
+    gap: 15px;
+    margin: 15px;
+    margin-bottom: 1px solid #eee;
+    margin-bottom: 10px;
+  }
+
+  .order-items img {
+    width: 160px;
+    height: 160px;
+    object-fit: cover;
+  }
+
+.total{
+    margin-top: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: right;
+  }
+
+.payment-method {
+    width: 30%;
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    text-align: center;
+    height: fit-content;
+  }
+
+  .payment-method button {
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0;
+    font-size: 16px;
+    border-radius:8px;
+    border: none;
+    cursor: pointer;
+  }
 
 /* ____________ Responsive ____________________ */
 

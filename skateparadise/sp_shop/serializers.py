@@ -98,16 +98,18 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 
 # ------ Serializer pour le modèle Order (commande) ---------
+
 class OrderSerializer(serializers.ModelSerializer):
-    items = OrderItemSerializer(many=True)
+    items = OrderItemSerializer(many=True, read_only=True)
+    user = serializers.SerializerMethodField()
+    payment_method = serializers.CharField()
 
     class Meta:
         model = Order
-        fields = ['id', 'status', 'created_at', 'items']
+        fields = ['id', 'user', 'status', 'payment_method', 'created_at', 'updated_at', 'items']
 
-    def create(self, validated_data):
-        items_data = validated_data.pop('items')
-        order = Order.objects.create(**validated_data)
-        for item_data in items_data:
-            OrderItem.objects.create(order=order, **item_data)
-        return order
+    def get_user(self, obj):
+        if obj.user:
+            return obj.user.username  # Ou obj.user.email
+        return None
+
