@@ -91,25 +91,26 @@ class CartItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity} x {self.product.name} in cart {self.cart.id}"
-
-#----------- Définition du modèle Order --------------------
-
-class Order(models.Model):
-    STATUS_CHOICES = [
-        ('pending', _('En attente')),
-        ('shipped', _('Expédié')),
-        ('delivered', _('Livré')),
-        ('canceled', _('Annulé')),
-    ]
+    
+# ----------- Définition du modèle Order --------------------
 
 class Order(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'En attente'),
+        ('completed', 'Complétée'),
+        ('cancelled', 'Annulée'),
+    )
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     cart = models.ForeignKey(Cart, related_name='orders', on_delete=models.CASCADE, null=True, blank=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)  # Utiliser AUTH_USER_MODEL
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     def __str__(self):
-        return f"Order #{self.id} - Cart Code: {self.cart.cart_code}"
+        cart_code = self.cart.cart_code if self.cart else "No cart"
+        return f"Order #{self.id} - Cart Code: {cart_code}"
+
 #----------- Définition du modèle OrderItem --------------------
 
 class OrderItem(models.Model):
