@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api";
+import { useNavigate } from 'react-router-dom'; // Importer useNavigate
 
 const Cart = () => {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [orderMessage, setOrderMessage] = useState("");
+  const navigate = useNavigate(); // Utiliser useNavigate pour gérer la redirection
 
   // Fetch cart data from API
   const fetchCart = async () => {
@@ -62,37 +62,37 @@ const Cart = () => {
   const finalPrice = totalPrice + shippingCost;
 
   // Handle order creation
-  const handleOrder = async () => {
-    if (!cart?.items.length) {
-      setOrderMessage("Votre panier est vide.");
-      return;
-    }
+  // Handle order creation
+const handleOrder = async () => {
+  if (!cart?.items.length) {
+    setOrderMessage("Votre panier est vide.");
+    return;
+  }
 
-    if (!name.trim() || !email.trim()) {
-      setOrderMessage("Veuillez entrer votre nom et votre email.");
-      return;
-    }
+  try {
+    setLoading(true);
+    const response = await api.post("http://localhost:8001/create_order", {
+      cart_code: localStorage.getItem("cart_code"),
+    });
 
-    try {
-      setLoading(true);
-      await api.post("/create_order", {
-        cart_code: localStorage.getItem("cart_code"),
-        name,
-        email,
-      });
+    console.log(response); // Affiche la réponse complète pour déboguer
+    setOrderMessage(`Commande envoyée avec succès ! ID de la commande: ${response.data.order_id}`);
+    setCart(null);
+    localStorage.removeItem("cart_code");
 
-      setOrderMessage("Commande envoyée avec succès !");
-      setCart(null);
-      setName("");
-      setEmail("");
-      localStorage.removeItem("cart_code");
-    } catch (error) {
-      console.error(error);
-      setOrderMessage("Erreur lors de la commande, veuillez réessayer.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Rediriger vers la page de la commande après avoir traité la commande
+    setTimeout(() => {
+      navigate(`/commande/${response.data.order_id}`); // Redirection vers la page de la commande
+    }, 2000);
+  } catch (error) {
+    console.error("Erreur serveur:", error.response?.data || error.message);
+    setOrderMessage("Erreur lors de la commande, veuillez réessayer.");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   return (
     <div className="cart-container">
@@ -101,9 +101,8 @@ const Cart = () => {
       {cart?.items.length ? (
         cart.items.map((item) => (
           <div key={item.product.id} className="cart-item">
-            {/* Display product image */}
             <img
-              src={`http://localhost:8001${item.product.image}`} // Utilisez l'URL correcte avec le port 8001
+              src={`http://localhost:8001${item.product.image}`}
               alt={item.product.name}
               className="product-image"
             />
@@ -134,21 +133,8 @@ const Cart = () => {
           <p>Livraison : {shippingCost === 0 ? "Gratuite" : `${shippingCost} €`}</p>
           <p>Total à payer : {finalPrice.toFixed(2)} €</p>
 
-          <input
-            type="text"
-            placeholder="Votre nom"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <input
-            type="email"
-            placeholder="Votre email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-
           <button className="validate-btn" onClick={handleOrder} disabled={loading}>
-            {loading ? "Commande en cours..." : "Valider ma commande"}
+            {loading ? "Commande en cours..." : "Voir ma commande"}
           </button>
 
           {orderMessage && <p className="order-message">{orderMessage}</p>}

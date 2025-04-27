@@ -1,9 +1,12 @@
 from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import api_view # Permet de créer des vues API basées sur des fonctions
-from .models import Product, Cart, CartItem
-from .serializers import ProductSerializer,  CartItemSerializer , CartSerializer , SimpleCartSerializer
+from .models import Product, Cart, CartItem, Order, OrderItem
+from .serializers import ProductSerializer,  CartItemSerializer , CartSerializer , SimpleCartSerializer, OrderSerializer 
 from rest_framework.response import Response # Utilisé pour retourner des réponses HTTP dans l'API
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
+
 
 # Create your views here.
 
@@ -124,6 +127,8 @@ def get_cart_stat(request):
 
 
 
+# ----- View update les produits dans le panier  ------
+
 @api_view(["POST"])
 def update_quantity(request):
     item_id = request.data.get("item_id")
@@ -149,3 +154,64 @@ def remove_item(request):
         return Response({"message": "Article supprimé du panier"})
     except CartItem.DoesNotExist:
         return Response({"error": "Article introuvable"}, status=404)
+
+# ----- Creer une commande ------------
+@api_view(["POST"])
+def create_order(request):
+    cart_code = request.data.get('cart_code')
+    if not cart_code:
+        return JsonResponse({"error": "Code de panier manquant"}, status=400)
+
+    try:
+        # Récupère le panier en fonction du code fourni
+        cart = Cart.objects.get(cart_code=cart_code)
+
+        # Crée une nouvelle commande
+        order = Order.objects.create(cart=cart)  # Assurez-vous que 'cart' existe dans le modèle Order
+
+        # Ajoute les articles du panier à la commande
+        for item in cart.items.all():
+            order_item = OrderItem.objects.create(
+                order=order,
+                product=item.product,
+                quantity=item.quantity,
+                price=item.product.price
+            )
+
+        # Renvoie une réponse avec l'ID de la commande
+        return JsonResponse({"message": "Commande créée avec succès", "order_id": order.id})
+
+    except Cart.DoesNotExist:
+        return JsonResponse({"error": "Panier non trouvé"}, status=404)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+# ----- Detail de la commande  ------------
+@api_view(["GET"])
+def order_details(request, order_id):
+    try:
+        order = Order.objects.get(id=order_id)
+    except Order.DoesNotExist:
+        return Response({"error": "Commande non trouvée"}, status=status.HTTP_404_NOT_FOUND)
+
+    # Sérialisation des données de la commande
+    serializer = OrderSerializer(order)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+# ----- Status de la commande  ------------
+
+@api_view(["PATCH"])
+def update_order_status(request, order_id):
+    try:
+        order = Order.objects.get(id=order_id)
+    except Order.DoesNotExist:
+        return Response({"error": "Commande non trouvée"}, status=status.HTTP_404_NOT_FOUND)
+
+    new_status = request.data.get("status")
+    if new_status and new_status in dict(Order.STATUS_CHOICES):
+        order.status = new_status
+        order.save()
+        return Response({"status": order.status}, status=status.HTTP_200_OK)
+    
+    return Response({"error": "Statut invalide"}, status=status.HTTP_400_BAD_REQUEST)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, Cart, CartItem
+from .models import Product, Cart, CartItem, Order, OrderItem
 
 # Serializer les models permet de convertir les objets Product en JSON (et vice versa) pour les API.
 
@@ -80,3 +80,34 @@ class CartSerializer(serializers.ModelSerializer):
         items = cart.items.all()
         return sum(item.quantity for item in items)
 
+# ------ Serializer pour le modèle OrderItem (produit d'une commande) ---------
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name')
+    product_price = serializers.DecimalField(source='price', max_digits=10, decimal_places=2)
+    product_image = serializers.ImageField(source='product.image', required=False)  # Si l'image existe
+    total_price = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OrderItem
+        fields = ['product_name', 'quantity', 'product_price', 'product_image', 'total_price']
+
+    def get_total_price(self, obj):
+        return obj.price * obj.quantity
+
+
+
+# ------ Serializer pour le modèle Order (commande) ---------
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True)
+
+    class Meta:
+        model = Order
+        fields = ['id', 'status', 'created_at', 'items']
+
+    def create(self, validated_data):
+        items_data = validated_data.pop('items')
+        order = Order.objects.create(**validated_data)
+        for item_data in items_data:
+            OrderItem.objects.create(order=order, **item_data)
+        return order

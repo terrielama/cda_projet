@@ -3,6 +3,7 @@ import MainLayout from "./layout/MainLayout.jsx";
 import Home from "./components/home/Home.jsx";
 import ProductList from "./components/product/ProductList.jsx";
 import Cart from "./components/cart/Cart.jsx";
+import Order from "./components/order/Order.jsx";
 
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/panier" element={<Cart/>} />
           <Route path="produits/:category" element={<ProductList />} />
+          <Route path="/commande/:order_id" element={<Order />} />
         </Route>
       </Routes>
     </BrowserRouter>
