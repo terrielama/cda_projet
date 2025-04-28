@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
@@ -6,22 +6,25 @@ import userIcon from '../assets/img/icon/user.svg';
 import shoppingIcon from '../assets/img/icon/shopping.svg';
 import logo from '../assets/img/img_page_accueil/logo.png';
 
-import { useAuth } from '../contexts/AuthContext.jsx'; 
+import { AuthContext } from '../components/context/AuthContext.jsx'; 
 import Input from './Input';
 import SignInForm from '../components/user/SignInForm.jsx';
 
 const NavBar = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { isUserLoggedIn } = useAuth();
+  const { isAuthenticated, username } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const toggleModal = () => setIsModalOpen(!isModalOpen);
 
+  // Fonction pour rediriger l'utilisateur vers son profil s'il est authentifié
   const handleProfileRedirect = () => {
-    isUserLoggedIn ? navigate('/') : toggleModal();
+    if (isAuthenticated) {
+      navigate('/profile'); // Redirection vers la page profil
+    } else {
+      toggleModal(); // Si l'utilisateur n'est pas authentifié, ouvrir le modal de connexion
+    }
   };
-
-
 
   return (
     <div>
@@ -49,6 +52,7 @@ const NavBar = () => {
           {/* Navigation centrale */}
           <div className="collapse navbar-collapse" id="navbarNav">
             <ul className="navbar-nav mx-auto">
+              {/* Catégories de produits */}
               <li className="nav-item dropdown">
                 <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown">
                   Skateboard
@@ -60,6 +64,7 @@ const NavBar = () => {
                   <li><Link className="dropdown-item" to="/produits/trucks">Trucks</Link></li>
                 </ul>
               </li>
+              {/* Autres catégories */}
               <li className="nav-item dropdown">
                 <a className="nav-link dropdown-toggle" href="#" id="navbarDropdownVêtements" role="button" data-bs-toggle="dropdown">
                   Vêtements
@@ -87,18 +92,16 @@ const NavBar = () => {
             {/* Champ de recherche */}
             <Input />
 
-          {/* Icône Panier */}
-          <button className="btn btn-light me-2" onClick={() => navigate('/panier')}>
-            <img src={shoppingIcon} alt="Shopping" className="img-fluid" width="20" />
-          </button>
+            {/* Icône Panier */}
+            <button className="btn btn-light me-2" onClick={() => navigate('/panier')}>
+              <img src={shoppingIcon} alt="Shopping" className="img-fluid" width="20" />
+            </button>
 
-            {/* Icône Utilisateur */}
-            {isUserLoggedIn ? (
-              <>
-                <button className="btn btn-outline-primary me-2" onClick={handleProfileRedirect}>
-                  Mon compte
-                </button>
-              </>
+            {/* Condition d'affichage de l'icône utilisateur ou du bouton "Mon compte" */}
+            {isAuthenticated ? (
+              <button className="btn btn-outline-primary me-2" onClick={handleProfileRedirect}>
+                Mon compte
+              </button>
             ) : (
               <button className="btn btn-light" onClick={toggleModal}>
                 <img src={userIcon} alt="User" className="img-fluid" width="20" />

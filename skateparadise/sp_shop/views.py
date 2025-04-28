@@ -1,11 +1,12 @@
 from django.shortcuts import render
 from rest_framework import status
-from rest_framework.decorators import api_view # Permet de créer des vues API basées sur des fonctions
+from rest_framework.decorators import api_view, permission_classes
 from .models import Product, Cart, CartItem, Order, OrderItem
 from .serializers import ProductSerializer,  CartItemSerializer , CartSerializer , SimpleCartSerializer, OrderSerializer 
 from rest_framework.response import Response # Utilisé pour retourner des réponses HTTP dans l'API
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
+from rest_framework.permissions import IsAuthenticated
 
 
 # Create your views here.
@@ -215,3 +216,11 @@ def update_order_status(request, order_id):
         return Response({"status": order.status}, status=status.HTTP_200_OK)
     
     return Response({"error": "Statut invalide"}, status=status.HTTP_400_BAD_REQUEST)
+
+# ----- Connexion  ------------
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_username(request):
+    user = request.user
+    return Response({"username": user.username})

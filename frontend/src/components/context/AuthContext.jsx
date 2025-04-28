@@ -1,39 +1,62 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { jwtDecode } from "jwt-decode";
+import api from "../../api"; // Assure-toi que l'importation de ton API est correcte.
 
-// Création du contexte d'authentification
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
-// Provider qui englobe l'application et gère l'état d'authentification
+// Le AuthProvider permet de gérer l'état d'authentification
 export const AuthProvider = ({ children }) => {
-  const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [username, setUsername] = useState("");
 
-  // Vérifie si un token est présent dans le localStorage au chargement
-  useEffect(() => {
-    const token = localStorage.getItem("access_token");
+  // Vérifie si l'utilisateur est authentifié en validant le token
+  const handleAuth = () => {
+    const token = localStorage.getItem("access");
     if (token) {
-      setIsUserLoggedIn(true);
+      const decoded = jwtDecode(token);
+      const expiry_date = decoded.exp;
+      const current_time = Date.now() / 1000;
+      if (expiry_date >= current_time) {
+        setIsAuthenticated(true);
+      }
     }
-  }, []);
-
-  // Fonction de connexion
-  const login = () => {
-    setIsUserLoggedIn(true);
   };
 
-  // Fonction de déconnexion (sans navigation)
-  const logout = () => {
-    localStorage.removeItem("access_token"); // Supprime le token
-    setIsUserLoggedIn(false); // Met à jour l'état
+  // Récupère le nom d'utilisateur si authentifié
+  function get_username() {
+    api
+      .get("get_username")
+      .then((res) => {
+        setUsername(res.data.username);
+      })
+      .catch((err) => {
+        console.log(err.message);
+      });
+  }
+
+  useEffect(() => {
+    handleAuth();
+    if (isAuthenticated) {
+      get_username();
+    }
+  }, [isAuthenticated]); // L'effet se réexécute lorsque isAuthenticated change
+
+  // Objet à partager via le contexte
+  const authValue = {
+    isAuthenticated,
+    setIsAuthenticated,
+    username,
+    get_username,
   };
 
   return (
-    <AuthContext.Provider value={{ isUserLoggedIn, login, logout }}>
+    <AuthContext.Provider value={authValue}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Hook personnalisé pour utiliser l'authentification facilement
+// Hook personnalisé pour accéder facilement au contexte d'authentification
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

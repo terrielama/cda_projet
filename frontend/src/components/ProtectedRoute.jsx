@@ -1,12 +1,13 @@
 import api from "../api";
 import {jwtDecode} from "jwt-decode";
 import { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import Loader from "./Loader"; //  composant Loader
 
 const ProtectedRoute = ({children}) => {
 
     const[isAuthorised, setisAuthorised] = useState(null)   
+    const location = useLocation()
 
     useEffect(function(){
         auth().catch(() => setisAuthorised(false))
@@ -59,10 +60,9 @@ const ProtectedRoute = ({children}) => {
         return <Loader/>
     }
 
-    {isAuthorised ? children : <Navigate to="/login"/>}
 
   return (
-    <div>ProtectedRoute</div>
+    isAuthorised ? children : <Navigate to="/connexion" state={{form: location}} replace />
   )
 }
 

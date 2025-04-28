@@ -1,70 +1,52 @@
-import React, { useState } from 'react'
-import axios from 'axios'
+import React, { useContext, useState } from 'react'
+import api from "../../api";
+import { useLocation, useNavigate } from 'react-router-dom';
+import {AuthContext} from "../context/AuthContext"
 
 function SignInForm({ toggleModal }) {
-  const [isLoginForm, setIsLoginForm] = useState(true)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
-  const [error, setError] = useState('')
-  const [successMessage, setSuccessMessage] = useState('') // État pour le message de succès
 
-  // Fonction pour l'inscription
-  const handleSignUp = async () => {
-    if (!email || !password || !firstName || !lastName) {
-      setError('Tous les champs sont requis.')
-      return
-    }
+  const {setIsAuthenticated} = useContext(AuthContext)
 
-    try {
-      const response = await axios.post('http://127.0.0.1:8001/signup/', {
-        email,
-        password,
-        first_name: firstName,
-        last_name: lastName,
-      })
-      console.log('User created successfully', response)
-      setSuccessMessage(
-        'Inscription réussie ! Vous pouvez maintenant vous connecter.'
-      )
-      setError('')
-      setIsLoginForm(true) // Basculer automatiquement sur le formulaire de connexion
-    } catch (err) {
-      console.error('Error during signup', err)
-      setError("Erreur lors de l'inscription")
-      setSuccessMessage('')
-    }
-  }
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState (false);
+  const [error, setError] = useState("");
+
+  const userInfo = { username, password };
 
   // Fonction pour la connexion
-  const handleLogin = async () => {
-    try {
-      const response = await axios.post('http://127.0.0.1:8001/login/', {
-        email,
-        password,
+  function handleSubmit(e) {
+    e.preventDefault(); // Empêche le comportement par défaut du formulaire (rafraîchissement de la page)
+    setLoading(true)
+
+    api.post("token/", userInfo)
+      .then(res => {
+        console.log(res.data); // Log des données de réponse
+        localStorage.setItem("access",res.data.access)
+        localStorage.setItem("refresh",res.data.refresh)
+        setUsername("")
+        setPassword("")
+        setLoading(false)
+        setIsAuthenticated(true)
+        get_username()
+        setError("")
+
+        const from = location.state.from.pathname || "/";
+        navigate(from, {replace:true})
+
       })
-
-      console.log('Connexion réussie', response)
-
-      const { access_token, refresh_token } = response.data
-      localStorage.setItem('access_token', access_token)
-      localStorage.setItem('refresh_token', refresh_token)
-
-      setSuccessMessage('Connexion réussie !')
-      setError('')
-
-      window.location.href = '/'
-    } catch (err) {
-      console.error('Erreur lors de la connexion', err)
-      if (err.response && err.response.data) {
-        setError(err.response.data.error || 'Identifiants invalides')
-      } else {
-        setError('Une erreur est survenue lors de la connexion')
-      }
-      setSuccessMessage('')
-    }
+      .catch(err => {
+        console.log(err.message); // Log des erreurs
+        setError(err.message)
+        setLoading(false)
+      });
   }
+
+
+
 
   return (
     <div className="modal">
@@ -72,101 +54,35 @@ function SignInForm({ toggleModal }) {
         <button className="close-btn" onClick={toggleModal}>
           X
         </button>
-
-        {isLoginForm ? (
-          <div>
-            <h2>Connexion</h2>
-            <div className="form-grid">
-              <div>
-                <label>Email</label>
-                <input
-                  type="email"
-                  placeholder="Votre email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <label>Mot de passe</label>
-                <input
-                  type="password"
-                  placeholder="Votre mot de passe"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
+        <div>
+          <h2>Connexion</h2>
+          <form onSubmit={handleSubmit} className="form-grid">
+            <div>
+              <label>Username</label>
+              <input
+                type="text"
+                placeholder="Votre username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
             </div>
-            <button onClick={handleLogin}>Se connecter</button>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-            {successMessage && (
-              <p style={{ color: 'green' }}>{successMessage}</p>
-            )}
-            <button onClick={() => setIsLoginForm(false)}>
-              Pas de compte ? Inscrivez-vous
-            </button>
-          </div>
-        ) : (
-          <div>
-            <h2>Inscription</h2>
-            <div className="form-grid">
-              <div>
-                <label>Nom</label>
-                <input
-                  type="text"
-                  placeholder="Votre nom"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <label>Prénom</label>
-                <input
-                  type="text"
-                  placeholder="Votre prénom"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <label>Email</label>
-                <input
-                  type="email"
-                  placeholder="Votre email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <label>Mot de passe</label>
-                <input
-                  type="password"
-                  placeholder="Votre mot de passe"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
+            <div>
+              <label>Mot de passe</label>
+              <input
+                type="password"
+                placeholder="Votre mot de passe"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
             </div>
-            <button onClick={handleSignUp}>S'inscrire</button>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-            {successMessage && (
-              <p style={{ color: 'green' }}>{successMessage}</p>
-            )}
-            <button onClick={() => setIsLoginForm(true)}>
-              {successMessage
-                ? 'Connectez-vous'
-                : 'Vous avez déjà un compte ? Connectez-vous'}
-            </button>
-          </div>
-        )}
+            <button type="submit" disabled={loading} >Se connecter</button>
+          </form>
+        </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default SignInForm
+export default SignInForm;

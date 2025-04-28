@@ -4,8 +4,8 @@ import Home from "./components/home/Home.jsx";
 import ProductList from "./components/product/ProductList.jsx";
 import Cart from "./components/cart/Cart.jsx";
 import Order from "./components/order/Order.jsx";
-import Login from "./components/user/SignInForm.jsx";
-import { AuthProvider } from './contexts/AuthContext';  // Import du AuthProvider
+import SignInForm from "./components/user/SignInForm.jsx";
+import { AuthProvider } from './components/context/AuthContext.jsx';  // Import du AuthProvider
 
 function App() {
   return (
@@ -18,7 +18,7 @@ function App() {
             <Route path="/panier" element={<Cart />} />
             <Route path="produits/:category" element={<ProductList />} />
             <Route path="/commande/:orderId" element={<Order />} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/connexion" element={<SignInForm />} />
             {/* Tu peux ajouter d'autres routes ici */}
           </Route>
         </Routes>

@@ -25,8 +25,8 @@ from rest_framework_simplejwt.views import (
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-     path("", include("sp_shop.urls")),
-      path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path("", include("sp_shop.urls")),
+    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
 # Servir les fichiers médias lors du développement
