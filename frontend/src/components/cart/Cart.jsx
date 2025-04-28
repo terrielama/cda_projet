@@ -1,18 +1,20 @@
 import React, { useEffect, useState } from "react";
 import api from "../../api";
-import { useNavigate } from 'react-router-dom'; // Importer useNavigate
+import { useNavigate } from 'react-router-dom'; 
+import Loader from "../Loader";
 
 const Cart = () => {
   const [cart, setCart] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start in loading mode
   const [error, setError] = useState("");
-  const [orderMessage, setOrderMessage] = useState("");
-  const navigate = useNavigate(); // Utiliser useNavigate pour gérer la redirection
+  const navigate = useNavigate();
 
-  // Fetch cart data from API
   const fetchCart = async () => {
     const cart_code = localStorage.getItem("cart_code");
-    if (!cart_code) return;
+    if (!cart_code) {
+      setLoading(false); // Important: stop loader if no cart
+      return;
+    }
 
     try {
       const res = await api.get(`http://localhost:8001/get_cart?cart_code=${cart_code}`);
@@ -20,6 +22,8 @@ const Cart = () => {
     } catch (err) {
       console.error(err);
       setError("Erreur de chargement du panier. Veuillez réessayer.");
+    } finally {
+      setLoading(false); // always stop loader
     }
   };
 
@@ -27,7 +31,6 @@ const Cart = () => {
     fetchCart();
   }, []);
 
-  // Update product quantity
   const updateQuantity = async (itemId, delta) => {
     const cart_code = localStorage.getItem("cart_code");
     if (!cart_code) return;
@@ -43,7 +46,6 @@ const Cart = () => {
     }
   };
 
-  // Remove product from cart
   const removeProduct = async (itemId) => {
     const cart_code = localStorage.getItem("cart_code");
     if (!cart_code) return;
@@ -56,44 +58,46 @@ const Cart = () => {
     }
   };
 
-  // Calculate total price and shipping cost
   const totalPrice = cart?.sum_total || 0;
   const shippingCost = totalPrice >= 70 ? 0 : 4;
   const finalPrice = totalPrice + shippingCost;
 
-  // Handle order creation
-  // Handle order creation
 const handleOrder = async () => {
   if (!cart?.items.length) {
-    setOrderMessage("Votre panier est vide.");
+    setError("Votre panier est vide.");
     return;
   }
 
   try {
-    setLoading(true);
+    setLoading(true); // On active le Loader
+
     const response = await api.post("http://localhost:8001/create_order", {
       cart_code: localStorage.getItem("cart_code"),
     });
 
-    console.log(response); // Affiche la réponse complète pour déboguer
-    setOrderMessage(`Commande envoyée avec succès ! ID de la commande: ${response.data.order_id}`);
+    console.log(response);
+
     setCart(null);
     localStorage.removeItem("cart_code");
 
-    // Rediriger vers la page de la commande après avoir traité la commande
+    // Laisser le Loader s'afficher un court instant avant de rediriger
     setTimeout(() => {
-      navigate(`/commande/${response.data.order_id}`); // Redirection vers la page de la commande
-    }, 2000);
+      navigate(`/commande/${response.data.order_id}`);
+    }, 1000); // 1000 ms = 1 seconde
   } catch (error) {
     console.error("Erreur serveur:", error.response?.data || error.message);
-    setOrderMessage("Erreur lors de la commande, veuillez réessayer.");
-  } finally {
+    setError("Erreur lors de la commande, veuillez réessayer.");
     setLoading(false);
   }
 };
 
 
+  // 1. Loader global
+  if (loading) {
+    return <Loader />;
+  }
 
+  // 2. Ensuite affichage normal
   return (
     <div className="cart-container">
       <h1 className="center-text">Mon Panier</h1>
@@ -134,10 +138,9 @@ const handleOrder = async () => {
           <p>Total à payer : {finalPrice.toFixed(2)} €</p>
 
           <button className="validate-btn" onClick={handleOrder} disabled={loading}>
-            {loading ? "Commande en cours..." : "Voir ma commande"}
+            Voir ma commande
           </button>
 
-          {orderMessage && <p className="order-message">{orderMessage}</p>}
           {error && <p className="error-message">{error}</p>}
         </div>
       )}
