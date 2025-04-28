@@ -6,13 +6,13 @@ import userIcon from '../assets/img/icon/user.svg';
 import shoppingIcon from '../assets/img/icon/shopping.svg';
 import logo from '../assets/img/img_page_accueil/logo.png';
 
-
+import { useAuth } from '../contexts/AuthContext.jsx'; 
 import Input from './Input';
-// import SignInForm from '../SignInForm';
+import SignInForm from '../components/user/SignInForm.jsx';
 
 const NavBar = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const { isUserLoggedIn } = useAuth();
   const navigate = useNavigate();
 
   const toggleModal = () => setIsModalOpen(!isModalOpen);
@@ -92,12 +92,18 @@ const NavBar = () => {
             <img src={shoppingIcon} alt="Shopping" className="img-fluid" width="20" />
           </button>
 
-             
-      
+            {/* Icône Utilisateur */}
+            {isUserLoggedIn ? (
+              <>
+                <button className="btn btn-outline-primary me-2" onClick={handleProfileRedirect}>
+                  Mon compte
+                </button>
+              </>
+            ) : (
               <button className="btn btn-light" onClick={toggleModal}>
                 <img src={userIcon} alt="User" className="img-fluid" width="20" />
               </button>
-            
+            )}
           </div>
         </div>
       </nav>
