@@ -12,7 +12,7 @@ import poeticcollective from "./assets/img/img_galerie/skateboard/Boards/poeticc
 import polar from "./assets/img/img_galerie/skateboard/Boards/polar.jpg";
 import quasi from "./assets/img/img_galerie/skateboard/Boards/quasi.jpg";
 import rassvet from "./assets/img/img_galerie/skateboard/Boards/rassvet.jpg";
-import obey from "./assets/img/img_galerie/vet/Sweat/obey.png";
+import obey from "./assets/img/img_galerie/vet/Sweat/obey.jpg";
 
 const images = {
   "enjoykitten.jpg": enjoykitten,
@@ -26,7 +26,7 @@ const images = {
   "polar.jpg": polar,
   "quasi.jpg": quasi,
   "rassvet.jpg": rassvet,
-  "obey.png": obey,
+  "obey.jpg": obey,
 };
 
 export default images;

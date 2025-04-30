@@ -34,7 +34,7 @@ const ProductList = () => {
         { id: 12, name: 'Board Rassvet - Titaev Pro F24', price: 89.00, image: images['rassvet.jpg'] },
       ],
       "sweat-shirts": [
-        { id: 13, name: 'Sweatshirt homme Obey', price: 140.00, image: images['obey.png'] },
+        { id: 13, name: 'Sweatshirt Obey massive graphic', price: 174.99, image: images['obey.jpg'] },
       ],
     };
 

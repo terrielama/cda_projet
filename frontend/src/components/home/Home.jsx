@@ -1,7 +1,7 @@
 import React from 'react';
 import   "../../assets/css/styles.css";
 import vansImage from "../../assets/img/img_page_accueil/vans.jpg";
-import obeyImage from "../../assets/img/img_page_accueil/obey.jpg";
+import obeyImage from "../../assets/img/img_page_accueil/obey_pose.jpg";
 import polarImage from "../../assets/img/img_page_accueil/polar.jpg";
 
 const Home = () => {
