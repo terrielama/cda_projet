@@ -8,14 +8,6 @@ from django.utils.translation import gettext_lazy as _
 
 #----------- Définition du modèle Product --------
 
-# from django.contrib.auth.models import AbstractUser
-
-# class CustomUser(AbstractUser):
-#     # Personnalisation supplémentaire si nécessaire
-#     is_active = models.BooleanField(default=True)
-#     is_staff = models.BooleanField(default=False)
-#     is_superuser = models.BooleanField(default=False)
-
 #----------- Définition du modèle Category --------
 
 class Category(models.Model):
