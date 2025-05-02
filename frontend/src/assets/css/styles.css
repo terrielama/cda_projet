@@ -406,7 +406,9 @@ body {
     justify-content: center;
     align-items: center;
     width: 100%;
-    padding: 130px 300px 300px 300px;
+    padding: 130px 5vw 300px 5vw; 
+    box-sizing: border-box;
+    overflow-x: hidden; 
     gap: 30px;
     align-content: flex-end;
     flex-wrap: wrap;
@@ -420,6 +422,8 @@ body {
     border: 1px solid #ddd;
     display: flex;
     width: 100%;
+     flex-shrink: 1;
+    min-width: 0;
     flex-direction: row;
     flex-wrap: nowrap;
     justify-content: space-around;
@@ -438,7 +442,7 @@ body {
 h1 {
   align-items: center;
   text-align: center;
-  font-size: 52px;
+  font-size: 48px;
   font-weight: bold;
   margin-bottom: 20px;
 }
@@ -501,7 +505,7 @@ h1 {
 
 .quantity-controls
 {
-  margin: 0px 10px 0px 20px;
+  display: flex;
 }
 
 .quantity-controls span{
@@ -529,29 +533,30 @@ h1 {
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
 }
 
+.cart-summary {
+  max-width: 400px;
+  margin: 30px auto;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  font-family: sans-serif;
+}
+
 .cart-summary div {
   display: flex;
   justify-content: space-between;
-  padding: 5px 0;
+  padding: 8px 0;
+  font-size: 16px;
+  color: #333;
 }
 
-.validate-btn {
-  background: #018849;
-  color: white;
+/* Texte en gras pour le total */
+.cart-summary .total {
+  font-weight: bold;
   font-size: 18px;
- padding: 10px 15px 15px 15px;  
- margin: 20px auto;
- border-radius: 5px;
-  width: 100%;
-  transition: 0.3s;
-  text-align: center;
-  cursor: pointer;
 }
-
-.validate-btn:hover {
-  background: #45a049;
-}
-
 
 .info-list {
   font-size: 0.9rem;
@@ -566,7 +571,7 @@ h1 {
 
 .center-text {
   text-align: center;
-  font-size: 54px;
+  font-size: 48px;
   margin-bottom: 50px;
 }
 
@@ -575,7 +580,7 @@ h1 {
 
 
 /*----- bouton déconnexion -----*/
-.logout-button {
+/* .logout-button {
   padding: 10px 20px;
   background-color: #ff1c1c;
   color: white;
@@ -590,16 +595,15 @@ h1 {
   background-color: #e20000;
 }
 
-/* Style du message d'erreur */
+
 .error-message {
   color: #e20000;
   font-size: 1rem;
   margin-top: 20px;
-} 
+}  */
 
 /* -------- recherche  --------- */
 
-/* ---- cart ------- */
 
 
 .shadow-sm{
@@ -804,6 +808,69 @@ h1 {
     max-width: 50%;
   }
 
+  .cart-container {
+    display: grid;
+    flex-direction: column;
+    padding: 50px ;
+    gap: 20px;
+  }
+
+  .cart-item {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px;
+  }
+
+  .product-image {
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto 15px auto;
+  }
+
+  .product-info {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    width: 100%;
+  }
+
+  .product-info h2,
+  .product-info p {
+    font-size: 25px;
+  }
+
+  .quantity-controls {
+    margin: 10px 0;
+  }
+
+  .quantity-controls span {
+    font-size: 20px;
+  }
+
+
+  .cart-summary {
+    margin-top: 30px;
+    max-width: 70%;
+    width: 700%;
+  }
+
+  .cart-summary div {
+    font-size: 15px;
+  }
+
+  .cart-summary .total {
+    font-size: 17px;
+  }
+
+  .center-text {
+     margin-top: 75px;
+    font-size: 32px;
+    display: flex;
+    justify-content: center;
+
+  }
+
 }   
 
 
@@ -830,11 +897,38 @@ h1 {
 
 }
 
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
   .col-md-4 {
     flex: 0 0 100%; /* 1 carte par ligne sur mobile */
     max-width: 100%;
   }
+  .cart-container {
+    flex-direction: column;
+    padding: 50px;
+  }
+
+  .cart-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .product-info {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin: 10px auto;
+  }
+
+  .product-image {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  .center-text {
+    font-size: 28px;
+  }
+
 }
 
 @media (max-width: 480px) {
@@ -844,6 +938,36 @@ h1 {
 
   .card-img-top {
     height: 200px;
+  }
+
+    .product-info h2,
+  .product-info p {
+    font-size: 18px;
+  }
+
+  .quantity-controls span {
+    font-size: 18px;
+  }
+
+  .quantity-controls .remove-button {
+    font-size: 0.9rem;
+    padding: 10px 15px;
+  }
+
+  .cart-summary {
+    padding: 15px;
+  }
+
+  .cart-summary div {
+    font-size: 14px;
+  }
+
+  .cart-summary .total {
+    font-size: 16px;
+  }
+
+  .center-text {
+    font-size: 24px;
   }
 
 }

@@ -37,7 +37,7 @@ const StyledWrapper = styled.div`
   display: flex;
   align-items: center;
   border: 1px solid #34974d;
-  background-color: #3aa856;
+  background-color:rgb(2, 134, 35);
   border-radius: 5px;
   margin: 0 auto; /* Centrage horizontal */
 }
