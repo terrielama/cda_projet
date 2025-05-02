@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import images from '../../importImages.js';
 import axios from 'axios';
+import AddButton from './AddButton.jsx'; // bouton stylisé
 
 function generateRandomAlphanumeric(length = 10) {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -61,7 +62,7 @@ const ProductList = () => {
       setMessage("Erreur lors de l'ajout au panier.");
     }
 
-    setTimeout(() => setMessage(""), 3000); // Efface le message après 3 secondes
+    setTimeout(() => setMessage(""), 3000);
   };
 
   return (
@@ -77,9 +78,7 @@ const ProductList = () => {
               <div className="card-body text-center">
                 <h5 className="card-title">{product.name}</h5>
                 <p className="card-text text-primary fw-bold">{product.price.toFixed(2)}€</p>
-                <button className="btn btn-dark" onClick={() => addItem(product)}>
-                  Ajouter au panier
-                </button>
+                <AddButton onClick={() => addItem(product)} />
               </div>
             </div>
           </div>

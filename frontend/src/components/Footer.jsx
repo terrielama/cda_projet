@@ -33,6 +33,10 @@ export default function Footer() {
             <a href="#" className="mb-2 hover:underline">Confidentialité</a>
             <a href="#" className="mb-2 hover:underline">Paiement sécurisé</a>
             <a href="#" className="mb-2 hover:underline">Gérer les cookies</a>
+          <a href="mailto:support@monsite.com?subject=Aide%20urgente&body=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20avec...">
+            Écrire au support
+          </a>
+
           </div>
           
           {/* INFORMATIONS LEGALES */}
@@ -41,6 +45,7 @@ export default function Footer() {
             <a href="#" className="mb-2 hover:underline">Conditions générales</a>
             <a href="#" className="mb-2 hover:underline">Mentions légales</a>
             <a href="#" className="mb-2 hover:underline">Gérer les cookies</a>
+          
           </div>
         </div>
         
