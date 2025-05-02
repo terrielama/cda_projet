@@ -391,6 +391,10 @@ body {
   transition: transform 0.2s ease-in-out;
 }
 
+.text-primary {
+      color: black!important;
+  }
+
 /* Images */
 .category-image {
   width: 100%;
@@ -604,6 +608,7 @@ h1 {
 
 /* -------- recherche  --------- */
 
+/* -------- page produit  --------- */
 
 
 .shadow-sm{
@@ -617,6 +622,20 @@ h1 {
   height: 250px; /* Définit une hauteur fixe */
   object-fit: contain;
   margin: 20px auto;
+}
+.row {
+    --bs-gutter-x: 1.5rem;
+    --bs-gutter-y: 0;
+    display: flex
+;
+    margin-top: calc(-1 * var(--bs-gutter-y));
+    margin-right: calc(-.5 * var(--bs-gutter-x));
+    margin-left: calc(-.5 * var(--bs-gutter-x));
+    align-items: flex-end;
+    flex-direction: row;
+    align-content: stretch;
+    justify-content: flex-start;
+    flex-wrap: wrap;
 }
 
 
@@ -899,8 +918,9 @@ h1 {
 
 @media screen and (max-width: 768px) {
   .col-md-4 {
-    flex: 0 0 100%; /* 1 carte par ligne sur mobile */
+    flex: 0 0 100%; 
     max-width: 100%;
+    margin: auto;
   }
   .cart-container {
     flex-direction: column;
