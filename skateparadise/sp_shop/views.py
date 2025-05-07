@@ -1,169 +1,117 @@
 from django.shortcuts import render
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes 
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Product, Cart, CartItem, Order, OrderItem
-from .serializers import ProductSerializer,  CartItemSerializer , CartSerializer , SimpleCartSerializer, OrderSerializer 
-from rest_framework.response import Response # Utilisé pour retourner des réponses HTTP dans l'API
+from .serializers import ProductSerializer, CartItemSerializer, CartSerializer, SimpleCartSerializer, OrderSerializer
+from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
-from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.views import TokenBlacklistView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
-# Create your views here.
 
 # ----- View des produits --------------
-
-# Vue API qui gère uniquement les requêtes GET
-@api_view(["GET"])  # Ce décorateur permet de limiter les types de requêtes HTTP acceptées (ici uniquement GET)
+@api_view(["GET"])
 def products(request):
-    # Récupère tous les produits de la base de données
-    products = Product.objects.all()
-     # Sérialise la liste des produits pour pouvoir la retourner en JSON
-    serializer = ProductSerializer(products, many=True)
-    # Retourne la réponse sous forme de JSON avec les données des produits
+    products = Product.objects.all()  # Récupère tous les produits
+    serializer = ProductSerializer(products, many=True)  # Sérialise les produits
     return Response(serializer.data)
 
-
-
-
 # ----- View pour ajouter un produit à un panier -----
-
-@api_view(["POST"])  # Accepte uniquement les requêtes POST
+@api_view(["POST"])
 def add_item(request):
     try:
-        # Récupère les données du corps de la requête
         cart_code = request.data.get("cart_code")
         product_id = request.data.get("product_id")
 
-        # Récupère ou crée un panier à partir du cart_code
-        cart, created = Cart.objects.get_or_create(cart_code=cart_code)
+        cart, created = Cart.objects.get_or_create(cart_code=cart_code)  # Crée ou récupère un panier
+        product = Product.objects.get(id=product_id)  # Récupère le produit
+        cartitem, created = CartItem.objects.get_or_create(cart=cart, product=product)  # Crée un item de panier
 
-        # Récupère le produit à partir de son ID
-        product = Product.objects.get(id=product_id)
+        cartitem.quantity = 1  # Définit la quantité à 1
+        cartitem.save()  # Sauvegarde l'item
 
-        # Récupère ou crée une ligne de panier pour ce produit dans ce panier
-        cartitem, created = CartItem.objects.get_or_create(cart=cart, product=product)
-
-        # Initialise la quantité à 1 (écrase si déjà existant)
-        cartitem.quantity = 1
-        cartitem.save()
-
-        # Sérialise l'objet CartItem pour le renvoyer
-        serializer = CartItemSerializer(cartitem)
-
+        serializer = CartItemSerializer(cartitem)  # Sérialise l'item du panier
         return Response({"data": serializer.data, "message": "Cart item created successfully"}, status=201)
-
     except Exception as e:
-        # En cas d'erreur, retourne un message d'erreur avec un code 400 (Bad Request)
         return Response({"error": str(e)}, status=400)
-    
-    
-# ----- View des produits du panier --------
 
-@api_view(["GET"])  
+# ----- View pour récupérer les produits dans le panier --------
+@api_view(["GET"])
 def product_in_cart(request):
-    # Récupère le code du panier depuis les paramètres de la requête (ex: ?cart_code=ABC123)
     cart_code = request.query_params.get("cart_code")
-    
-    # Récupère l'ID du produit depuis les paramètres de la requête (ex: ?product_id=5)
     product_id = request.query_params.get("product_id")
 
-    # Récupère l'objet Cart correspondant au cart_code fourni
-    cart = Cart.objects.get(cart_code=cart_code)
-
-    # Récupère l'objet Product correspondant à l'ID fourni
-    product = Product.objects.get(id=product_id)
-
-    # Vérifie si un CartItem existe avec ce panier et ce produit
-    product_exists_in_cart = CartItem.objects.filter(cart=cart, product=product).exists()
-
-    # Renvoie une réponse JSON avec un booléen indiquant si le produit est dans le panier
-    return Response({'product_in_cart': product_exists_in_cart})
+    try:
+        cart = Cart.objects.get(cart_code=cart_code)
+        product = Product.objects.get(id=product_id)
+        
+        product_exists_in_cart = CartItem.objects.filter(cart=cart, product=product).exists()
+        
+        return Response({'product_in_cart': product_exists_in_cart})
+    except Cart.DoesNotExist:
+        return Response({"error": "Panier introuvable"}, status=status.HTTP_404_NOT_FOUND)
+    except Product.DoesNotExist:
+        return Response({"error": "Produit introuvable"}, status=status.HTTP_404_NOT_FOUND)
 
 
 # ----- View du panier --------
-# récupérer toutes les informations d’un panier (produits, quantités, total, etc.) en fonction d’un cart_code.
-
 @api_view(["GET"])
-@permission_classes([AllowAny])  # Permet à tout utilisateur, authentifié ou non, d'accéder à son panier
+@permission_classes([AllowAny])  # Permet l'accès à tous
 def get_cart(request):
-    # Récupère le cart_code depuis les paramètres de la requête GET
-    cart_code = request.GET.get("cart_code")
+    cart_code = request.GET.get("cart_code")  # Récupère le code du panier depuis les paramètres
 
-    # Si aucun cart_code n’est fourni, retourne une erreur 400
     if not cart_code:
         return Response({"error": "cart_code manquant"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        # Essaie de récupérer le panier correspondant au cart_code
-        cart = Cart.objects.get(cart_code=cart_code)
+        cart = Cart.objects.get(cart_code=cart_code)  # Récupère le panier par son code
     except Cart.DoesNotExist:
-        # Si aucun panier n’est trouvé, retourne une erreur 404
         return Response({"error": "Panier introuvable"}, status=status.HTTP_404_NOT_FOUND)
 
-    # Si l'utilisateur est connecté mais que le panier n'est pas lié à un utilisateur
+    # Si l'utilisateur est authentifié et que le panier n'a pas encore d'utilisateur, on l'associe à l'utilisateur actuel
     if request.user.is_authenticated and cart.user is None:
-        cart.user = request.user  # Associe le panier à l'utilisateur connecté
-        cart.save()  # Sauvegarde le panier avec l'utilisateur lié
+        cart.user = request.user
+        cart.save()
 
-    # Sérialise le panier trouvé pour renvoyer ses données en JSON
-    serializer = CartSerializer(cart)
-
-    # Renvoie les données du panier avec un statut 200
+    serializer = CartSerializer(cart)  # Sérialise le panier
     return Response(serializer.data)
 
-
-
-# ----- View des infos basiques du panier ------
-
-@api_view(["GET"])  
+# ----- View pour récupérer le statut du panier ------
+@api_view(["GET"])
 def get_cart_stat(request):
-    # Récupère le cart_code depuis les paramètres de la requête (ex: ?cart_code=XYZ123)
     cart_code = request.query_params.get("cart_code")
-
-    # Récupère le panier correspondant au cart_code et qui n’a pas encore été payé
-    # Si aucun panier n'est trouvé, cela lèvera automatiquement une exception (à sécuriser si besoin)
-    cart = Cart.objects.get(cart_code=cart_code, paid=False)
-
-    # Sérialise le panier en utilisant le serializer simplifié (qui contient seulement l'id, le cart_code, et le nombre d’articles)
+    cart = Cart.objects.get(cart_code=cart_code, paid=False)  # Récupère le panier non payé
     serializer = SimpleCartSerializer(cart)
-
-    # Renvoie les données sérialisées du panier
     return Response(serializer.data)
 
-
-
-
-# ----- View update les produits dans le panier  ------
-
+# ----- View pour mettre à jour la quantité d'un produit ------
 @api_view(["POST"])
 def update_quantity(request):
     item_id = request.data.get("item_id")
     delta = int(request.data.get("delta", 0))
 
     try:
-        item = CartItem.objects.get(id=item_id)
-        item.quantity = max(1, item.quantity + delta)
+        item = CartItem.objects.get(id=item_id)  # Récupère l'item du panier par son ID
+        item.quantity = max(1, item.quantity + delta)  # Met à jour la quantité (minimum 1)
         item.save()
         return Response({"message": "Quantité mise à jour"})
     except CartItem.DoesNotExist:
         return Response({"error": "Article non trouvé"}, status=404)
 
-
-
-# ----- Supprimer un article du panier ------
-
+# ----- View pour supprimer un article du panier ------
 @api_view(["POST"])
 def remove_item(request):
     item_id = request.data.get("item_id")
     try:
-        CartItem.objects.get(id=item_id).delete()
+        CartItem.objects.get(id=item_id).delete()  # Supprime l'item du panier
         return Response({"message": "Article supprimé du panier"})
     except CartItem.DoesNotExist:
         return Response({"error": "Article introuvable"}, status=404)
 
-# ----- Creer une commande ------------
+# ----- View pour créer une commande ------------
 @api_view(["POST"])
 def create_order(request):
     cart_code = request.data.get('cart_code')
@@ -171,13 +119,15 @@ def create_order(request):
         return JsonResponse({"error": "Code de panier manquant"}, status=400)
 
     try:
-        # Récupère le panier en fonction du code fourni
         cart = Cart.objects.get(cart_code=cart_code)
 
-        # Crée une nouvelle commande
-        order = Order.objects.create(cart=cart)  # Assurez-vous que 'cart' existe dans le modèle Order
+        # Si l'utilisateur est authentifié, associer la commande à cet utilisateur
+        if request.user.is_authenticated:
+            order = Order.objects.create(cart=cart, user=request.user)
+        else:
+            order = Order.objects.create(cart=cart)  # Si invité, laisser user à None
 
-        # Ajoute les articles du panier à la commande
+        # Ajouter les articles du panier à la commande
         for item in cart.items.all():
             order_item = OrderItem.objects.create(
                 order=order,
@@ -186,48 +136,66 @@ def create_order(request):
                 price=item.product.price
             )
 
-        # Renvoie une réponse avec l'ID de la commande
         return JsonResponse({"message": "Commande créée avec succès", "order_id": order.id})
-
     except Cart.DoesNotExist:
         return JsonResponse({"error": "Panier non trouvé"}, status=404)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
-
-# ----- Detail de la commande  ------------
+# ----- View pour afficher les détails de la commande ------------
 @api_view(["GET"])
 def order_details(request, order_id):
     try:
-        order = Order.objects.get(id=order_id)
+        order = Order.objects.get(id=order_id)  # Récupère la commande par son ID
     except Order.DoesNotExist:
         return Response({"error": "Commande non trouvée"}, status=status.HTTP_404_NOT_FOUND)
 
-    # Sérialisation des données de la commande
-    serializer = OrderSerializer(order)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    # Structure les données de la commande
+    order_data = {
+        "id": order.id,
+        "status": order.status,
+        "cart_code": order.cart.cart_code if order.cart else "No cart",
+        "user": order.user.username if order.user else "Invité",  # Affiche le nom d'utilisateur si disponible
+        "created_at": order.created_at,
+        "updated_at": order.updated_at,
+        "payment_method": order.payment_method,
+    }
 
-# ----- Status de la commande  ------------
+    # Ajoute les articles de la commande
+    order_items = [
+        {
+            "product_name": item.product.name,
+            "quantity": item.quantity,
+            "price": item.product.price,
+            "total_price": item.quantity * item.product.price
+        }
+        for item in order.cart.items.all()
+    ]
+    
+    return Response({"order": order_data, "items": order_items}, status=status.HTTP_200_OK)
 
-@api_view(["PATCH"])
+# ----- View pour mettre à jour le statut d'une commande ------
+@api_view(["PUT"])
 def update_order_status(request, order_id):
     try:
-        order = Order.objects.get(id=order_id)
+        order = Order.objects.get(id=order_id)  # Récupère la commande par son ID
     except Order.DoesNotExist:
         return Response({"error": "Commande non trouvée"}, status=status.HTTP_404_NOT_FOUND)
 
-    new_status = request.data.get("status")
-    if new_status and new_status in dict(Order.STATUS_CHOICES):
-        order.status = new_status
-        order.save()
-        return Response({"status": order.status}, status=status.HTTP_200_OK)
-    
-    return Response({"error": "Statut invalide"}, status=status.HTTP_400_BAD_REQUEST)
+    new_status = request.data.get("status")  # Récupère le nouveau statut
 
-# ----- Connexion  ------------
+    if new_status not in dict(Order.STATUS_CHOICES):  # Vérifie que le statut est valide
+        return Response({"error": "Statut invalide"}, status=status.HTTP_400_BAD_REQUEST)
+
+    order.status = new_status  # Met à jour le statut
+    order.save()  # Sauvegarde la commande
+
+    return Response({"message": f"Statut de la commande mis à jour en {new_status}"}, status=status.HTTP_200_OK)
+
+# ----- View pour récupérer le nom de l'utilisateur connecté ------
+
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_username(request):
-    user = request.user
-    return Response({"username": user.username})
+    return JsonResponse({'first_name': request.user.first_name})

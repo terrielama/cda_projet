@@ -110,6 +110,17 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def get_user(self, obj):
         if obj.user:
-            return obj.user.username  # Ou obj.user.email
-        return None
+            return {
+                "username": obj.user.username,
+                "first_name": obj.user.first_name or "Non renseigné",  # Valeur par défaut si first_name est None
+                "last_name": obj.user.last_name or "Non renseigné",  # Valeur par défaut si last_name est None
+                "email": obj.user.email or "Non renseigné",  # Valeur par défaut si email est None
+            }
+        return {
+            "username": "Invité",
+            "first_name": "Invité",
+            "last_name": "Non renseigné",
+            "email": "Non renseigné",
+        }
+
 

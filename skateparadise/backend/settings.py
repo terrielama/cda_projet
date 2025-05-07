@@ -58,11 +58,21 @@ MIDDLEWARE = [
 
 # CORS_ALLOWED_ORIGINS = [
 # "http://localhost:5173",
-# "http://localhost:5174",
-# "http://localhost:5174",
+# # "http://localhost:5174",
+# # "http://localhost:5174",
 # ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+]
+
+
+CORS_ORIGIN_WHITELIST = [
+    'http://localhost:5173',  # Autorise ton front-end à accéder à l'API
+]
 
 ROOT_URLCONF = 'backend.urls'
 
@@ -123,7 +133,7 @@ REST_FRAMEWORK = {
 
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60)
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5)
 }
 
 # Internationalization

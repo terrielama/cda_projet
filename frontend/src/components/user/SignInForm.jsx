@@ -1,52 +1,64 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useState } from "react";
 import api from "../../api";
-import { useLocation, useNavigate } from 'react-router-dom';
-import {AuthContext} from "../context/AuthContext"
+import { useLocation, useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
 function SignInForm({ toggleModal }) {
-
-  const {setIsAuthenticated} = useContext(AuthContext)
-
-  const location = useLocation()
-  const navigate = useNavigate()
+  const { setIsAuthenticated } = useContext(AuthContext);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState (false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const userInfo = { username, password };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
-  // Fonction pour la connexion
-  function handleSubmit(e) {
-    e.preventDefault(); // Empêche le comportement par défaut du formulaire (rafraîchissement de la page)
-    setLoading(true)
+    try {
+      const response = await api.post("token/", { username, password });
+      const { access, refresh } = response.data;
 
-    api.post("token/", userInfo)
-      .then(res => {
-        console.log(res.data); // Log des données de réponse
-        localStorage.setItem("access",res.data.access)
-        localStorage.setItem("refresh",res.data.refresh)
-        setUsername("")
-        setPassword("")
-        setLoading(false)
-        setIsAuthenticated(true)
-        get_username()
-        setError("")
+      localStorage.setItem("access_token", access);
+      localStorage.setItem("refresh_token", refresh);
+      setIsAuthenticated(true);
 
-        const from = location.state.from.pathname || "/";
-        navigate(from, {replace:true})
+      // Facultatif : récupérer le prénom
+      try {
+        const userRes = await fetch("http://localhost:8001/get_username", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${access}`,
+          },
+        });
 
-      })
-      .catch(err => {
-        console.log(err.message); // Log des erreurs
-        setError(err.message)
-        setLoading(false)
-      });
-  }
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          console.log("Prénom récupéré :", userData.first_name);
+          // Tu peux stocker le prénom si besoin
+          // localStorage.setItem("first_name", userData.first_name);
+        } else {
+          console.warn("Impossible de récupérer le prénom.");
+        }
+      } catch (err) {
+        console.error("Erreur prénom :", err);
+      }
 
-
-
+      setUsername("");
+      setPassword("");
+      const from = location.state?.from?.pathname || "/";
+      navigate(from, { replace: true });
+    } catch (err) {
+      console.error("Erreur lors de la connexion :", err);
+      setError("Nom d'utilisateur ou mot de passe incorrect.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="modal">
@@ -54,32 +66,33 @@ function SignInForm({ toggleModal }) {
         <button className="close-btn" onClick={toggleModal}>
           X
         </button>
-        <div>
-          <h2>Connexion</h2>
-          <form onSubmit={handleSubmit} className="form-grid">
-            <div>
-              <label>Username</label>
-              <input
-                type="text"
-                placeholder="Votre username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label>Mot de passe</label>
-              <input
-                type="password"
-                placeholder="Votre mot de passe"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <button type="submit" disabled={loading} >Se connecter</button>
-          </form>
-        </div>
+        <h2>Connexion</h2>
+        <form onSubmit={handleSubmit} className="form-grid">
+          <div>
+            <label>Nom d'utilisateur</label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Votre nom d'utilisateur"
+              required
+            />
+          </div>
+          <div>
+            <label>Mot de passe</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Votre mot de passe"
+              required
+            />
+          </div>
+          <button type="submit" disabled={loading}>
+            {loading ? "Connexion..." : "Se connecter"}
+          </button>
+          {error && <p className="error-msg">{error}</p>}
+        </form>
       </div>
     </div>
   );
