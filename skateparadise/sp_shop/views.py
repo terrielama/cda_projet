@@ -23,20 +23,31 @@ def products(request):
 @api_view(["POST"])
 def add_item(request):
     try:
+        # Récupère les données du corps de la requête
         cart_code = request.data.get("cart_code")
         product_id = request.data.get("product_id")
 
-        cart, created = Cart.objects.get_or_create(cart_code=cart_code)  # Crée ou récupère un panier
-        product = Product.objects.get(id=product_id)  # Récupère le produit
-        cartitem, created = CartItem.objects.get_or_create(cart=cart, product=product)  # Crée un item de panier
+        # Récupère ou crée un panier à partir du cart_code
+        cart, created = Cart.objects.get_or_create(cart_code=cart_code)
 
-        cartitem.quantity = 1  # Définit la quantité à 1
+        # Récupère le produit à partir de son ID
+        product = Product.objects.get(id=product_id)
+
+        # Récupère ou crée une ligne de panier pour ce produit dans ce panier
+        cartitem, created = CartItem.objects.get_or_create(cart=cart, product=product)
+
+        # Initialise la quantité à 1 (écrase si déjà existant)
+        cartitem.quantity = cartitem.quantity + 1  # Incrémente la quantité si l'item existe déjà
         cartitem.save()  # Sauvegarde l'item
 
-        serializer = CartItemSerializer(cartitem)  # Sérialise l'item du panier
+        # Sérialise l'objet CartItem pour le renvoyer
+        serializer = CartItemSerializer(cartitem)
         return Response({"data": serializer.data, "message": "Cart item created successfully"}, status=201)
+
     except Exception as e:
+        # En cas d'erreur, retourne un message d'erreur avec un code 400 (Bad Request)
         return Response({"error": str(e)}, status=400)
+
 
 # ----- View pour récupérer les produits dans le panier --------
 @api_view(["GET"])
@@ -146,7 +157,8 @@ def create_order(request):
 @api_view(["GET"])
 def order_details(request, order_id):
     try:
-        order = Order.objects.get(id=order_id)  # Récupère la commande par son ID
+        # Récupère la commande par son ID
+        order = Order.objects.get(id=order_id)
     except Order.DoesNotExist:
         return Response({"error": "Commande non trouvée"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -154,23 +166,26 @@ def order_details(request, order_id):
     order_data = {
         "id": order.id,
         "status": order.status,
-        "cart_code": order.cart.cart_code if order.cart else "No cart",
-        "user": order.user.username if order.user else "Invité",  # Affiche le nom d'utilisateur si disponible
+        "cart_code": order.cart.cart_code if order.cart else "No cart",  # Affiche le code du panier s'il existe
+        "user": order.user.username if order.user else "Invité",  # Affiche le nom d'utilisateur ou "Invité"
         "created_at": order.created_at,
         "updated_at": order.updated_at,
         "payment_method": order.payment_method,
     }
 
     # Ajoute les articles de la commande
-    order_items = [
-        {
-            "product_name": item.product.name,
-            "quantity": item.quantity,
-            "price": item.product.price,
-            "total_price": item.quantity * item.product.price
-        }
-        for item in order.cart.items.all()
-    ]
+    order_items = []
+    if order.cart:  # Vérifie que le panier est bien associé à la commande
+        order_items = [
+            {
+                "product_name": item.product.name,
+                "quantity": item.quantity,
+                "price": item.product.price,
+                "total_price": item.quantity * item.product.price,
+                "product_image": item.product.image.url if item.product.image else None  # Ajout de l'image
+            }
+            for item in order.cart.items.all()  # Récupère tous les articles associés au panier
+        ]
     
     return Response({"order": order_data, "items": order_items}, status=status.HTTP_200_OK)
 

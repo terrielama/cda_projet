@@ -37,18 +37,19 @@ const Order = () => {
     if (token) {
       fetch("http://localhost:8001/get_username", {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
       })
-        .then(res => res.json())
-        .then(data => {
+        .then((res) => res.json())
+        .then((data) => {
           console.log("Prénom récupéré :", data.first_name);
           setFirstName(data.first_name);
         })
-        .catch(err => {
+        .catch((err) => {
           console.warn("Erreur prénom :", err);
           setFirstName(null);
         });
+      
     }
   }, []);
 
@@ -56,7 +57,9 @@ const Order = () => {
   if (error) return <div>Erreur : {error}</div>;
   if (!orderDetails) return <div>Aucune commande trouvée.</div>;
 
-  const isGuest = !orderDetails.user;
+  const isGuest = !firstName & !orderDetails.user;
+
+  // const isGuest = !orderDetails.user;
   const totalAmount = orderDetails.items
     .reduce((sum, item) => sum + parseFloat(item.total_price), 0)
     .toFixed(2);
@@ -67,23 +70,24 @@ const Order = () => {
 
       {/* Partie Gauche - Détails */}
       <div className="order-summary">
-  <p>
-    <strong>Client :</strong>{" "}
-    {firstName ? `Bienvenue ${firstName}` : isGuest ? "Invité" : "Utilisateur inscrit"}
-  </p>
-
-
-
-
-
+        <p>
+          <strong>Client :</strong>{" "}
+          {firstName ? ` ${firstName}` : isGuest ? "Invité" : "Utilisateur inscrit"}
+        </p>
 
         <div className="order-items">
           {orderDetails.items.map((item, index) => (
             <div key={index} className="order-item">
+              {/* Assure-toi que l'image est correctement récupérée */}
               <img
-                src={`http://localhost:8001${item.product_image}`}
-                alt={item.product_name}
-              />
+              src={`http://localhost:8001${item.product_image}`}
+              alt={item.product_name}
+              onError={(e) => {
+                e.target.onerror = null;  // empêche la boucle infinie
+                e.target.src = '/default-image.jpg';  // image par défaut en cas d'erreur
+              }}
+            />
+
               <div>
                 <h4>{item.product_name}</h4>
                 <p>Quantité : {item.quantity}</p>
@@ -102,19 +106,13 @@ const Order = () => {
       {/* Partie Droite - Paiement */}
       <div className="payment-method">
         <h2>Choisissez votre mode de paiement</h2>
-        <button onClick={() => setSelectedPayment('card')}>
-          Carte Bancaire
-        </button>
-        <button onClick={() => setSelectedPayment('paypal')}>
-          PayPal
-        </button>
+        <button onClick={() => setSelectedPayment('card')}>Carte Bancaire</button>
+        <button onClick={() => setSelectedPayment('paypal')}>PayPal</button>
 
         {selectedPayment && (
           <p>
             Vous avez choisi :{' '}
-            <strong>
-              {selectedPayment === 'card' ? "Carte Bancaire" : "PayPal"}
-            </strong>
+            <strong>{selectedPayment === 'card' ? "Carte Bancaire" : "PayPal"}</strong>
           </p>
         )}
       </div>
