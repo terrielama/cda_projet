@@ -4,100 +4,118 @@ import { useNavigate } from 'react-router-dom';
 import Loader from "../Loader";
 
 const Cart = () => {
-  const [cart, setCart] = useState(null);
-  const [loading, setLoading] = useState(true); // Start in loading mode
-  const [error, setError] = useState("");
-  const navigate = useNavigate();
+  const [cart, setCart] = useState(null); // Stocke le panier récupéré
+  const [loading, setLoading] = useState(true); // Indique si le panier est en cours de chargement
+  const [error, setError] = useState(""); // Stocke les messages d'erreur
+  const navigate = useNavigate(); // Utilisé pour la navigation après une commande
 
+  // Fonction pour récupérer le panier depuis l'API
   const fetchCart = async () => {
-    const cart_code = localStorage.getItem("cart_code");
+    const cart_code = localStorage.getItem("cart_code"); // Récupère le cart_code du localStorage
+    const token = localStorage.getItem("token"); // Récupère le token d'authentification
+
+    // Si aucun cart_code n'est trouvé, on arrête le chargement
     if (!cart_code) {
-      setLoading(false); // Important: stop loader if no cart
+      setLoading(false);
       return;
     }
 
     try {
-      const res = await api.get(`http://localhost:8001/get_cart?cart_code=${cart_code}`);
-      setCart(res.data);
+      // Envoie une requête GET pour récupérer le panier
+      const res = await api.get(`http://localhost:8001/get_cart?cart_code=${cart_code}`, {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "", // Ajoute le token si l'utilisateur est connecté
+        },
+      });
+      setCart(res.data); // Mise à jour de l'état avec les données du panier
     } catch (err) {
       console.error(err);
-      setError("Erreur de chargement du panier. Veuillez réessayer.");
+      setError("Erreur de chargement du panier. Veuillez réessayer."); // Message d'erreur en cas de problème
     } finally {
-      setLoading(false); // always stop loader
+      setLoading(false); // Arrête le loader une fois la réponse reçue
     }
   };
 
+  // On appelle fetchCart dès le chargement de la page
   useEffect(() => {
     fetchCart();
   }, []);
 
+  // Fonction pour mettre à jour la quantité d'un produit dans le panier
   const updateQuantity = async (itemId, delta) => {
-    const cart_code = localStorage.getItem("cart_code");
+    const cart_code = localStorage.getItem("cart_code"); // Récupère le cart_code
     if (!cart_code) return;
+
     try {
+      // Envoie une requête POST pour mettre à jour la quantité
       await api.post(`http://localhost:8001/update_quantity?cart_code=${cart_code}`, {
         item_id: itemId,
         delta,
       });
-      fetchCart();
+      fetchCart(); // Rafraîchit le panier après la mise à jour
     } catch (error) {
       console.error("Erreur mise à jour quantité", error);
       setError("Erreur de mise à jour de la quantité.");
     }
   };
 
+  // Fonction pour supprimer un produit du panier
   const removeProduct = async (itemId) => {
-    const cart_code = localStorage.getItem("cart_code");
+    const cart_code = localStorage.getItem("cart_code"); // Récupère le cart_code
     if (!cart_code) return;
+
     try {
+      // Envoie une requête POST pour supprimer le produit
       await api.post(`http://localhost:8001/remove_item?cart_code=${cart_code}`, { item_id: itemId });
-      fetchCart();
+      fetchCart(); // Rafraîchit le panier après la suppression
     } catch (error) {
       console.error("Erreur suppression produit", error);
       setError("Erreur lors de la suppression du produit.");
     }
   };
 
+  // Calcul du total et du prix final (y compris la livraison)
   const totalPrice = cart?.sum_total || 0;
-  const shippingCost = totalPrice >= 70 ? 0 : 4;
+  const shippingCost = totalPrice >= 70 ? 0 : 4; // Livraison gratuite si le total dépasse 70€
   const finalPrice = totalPrice + shippingCost;
 
-const handleOrder = async () => {
-  if (!cart?.items.length) {
-    setError("Votre panier est vide.");
-    return;
-  }
+  // Fonction pour traiter la commande
+  const handleOrder = async () => {
+    if (!cart?.items.length) {
+      setError("Votre panier est vide."); // Vérifie que le panier contient des articles
+      return;
+    }
 
-  try {
-    setLoading(true); // On active le Loader
+    try {
+      setLoading(true); // Affiche le loader pendant la création de la commande
 
-    const response = await api.post("http://localhost:8001/create_order", {
-      cart_code: localStorage.getItem("cart_code"),
-    });
+      // Envoie la requête pour créer la commande
+      const response = await api.post("http://localhost:8001/create_order", {
+        cart_code: localStorage.getItem("cart_code"), // Envoie le cart_code
+      });
 
-    console.log(response);
+      console.log(response);
 
-    setCart(null);
-    localStorage.removeItem("cart_code");
+      setCart(null); // Réinitialise le panier après la commande
+      localStorage.removeItem("cart_code"); // Supprime le cart_code du localStorage
 
-    // Laisser le Loader s'afficher un court instant avant de rediriger
-    setTimeout(() => {
-      navigate(`/commande/${response.data.order_id}`);
-    }, 1000); // 1000 ms = 1 seconde
-  } catch (error) {
-    console.error("Erreur serveur:", error.response?.data || error.message);
-    setError("Erreur lors de la commande, veuillez réessayer.");
-    setLoading(false);
-  }
-};
+      // Redirige vers la page de commande après un court délai
+      setTimeout(() => {
+        navigate(`/commande/${response.data.order_id}`); // Redirige vers la page de la commande avec l'ID de la commande
+      }, 1000); // 1 seconde de délai
+    } catch (error) {
+      console.error("Erreur serveur:", error.response?.data || error.message);
+      setError("Erreur lors de la commande, veuillez réessayer."); // Message d'erreur en cas d'échec
+      setLoading(false);
+    }
+  };
 
-
-  // 1. Loader global
+  // Affichage du loader pendant le chargement
   if (loading) {
     return <Loader />;
   }
 
-  // 2. Ensuite affichage normal
+  // Affichage du panier une fois qu'il est chargé
   return (
     <div className="cart-container">
       <h1 className="center-text">Mon Panier</h1>
@@ -110,7 +128,6 @@ const handleOrder = async () => {
               alt={item.product.name}
               className="product-image"
             />
-
             <div className="product-info">
               <h2>{item.product.name}</h2>
               <p>{item.product.price} € x {item.quantity}</p>
@@ -119,7 +136,6 @@ const handleOrder = async () => {
                 <span>{item.quantity}</span>
                 <button onClick={() => updateQuantity(item.id, 1)}>+</button>
               </div>
-
               <button className="remove-button" onClick={() => removeProduct(item.id)}>
                 Supprimer
               </button>

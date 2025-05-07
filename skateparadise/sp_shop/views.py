@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes 
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Product, Cart, CartItem, Order, OrderItem
 from .serializers import ProductSerializer,  CartItemSerializer , CartSerializer , SimpleCartSerializer, OrderSerializer 
 from rest_framework.response import Response # Utilisé pour retourner des réponses HTTP dans l'API
@@ -85,11 +86,12 @@ def product_in_cart(request):
 # récupérer toutes les informations d’un panier (produits, quantités, total, etc.) en fonction d’un cart_code.
 
 @api_view(["GET"])
+@permission_classes([AllowAny])  # Permet à tout utilisateur, authentifié ou non, d'accéder à son panier
 def get_cart(request):
-    # Récupère le cart_code depuis les paramètres de la requête GET (ex: ?cart_code=XYZ123)
+    # Récupère le cart_code depuis les paramètres de la requête GET
     cart_code = request.GET.get("cart_code")
 
-    # Si aucun cart_code n’est fourni, retourne une erreur 400 (Bad Request)
+    # Si aucun cart_code n’est fourni, retourne une erreur 400
     if not cart_code:
         return Response({"error": "cart_code manquant"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -97,13 +99,18 @@ def get_cart(request):
         # Essaie de récupérer le panier correspondant au cart_code
         cart = Cart.objects.get(cart_code=cart_code)
     except Cart.DoesNotExist:
-        # Si aucun panier n’est trouvé, retourne une erreur 404 (Not Found)
+        # Si aucun panier n’est trouvé, retourne une erreur 404
         return Response({"error": "Panier introuvable"}, status=status.HTTP_404_NOT_FOUND)
+
+    # Si l'utilisateur est connecté mais que le panier n'est pas lié à un utilisateur
+    if request.user.is_authenticated and cart.user is None:
+        cart.user = request.user  # Associe le panier à l'utilisateur connecté
+        cart.save()  # Sauvegarde le panier avec l'utilisateur lié
 
     # Sérialise le panier trouvé pour renvoyer ses données en JSON
     serializer = CartSerializer(cart)
 
-    # Renvoie les données du panier avec un statut 200 (OK)
+    # Renvoie les données du panier avec un statut 200
     return Response(serializer.data)
 
 
