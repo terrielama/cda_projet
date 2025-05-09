@@ -66,7 +66,7 @@ const PaiementForm = () => {
           <div className="credit-card-info--form">
             <div className="input_container">
               <label htmlFor="password_field" className="input_label">Nom complet du titulaire de la carte</label>
-              <input id="password_field" className="input_field" type="text" name="input-name" title="Inpit title" placeholder="Enter your full name" />
+              <input id="password_field" className="input_field" type="text" name="input-name" title="Inpit title" placeholder="Entrer votre nom complet" />
             </div>
             <div className="input_container">
               <label htmlFor="password_field" className="input_label">Numéro de carter</label>
@@ -75,7 +75,7 @@ const PaiementForm = () => {
             <div className="input_container">
               <label htmlFor="password_field" className="input_label">Date d’expiration / CVV</label>
               <div className="split">
-                <input id="password_field" className="input_field" type="text" name="input-name" title="Expiry Date" placeholder="01/23" />
+                <input id="password_field" className="input_field" type="text" name="input-name" title="Date d'expiration" placeholder="01/23" />
                 <input id="password_field" className="input_field" type="number" name="cvv" title="CVV" placeholder="CVV" />
               </div>
             </div>
@@ -119,7 +119,7 @@ const StyledWrapper = styled.div`
 
   .payment--options button {
     height: 55px;
-    background: #F2F2F2;
+    background:rgb(243, 243, 243);
     border-radius: 11px;
     padding: 0;
     border: 0;
@@ -139,7 +139,7 @@ const StyledWrapper = styled.div`
     display: grid;
     grid-template-columns: 1fr 2fr 1fr;
     gap: 10px;
-    color: #8B8E98;
+    color:rgb(0, 0, 0);
     margin: 0 10px;
   }
 
@@ -148,7 +148,7 @@ const StyledWrapper = styled.div`
     display: block;
     text-align: center;
     font-weight: 600;
-    font-size: 11px;
+    font-size: 14px;
     margin: auto;
   }
 
@@ -157,7 +157,7 @@ const StyledWrapper = styled.div`
     width: 100%;
     height: 1px;
     border: 0;
-    background-color: #e8e8e8;
+    background-color:rgb(0, 0, 0);
     margin: auto;
   }
 
@@ -186,9 +186,9 @@ const StyledWrapper = styled.div`
   }
 
   .input_label {
-    font-size: 10px;
-    color: #8B8E98;
-    font-weight: 600;
+    font-size: 13px;
+    color:rgb(13, 13, 13);
+    font-weight: 300;
   }
 
 
@@ -198,14 +198,14 @@ const StyledWrapper = styled.div`
     padding: 0 0 0 16px;
     border-radius: 9px;
     outline: none;
-    background-color: #F2F2F2;
-    border: 1px solid #e5e5e500;
+    background-color:rgb(240, 240, 240);
+    border: 1px solid rgba(0, 0, 0, 0.5);
     transition: all 0.3s cubic-bezier(0.15, 0.83, 0.66, 1);
   }
 
   .input_field:focus {
     border: 1px solid transparent;
-    box-shadow: 0px 0px 0px 2px #242424;
+    box-shadow: 0px 0px 0px 2pxrgb(28, 28, 28);
     background-color: transparent;
   }
 
@@ -216,9 +216,9 @@ const StyledWrapper = styled.div`
     border: 0;
     outline: none;
     color: #ffffff;
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 700;
-    background: linear-gradient(180deg, #363636 0%, #1B1B1B 50%, #000000 100%);
+    background: linear-gradient(180deg,rgb(99, 99, 99) 0%, #1B1B1B 50%, #000000 100%);
     box-shadow: 0px 0px 0px 0px #FFFFFF, 0px 0px 0px 0px #000000;
     transition: all 0.3s cubic-bezier(0.15, 0.83, 0.66, 1);
   }

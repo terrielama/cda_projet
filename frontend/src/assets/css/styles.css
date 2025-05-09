@@ -630,7 +630,7 @@ h1 {
 .order-page {
   display: flex;
   justify-content: center;
-  gap: 40px;
+  gap: 60px;
   padding: 60px 180px 180px 180px;
   margin-top: 185px;
   background-color: #f8f8f8;
@@ -638,7 +638,7 @@ h1 {
 }
 
 .order-summary {
-  width: 35%;
+  width: 50%;
   background-color: #ffffff;
   padding: 20px;
   border-radius: 10px;
@@ -656,7 +656,7 @@ h1 {
 }
 
 .order-summary {
-  padding: 10px;
+  padding: 30px;
 }
 
 .order-items {
@@ -665,6 +665,7 @@ h1 {
   flex-direction: column;
   margin-top: 30px;
   padding: 20px ;
+  
   margin-bottom: 1px solid #eee;
 }
 
@@ -704,7 +705,7 @@ h1 {
 }
 
 .payment-method {
-  width: 30%;
+
   background-color: #ffffff;
   padding: 40px;
   border-radius: 10px;
