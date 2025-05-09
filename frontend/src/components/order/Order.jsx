@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import PaiementForm from './PaymentForm'; // Import PaiementForm component
 
 const Order = () => {
   const { orderId } = useParams();
@@ -49,7 +50,6 @@ const Order = () => {
           console.warn("Erreur prénom :", err);
           setFirstName(null);
         });
-      
     }
   }, []);
 
@@ -59,7 +59,6 @@ const Order = () => {
 
   const isGuest = !firstName & !orderDetails.user;
 
-  // const isGuest = !orderDetails.user;
   const totalAmount = orderDetails.items
     .reduce((sum, item) => sum + parseFloat(item.total_price), 0)
     .toFixed(2);
@@ -80,19 +79,16 @@ const Order = () => {
             <div key={index} className="order-item">
               {/* Assure-toi que l'image est correctement récupérée */}
               <img
-              src={`http://localhost:8001${item.product_image}`}
-              alt={item.product_name}
-              onError={(e) => {
-                e.target.onerror = null;  // empêche la boucle infinie
-                e.target.src = '/default-image.jpg';  // image par défaut en cas d'erreur
-              }}
-            />
-
-              <div>
+                src={`http://localhost:8001${item.product_image}`}
+                alt={item.product_name}
+                onError={(e) => {
+                  e.target.onerror = null;  // empêche la boucle infinie
+                  e.target.src = '/default-image.jpg';  // image par défaut en cas d'erreur
+                }}
+              />
+              <div className="order-text">
                 <h4>{item.product_name}</h4>
-                <p>Quantité : {item.quantity}</p>
-                <p>Prix : {item.product_price} €</p>
-                <p>Total : {item.total_price} €</p>
+                <p>Quantité : {item.quantity}  | Prix : {item.total_price} €</p>
               </div>
             </div>
           ))}
@@ -115,6 +111,9 @@ const Order = () => {
             <strong>{selectedPayment === 'card' ? "Carte Bancaire" : "PayPal"}</strong>
           </p>
         )}
+
+        {/* Afficher le formulaire PaiementForm si "Carte Bancaire" est sélectionné */}
+        {selectedPayment === 'card' && <PaiementForm />}
       </div>
     </div>
   );
