@@ -18,9 +18,13 @@ function SignInForm({ toggleModal }) {
     setLoading(true);
     setError("");
 
+    console.log("Tentative de connexion avec :", { username, password });
+
     try {
       const response = await api.post("token/", { username, password });
       const { access, refresh } = response.data;
+
+      console.log("Token reçu :", { access, refresh });
 
       localStorage.setItem("access_token", access);
       localStorage.setItem("refresh_token", refresh);
@@ -36,13 +40,14 @@ function SignInForm({ toggleModal }) {
           },
         });
 
+        console.log("Réponse de /get_username :", userRes);
+
         if (userRes.ok) {
           const userData = await userRes.json();
           console.log("Prénom récupéré :", userData.first_name);
-          // Tu peux stocker le prénom si besoin
-          // localStorage.setItem("first_name", userData.first_name);
         } else {
-          console.warn("Impossible de récupérer le prénom.");
+          const errorText = await userRes.text();
+          console.warn("Impossible de récupérer le prénom :", errorText);
         }
       } catch (err) {
         console.error("Erreur prénom :", err);
@@ -50,10 +55,18 @@ function SignInForm({ toggleModal }) {
 
       setUsername("");
       setPassword("");
+
+      // 🔒 Ferme la modal après connexion réussie
+      toggleModal();
+
       const from = location.state?.from?.pathname || "/";
+      console.log("Redirection vers :", from);
       navigate(from, { replace: true });
     } catch (err) {
       console.error("Erreur lors de la connexion :", err);
+      if (err.response) {
+        console.error("Détails de l'erreur :", err.response.data);
+      }
       setError("Nom d'utilisateur ou mot de passe incorrect.");
     } finally {
       setLoading(false);
