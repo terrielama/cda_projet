@@ -104,7 +104,7 @@ const StyledWrapper = styled.div`
   .form {
     display: flex;
     flex-direction: column;
-        align-items: center;
+    align-items: center;
     gap: 20px;
     padding: 20px;
   }
