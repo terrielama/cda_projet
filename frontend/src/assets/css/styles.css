@@ -155,14 +155,14 @@ body {
 
 .btn-outline-primary
 {
-  width: 100px;
+  width: 120px;
   height: 40px;
   color: #212529;
   border-color: black;
 }
 .btn-outline-primary a 
 {
-  font-size: 12px;
+  font-size: 10px;
 }
 
 
