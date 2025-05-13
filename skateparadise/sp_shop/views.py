@@ -8,7 +8,9 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 from rest_framework_simplejwt.tokens import RefreshToken
-import uuid
+from django.contrib.auth import get_user_model
+from rest_framework.exceptions import NotFound
+
 
 # ----- View des produits --------------
 @api_view(["GET"])
@@ -140,46 +142,6 @@ def get_cart(request):
     except Cart.DoesNotExist:
         return Response({"error": "Panier non trouvé"}, status=status.HTTP_404_NOT_FOUND)
 
-# ----- Vue pour associer le panier à un utilisateur -----
-@api_view(['POST'])
-def create_cart(request):
-    user = request.user  # Récupère l'utilisateur connecté
-    if user.is_authenticated:
-        cart = Cart.objects.create(user=user)  # Crée un panier lié à l'utilisateur
-        return Response({'cart_code': cart.cart_code}, status=status.HTTP_201_CREATED)
-    else:
-        return Response({"detail": "User not authenticated"}, status=status.HTTP_401_UNAUTHORIZED)
-
-# Exemple de mise à jour d'un panier
-
-@api_view(['POST'])
-def create_or_get_cart(request):
-    cart_code = request.data.get('cart_code')
-    user_id = request.data.get('user_id')
-
-    # Vérification si un panier avec le cart_code existe déjà
-    if cart_code:
-        try:
-            cart = Cart.objects.get(cart_code=cart_code)
-            return Response(CartSerializer(cart).data, status=status.HTTP_200_OK)
-        except Cart.DoesNotExist:
-            pass  # Si le panier n'existe pas, on le crée en dessous
-
-    # Si aucun panier n'existe, on crée un nouveau panier
-    if user_id:
-        user = User.objects.get(id=user_id)
-    else:
-        user = None  # L'utilisateur est peut-être un invité
-
-    # Création du nouveau panier
-    cart = Cart.objects.create(cart_code=cart_code or generate_cart_code(), user=user)
-    return Response(CartSerializer(cart).data, status=status.HTTP_201_CREATED)
-
-def generate_cart_code():
-    import random
-    import string
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=10))  # Code aléatoire pour le panier
-
 # ----------- user --------
 @api_view(['GET'])
 def get_profile(request):
@@ -232,6 +194,7 @@ def create_order(request):
         return JsonResponse({"error": "Code de panier manquant"}, status=400)
 
     try:
+        # Récupérer le panier en fonction du code
         cart = Cart.objects.get(cart_code=cart_code)
 
         # Si l'utilisateur est authentifié, associer la commande à cet utilisateur
@@ -242,18 +205,44 @@ def create_order(request):
 
         # Ajouter les articles du panier à la commande
         for item in cart.items.all():
-            order_item = OrderItem.objects.create(
+            OrderItem.objects.create(
                 order=order,
                 product=item.product,
                 quantity=item.quantity,
                 price=item.product.price
             )
 
+        # Retourner une réponse avec l'ID de la commande
         return JsonResponse({"message": "Commande créée avec succès", "order_id": order.id})
+    
     except Cart.DoesNotExist:
+        # Si le panier n'existe pas, renvoyer une erreur
         return JsonResponse({"error": "Panier non trouvé"}, status=404)
+    
     except Exception as e:
+        # Gestion des autres erreurs
         return JsonResponse({"error": str(e)}, status=500)
+# --------------- Assossier commande a un user ------------
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def associate_user_to_order(request):
+    order_id = request.data.get('orderId')
+    user = request.user
+
+    print("== ASSOCIATE USER ==")
+    print(f"User connecté : {user}")
+    print(f"orderId reçu : {order_id}")
+
+    try:
+        order = Order.objects.get(id=order_id)
+        print(f"Commande trouvée : {order}")
+        order.user = user
+        order.save()
+        print("Utilisateur associé à la commande")
+        return Response({"message": "Utilisateur associé à la commande."}, status=status.HTTP_200_OK)
+    except Order.DoesNotExist:
+        print("Commande non trouvée")
+        return Response({"error": "Commande introuvable"}, status=status.HTTP_404_NOT_FOUND)
 
 
 # ---- View Profile ------
@@ -282,7 +271,10 @@ def order_details(request, order_id):
         "id": order.id,
         "status": order.status,
         "cart_code": order.cart.cart_code if order.cart else "No cart",  # Affiche le code du panier s'il existe
-        "user": order.user.username if order.user else "Invité",  # Affiche le nom d'utilisateur ou "Invité"
+        "user": {
+            "id": order.user.id if order.user else None,  # Ajoute l'ID de l'utilisateur s'il existe
+            "username": order.user.username if order.user else "Invité",  # Affiche le nom d'utilisateur ou "Invité"
+        } if order.user else {"id": None, "username": "Invité"},  # Gère le cas où il n'y a pas d'utilisateur
         "created_at": order.created_at,
         "updated_at": order.updated_at,
         "payment_method": order.payment_method,

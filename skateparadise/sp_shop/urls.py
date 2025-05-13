@@ -13,10 +13,10 @@ urlpatterns = [
     path('order/<int:order_id>', views.order_details, name='order-details'),
     path('order/<int:order_id>/status/', views.update_order_status, name='update_order_status'),
     path("get_username", views.get_username, name="get_username"),
-    path("create_cart", views.create_cart, name="create_cart"),
     path("associate_cart_to_user/", views.associate_cart_to_user, name="associate_cart_to_user"),
+    path('associate_user_to_order/', views.associate_user_to_order, name='associate_user_to_order'),
+
     path('profile', views.profile, name='profile'), 
-    path('create_or_get_cart', views.create_or_get_cart, name='create_or_get_cart'),
 
 
 

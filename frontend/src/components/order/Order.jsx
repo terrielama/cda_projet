@@ -38,7 +38,7 @@ const Order = () => {
     if (token) {
       fetch("http://localhost:8001/get_username", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          Authorization: `Bearer ${token}`,
         },
       })
         .then((res) => res.json())
@@ -53,11 +53,39 @@ const Order = () => {
     }
   }, []);
 
+  // Associer l'utilisateur à la commande
+  useEffect(() => {
+    // Si l'utilisateur est connecté, on associe l'utilisateur à la commande
+    if (firstName && orderDetails) {
+      const associateUserToOrder = async () => {
+        try {
+          const token = localStorage.getItem("access_token");
+          if (token) {
+            await fetch(`http://localhost:8001/associate_user_to_order/`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ orderId }),
+            });
+            console.log("✅ Utilisateur associé à la commande.");
+          }
+        } catch (err) {
+          console.error("❌ Erreur lors de l'association :", err);
+        }
+      };
+  
+      associateUserToOrder();
+    }
+  }, [firstName, orderDetails, orderId]);
+  
+
   if (loading) return <div>Chargement...</div>;
   if (error) return <div>Erreur : {error}</div>;
   if (!orderDetails) return <div>Aucune commande trouvée.</div>;
 
-  const isGuest = !firstName & !orderDetails.user;
+  const isGuest = !firstName && !orderDetails.user;
 
   const totalAmount = orderDetails.items
     .reduce((sum, item) => sum + parseFloat(item.total_price), 0)
@@ -79,7 +107,7 @@ const Order = () => {
             <div key={index} className="order-item">
               {/* Assure-toi que l'image est correctement récupérée */}
               <img
-                src={`http://localhost:8001${item.product_image}`}
+                src={`http://localhost:8001${item.product_image || '/default-image.jpg'}`}
                 alt={item.product_name}
                 onError={(e) => {
                   e.target.onerror = null;  // empêche la boucle infinie
