@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import images from '../../importImages.js';
 import axios from 'axios';
-import AddButton from './AddButton.jsx';
+
+const api = axios.create({
+  baseURL: "http://127.0.0.1:8001/",
+});
 
 function generateRandomAlphanumeric(length = 10) {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -17,6 +20,12 @@ const ProductList = () => {
   const { category } = useParams();
   const [products, setProducts] = useState([]);
   const [message, setMessage] = useState('');
+  const [inCart, setInCart] = useState({});
+  const cart_code = localStorage.getItem("cart_code") || generateRandomAlphanumeric();
+
+  useEffect(() => {
+    localStorage.setItem("cart_code", cart_code); // Assure qu'on a un cart_code persistant
+  }, [cart_code]);
 
   useEffect(() => {
     const fetchedProducts = {
@@ -41,28 +50,39 @@ const ProductList = () => {
 
     if (fetchedProducts[category]) {
       setProducts(fetchedProducts[category]);
-    }
-  }, [category]);
 
-  const addItem = async (product) => {
-    let cartCode = localStorage.getItem("cart_code");
-    if (!cartCode) {
-      cartCode = generateRandomAlphanumeric();
-      localStorage.setItem("cart_code", cartCode);
-    }
+      // Vérifie chaque produit pour voir s'il est dans le panier
+      fetchedProducts[category].forEach((product) => {
+        api.get(`product_in_cart?cart_code=${cart_code}&product_id=${product.id}`)
+        .then(res => {
+          console.log("Produit", product.id, "dans panier ?", res.data);
+        })
+        .catch(err => {
+          console.error("Erreur API :", err);
+        });
 
-    try {
-      await axios.post("http://localhost:8001/add_item", {
-        cart_code: cartCode,
-        product_id: product.id,
       });
-      setMessage("Produit ajouté au panier !");
-    } catch (error) {
-      console.error(error);
-      setMessage("Erreur lors de l'ajout au panier.");
     }
+  }, [category, cart_code]);
 
-    setTimeout(() => setMessage(""), 3000); // Efface le message après 3 secondes
+  const add_item = (product_id) => {
+    const newItem = {
+      cart_code: cart_code,
+      product_id: product_id,
+    };
+
+    api.post("add_item", newItem)
+      .then(res => {
+        console.log(res.data);
+        setMessage("Produit ajouté au panier !");
+        setInCart(prev => ({
+          ...prev,
+          [product_id]: true
+        }));
+      })
+      .catch(err => {
+        console.log(err.message);
+      });
   };
 
   return (
@@ -78,7 +98,13 @@ const ProductList = () => {
               <div className="card-body text-center">
                 <h5 className="card-title">{product.name}</h5>
                 <p className="card-text text-primary fw-bold">{product.price.toFixed(2)}€</p>
-                <AddButton onClick={() => addItem(product)} />
+                <button
+                  className="btn btn-dark"
+                  onClick={() => add_item(product.id)}
+                  disabled={inCart[product.id]}
+                >
+                  {inCart[product.id] ? 'Déjà dans le panier' : 'Ajouter au panier'}
+                </button>
               </div>
             </div>
           </div>

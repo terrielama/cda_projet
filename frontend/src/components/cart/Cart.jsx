@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import api from "../../api";
 import { useNavigate } from 'react-router-dom'; 
 import Loader from "../Loader";
-import SMOButton from "./SMOButton.jsx"
 
 const Cart = () => {
   const [cart, setCart] = useState(null); // Stocke le panier récupéré
@@ -154,8 +153,9 @@ const Cart = () => {
           <p>Livraison : {shippingCost === 0 ? "Gratuite" : `${shippingCost} €`}</p>
           <p>Total à payer : {finalPrice.toFixed(2)} €</p>
 
-        <SMOButton onClick={handleOrder} disabled={loading} />
-
+          <button className="validate-btn" onClick={handleOrder} disabled={loading}>
+            Voir ma commande
+          </button>
 
           {error && <p className="error-message">{error}</p>}
         </div>

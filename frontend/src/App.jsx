@@ -5,26 +5,25 @@ import ProductList from "./components/product/ProductList.jsx";
 import Cart from "./components/cart/Cart.jsx";
 import Order from "./components/order/Order.jsx";
 import SignInForm from "./components/user/SignInForm.jsx";
-import { AuthProvider } from './components/context/AuthContext.jsx';  // Import du AuthProvider
+import { AuthProvider } from './components/context/AuthContext.jsx';
+// import { CartProvider } from "./components/context/CartContext.jsx";
 
-function App() {
+const App = () => {
   return (
-    // Envelopper l'application avec AuthProvider pour fournir l'état d'authentification à tous les composants
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route element={<MainLayout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/panier" element={<Cart />} />
-            <Route path="produits/:category" element={<ProductList />} />
-            <Route path="/commande/:orderId" element={<Order />} />
-            <Route path="/connexion" element={<SignInForm />} />
-            {/* Tu peux ajouter d'autres routes ici */}
-          </Route>
-        </Routes>
-      </BrowserRouter>
+        <BrowserRouter>
+          <Routes>
+            <Route element={<MainLayout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/panier" element={<Cart />} />
+              <Route path="produits/:category" element={<ProductList />} />
+              <Route path="/commande/:orderId" element={<Order />} />
+              <Route path="/connexion" element={<SignInForm />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
     </AuthProvider>
   );
-}
+};
 
 export default App;

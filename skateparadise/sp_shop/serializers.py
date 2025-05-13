@@ -43,43 +43,42 @@ class CartItemSerializer(serializers.ModelSerializer):
 
 # ------ Serializer pour le modèle   ---------
 
-
 class SimpleCartSerializer(serializers.ModelSerializer):
+    num_of_items = serializers.SerializerMethodField()
+
     class Meta:
         model = Cart
-        fields = [ "id", "cart_code","num_of_items"]
+        fields = ["id", "cart_code", "num_of_items"]
 
     def get_num_of_items(self, cart):
-        num_of_items = sum([ item.quantity for item in cart.items.all()])
-        return num_of_items
-
-
+        return sum([item.quantity for item in cart.items.all()])
 
 
 # ------ Serializer pour le modèle Cart ---------
 
 class CartSerializer(serializers.ModelSerializer):
-    items = CartItemSerializer(read_only=True, many=True)
-    sum_total = serializers.SerializerMethodField()
-    num_of_items = serializers.SerializerMethodField()
+    items = CartItemSerializer(read_only=True, many=True)  # Sérialise les items du panier
+    sum_total = serializers.SerializerMethodField()  # Champ pour calculer le total
+    num_of_items = serializers.SerializerMethodField()  # Champ pour calculer le nombre d'articles
+
     class Meta:
         model = Cart
-        fields = [ "id", "cart_code", "items", "sum_total", "num_of_items", "created_at", "modified_at"]
+        fields = ["id", "cart_code", "items", "sum_total", "num_of_items", "created_at", "modified_at"]
 
+    # Méthode pour calculer le total du panier
     def get_sum_total(self, cart):
+        # Récupère les items du panier et calcule le total
         items = cart.items.all()
-        total = sum([item.product.price * item.quantity for item in items ])
+        total = sum([item.product.price * item.quantity for item in items])
         return total
     
-    def get_num_total(self, cart):
+    # Méthode pour calculer le nombre total d'articles dans le panier
+    def get_num_of_items(self, cart):
+        # Récupère les items du panier et calcule le nombre total d'articles
         items = cart.items.all()
-        total = sum([ item.quantity for item in items ])
+        total = sum([item.quantity for item in items])
         return total
-    
-    def get_num_of_items(self, cart): 
-        items = cart.items.all()
-        return sum(item.quantity for item in items)
-
+   
 # ------ Serializer pour le modèle OrderItem (produit d'une commande) ---------
 
 class OrderItemSerializer(serializers.ModelSerializer):

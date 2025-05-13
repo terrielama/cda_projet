@@ -68,21 +68,23 @@ class Product(models.Model):
 
 class Cart(models.Model):
     cart_code = models.CharField(max_length=11, unique=True)
-   
-  # settings.AUTH_USER_MODEL permet de référencer dynamiquement le modèle User personnalisé défini dans les settings.py
-  # on_delete pour que si  l'utilisateur est supprimé, son panier l'est aussi
+
+    # settings.AUTH_USER_MODEL permet de référencer dynamiquement le modèle User personnalisé défini dans settings.py
+    # on_delete pour que si l'utilisateur est supprimé, son panier l'est aussi
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, blank=True, null=True)
- 
-  # Indique si le panier a été payé. Par défaut, c'est False (non payé).
+
+    # Indique si le panier a été payé. Par défaut, c'est False (non payé).
     paid = models.BooleanField(default=False)
-  # Date de création automatique du panier. auto_now_add le remplit à la création.
+
+    # Date de création automatique du panier.
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-  # Date de dernière modification.
+
+    # Date de dernière modification.
     modified_at = models.DateTimeField(auto_now=True, blank=True, null=True)
 
     def __str__(self):
-        return self.cart_code
-
+        user_display = self.user.username if self.user else "invité"
+        return f"Panier {self.cart_code} - {user_display}"
 
 #----------- Définition du modèle CartItem ( Les produits qui sont dans le panier ) ----
 
