@@ -1,37 +1,56 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../../api"; // Assurez-vous que l'API est bien configurée pour les appels backend
+import api from "../../api"; // axios instance bien configurée avec baseURL
 
-const SignInForm = ({ toggleModal }) => { // Assurez-vous de passer toggleModal en prop
+const SignInForm = ({ toggleModal }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false); // Ajout de l'état de chargement
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); // Démarrer le chargement
+    setLoading(true);
+    setError("");
 
     try {
-      // Envoyer les informations de connexion à l'API pour récupérer le token
+      // 1. Authentification - récupération du token
       const response = await api.post("token/", { username, password });
-      const { access, refresh, user_id } = response.data;
+      const { access, refresh } = response.data;
 
       console.log("Token reçu :", { access, refresh });
 
-      // Sauvegarder les tokens dans le localStorage
+      // 2. Sauvegarde dans le localStorage
       localStorage.setItem("access_token", access);
       localStorage.setItem("refresh_token", refresh);
 
-      // Fermer le modal de connexion
+      // 3. Associer un panier si cart_code existe déjà
+      const cart_code = localStorage.getItem("cart_code");
+      if (cart_code) {
+        await api.post(
+          "associate_cart_to_user/",
+          { cart_code },
+          {
+            headers: {
+              Authorization: `Bearer ${access}`,
+            },
+          }
+        );
+        console.log("Panier associé à l'utilisateur");
+      }
+
+      // 4. Fermer le modal
       toggleModal();
+
+      // 5. Redirection si souhaitée
+      // navigate("/mon-compte"); // facultatif
 
     } catch (err) {
       console.error(err);
       setError("Erreur de connexion. Veuillez réessayer.");
     } finally {
-      setLoading(false); // Fin du chargement
+      setLoading(false);
     }
   };
 
