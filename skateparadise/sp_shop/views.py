@@ -233,6 +233,7 @@ def remove_item(request):
         return Response({"error": "Article non trouvé"}, status=status.HTTP_404_NOT_FOUND)
 
 # ----- View pour créer une commande -----
+
 @api_view(["POST"])
 def create_order(request):
     cart_code = request.data.get('cart_code')
@@ -243,7 +244,7 @@ def create_order(request):
 
     try:
         cart = Cart.objects.get(cart_code=cart_code)
-        print(f"Panier trouvé avec {cart.items.count()} articles")
+        print(f"Panier trouvé avec {cart.cart_items.count()} articles")
 
         if request.user.is_authenticated:
             order = Order.objects.create(cart=cart, user=request.user)
@@ -252,15 +253,16 @@ def create_order(request):
             order = Order.objects.create(cart=cart)
             print("Commande créée pour invité")
 
-        # Création des OrderItem
-        for item in cart.items.all():
+        # Création des OrderItem à partir des CartItem liés au panier
+        for item in cart.cart_items.all():
             print(f"Ajout de l'article {item.product.name} x {item.quantity}")
-            OrderItem.objects.create(
+            order_item = OrderItem.objects.create(
                 order=order,
                 product=item.product,
                 quantity=item.quantity,
                 price=item.product.price
             )
+            print(f"OrderItem créé : {order_item}")
 
         print("Tous les articles ont été ajoutés à la commande.")
         return JsonResponse({"message": "Commande créée avec succès", "order_id": order.id})
