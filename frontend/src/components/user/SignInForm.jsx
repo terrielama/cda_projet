@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../../api"; // Instance axios avec baseURL déjà configurée
+import api from "../../api"; // Axios instance configurée
 
 const AuthModal = ({ toggleModal }) => {
-  const [isLogin, setIsLogin] = useState(true); // true = Connexion, false = Inscription
+  const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -17,27 +17,27 @@ const AuthModal = ({ toggleModal }) => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Gère les changements dans les champs du formulaire
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+    console.log(`Champ ${name} mis à jour :`, value);
   };
 
-  // Gère la soumission du formulaire (connexion ou inscription)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-
-    console.log("Formulaire soumis");
+    console.log("Soumission du formulaire...");
+    console.log("Mode :", isLogin ? "Connexion" : "Inscription");
+    console.log("Données saisies :", formData);
 
     if (!isLogin && formData.password !== formData.confirmPassword) {
       setError("Les mots de passe ne correspondent pas.");
+      console.error("Erreur : mots de passe différents.");
       setLoading(false);
-      console.log("Erreur: Les mots de passe ne correspondent pas.");
       return;
     }
 
@@ -45,27 +45,33 @@ const AuthModal = ({ toggleModal }) => {
       let response;
 
       if (isLogin) {
-        console.log("Tentative de connexion avec les données:", formData);
+        console.log("Connexion avec :", {
+          username: formData.username,
+          password: formData.password,
+        });
+
         response = await api.post("token/", {
           username: formData.username,
           password: formData.password,
         });
       } else {
         const { confirmPassword, ...dataToSend } = formData;
-        console.log("Tentative d'inscription avec les données:", dataToSend);
+        console.log("Inscription avec :", dataToSend);
+
         response = await api.post("register/", dataToSend);
       }
 
+      console.log("Réponse reçue :", response.data);
       const { access, refresh } = response.data;
-      console.log("Tokens reçus:", { access, refresh });
 
       localStorage.setItem("access_token", access);
       localStorage.setItem("refresh_token", refresh);
+      console.log("Tokens enregistrés dans le localStorage.");
 
-      // Vérifiez si le cart_code existe dans le localStorage
       const cart_code = localStorage.getItem("cart_code");
       if (cart_code && access) {
-        console.log("Tentative d'associer le panier avec cart_code:", cart_code);
+        console.log("Cart_code trouvé :", cart_code);
+        console.log("Association du panier en cours...");
 
         try {
           const cartResponse = await api.post(
@@ -77,18 +83,19 @@ const AuthModal = ({ toggleModal }) => {
               },
             }
           );
-          console.log("Panier associé avec succès:", cartResponse.data);
+          console.log("Panier associé avec succès :", cartResponse.data);
         } catch (cartError) {
-          console.error("Erreur d'association du panier:", cartError.response?.data);
+          console.error("Erreur d'association du panier :", cartError.response?.data);
           setError("Erreur lors de l'association du panier.");
         }
       } else {
-        console.log("Aucun cart_code trouvé dans localStorage ou pas de token d'accès.");
+        console.log("Aucun cart_code trouvé ou access token manquant.");
       }
 
       toggleModal();
+      console.log("Modal fermée.");
     } catch (err) {
-      console.error("Erreur backend : ", err.response?.data);
+      console.error("Erreur lors de la requête :", err.response?.data);
       setError(
         err.response?.data?.detail ||
         err.response?.data?.username?.[0] ||
@@ -97,6 +104,7 @@ const AuthModal = ({ toggleModal }) => {
       );
     } finally {
       setLoading(false);
+      console.log("Fin du traitement du formulaire.");
     }
   };
 
@@ -107,8 +115,6 @@ const AuthModal = ({ toggleModal }) => {
         <h2>{isLogin ? "Connexion" : "Inscription"}</h2>
 
         <form onSubmit={handleSubmit} className="form-grid">
-
-          {/* Champs visibles uniquement en mode inscription */}
           {!isLogin && (
             <>
               <input
@@ -138,7 +144,6 @@ const AuthModal = ({ toggleModal }) => {
             </>
           )}
 
-          {/* Champ commun : nom d'utilisateur */}
           <input
             type="text"
             name="username"
@@ -148,7 +153,6 @@ const AuthModal = ({ toggleModal }) => {
             required
           />
 
-          {/* Mot de passe */}
           <input
             type="password"
             name="password"
@@ -158,7 +162,6 @@ const AuthModal = ({ toggleModal }) => {
             required
           />
 
-          {/* Confirmation du mot de passe en inscription */}
           {!isLogin && (
             <input
               type="password"
@@ -181,7 +184,6 @@ const AuthModal = ({ toggleModal }) => {
           {error && <p className="error-msg">{error}</p>}
         </form>
 
-        {/* Lien pour basculer entre inscription et connexion */}
         <p style={{ marginTop: "1rem" }}>
           {isLogin ? (
             <>

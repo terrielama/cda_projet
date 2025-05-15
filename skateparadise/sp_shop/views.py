@@ -179,6 +179,7 @@ def get_cart(request):
     return Response(serializer.data)
 
 # -----------View du profile d'un user --------
+
 @api_view(['GET'])
 def get_profile(request):
     if request.user.is_authenticated:
@@ -210,7 +211,8 @@ def update_quantity(request):
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 # ----- View pour supprimer un item du panier -----
-@api_view(['POST'])  # Assure-toi que la méthode POST est autorisée
+
+@api_view(['POST'])  
 def remove_item(request):
     cart_code = request.query_params.get('cart_code')
     item_id = request.data.get('item_id')  # L'ID du produit à supprimer
@@ -223,6 +225,7 @@ def remove_item(request):
         return Response({"error": "Item not found"}, status=status.HTTP_404_NOT_FOUND)
 
 # ----- View pour créer une commande -----
+
 @api_view(["POST"])
 def create_order(request):
     cart_code = request.data.get('cart_code')
@@ -258,6 +261,7 @@ def create_order(request):
     except Exception as e:
         # Gestion des autres erreurs
         return JsonResponse({"error": str(e)}, status=500)
+    
 # --------------- Assossier commande a un user ------------
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
