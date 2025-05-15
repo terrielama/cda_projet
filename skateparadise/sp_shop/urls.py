@@ -15,7 +15,7 @@ urlpatterns = [
     path("get_username", views.get_username, name="get_username"),
     path("associate_cart_to_user/", views.associate_cart_to_user, name="associate_cart_to_user"),
     path('associate_user_to_order/', views.associate_user_to_order, name='associate_user_to_order'),
-
+    path('register/', views.register, name='register'),
     path('profile', views.profile, name='profile'), 
 
 

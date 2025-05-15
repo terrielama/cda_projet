@@ -1,7 +1,38 @@
 from rest_framework import serializers
-from .models import Product, Cart, CartItem, Order, OrderItem
+from .models import Product, Cart, CartItem, Order, OrderItem, User
+from main.models import CustomUser  # Remplace si ton modèle est ailleurs
+from django.contrib.auth.password_validation import validate_password
+
 
 # Serializer les models permet de convertir les objets Product en JSON (et vice versa) pour les API.
+# ------------------------------------------------------------------
+
+# ------- Serializer pour le modèle Register-----------
+
+class UserRegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    confirm_password = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = CustomUser
+        fields = (
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "password",
+            "confirm_password",
+        )
+
+    def validate(self, attrs):
+        if attrs["password"] != attrs["confirm_password"]:
+            raise serializers.ValidationError({"confirm_password": "Les mots de passe ne correspondent pas."})
+        return attrs
+
+    def create(self, validated_data):
+        validated_data.pop("confirm_password")
+        user = CustomUser.objects.create_user(**validated_data)
+        return user
 
 # -----  Serializer pour le modèle Product --------
 
@@ -57,8 +88,8 @@ class SimpleCartSerializer(serializers.ModelSerializer):
 # ------ Serializer pour le modèle Cart ---------
 
 class CartSerializer(serializers.ModelSerializer):
-    items = CartItemSerializer(read_only=True, many=True)  # Sérialise les items du panier
-    sum_total = serializers.SerializerMethodField()  # Champ pour calculer le total
+    items = CartItemSerializer(source='cart_items', many=True, read_only=True)
+    sum_total = serializers.SerializerMethodField()
     num_of_items = serializers.SerializerMethodField()  # Champ pour calculer le nombre d'articles
 
     class Meta:
@@ -67,17 +98,16 @@ class CartSerializer(serializers.ModelSerializer):
 
     # Méthode pour calculer le total du panier
     def get_sum_total(self, cart):
-        # Récupère les items du panier et calcule le total
-        items = cart.items.all()
+        items = cart.cart_items.all()
         total = sum([item.product.price * item.quantity for item in items])
         return total
     
     # Méthode pour calculer le nombre total d'articles dans le panier
     def get_num_of_items(self, cart):
-        # Récupère les items du panier et calcule le nombre total d'articles
-        items = cart.items.all()
+        items = cart.cart_items.all()
         total = sum([item.quantity for item in items])
         return total
+
    
 # ------ Serializer pour le modèle OrderItem (produit d'une commande) ---------
 

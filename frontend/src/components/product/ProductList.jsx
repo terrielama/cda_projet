@@ -21,11 +21,18 @@ const ProductList = () => {
   const [products, setProducts] = useState([]);
   const [message, setMessage] = useState('');
   const [inCart, setInCart] = useState({});
-  const cart_code = localStorage.getItem("cart_code") || generateRandomAlphanumeric();
 
-  useEffect(() => {
-    localStorage.setItem("cart_code", cart_code); // Assure qu'on a un cart_code persistant
-  }, [cart_code]);
+  const [cartCode, setCartCode] = useState(() => {
+    let code = localStorage.getItem("cart_code");
+    if (!code) {
+      code = generateRandomAlphanumeric();
+      localStorage.setItem("cart_code", code);
+      console.log("Nouveau cart_code généré et stocké :", code);
+    } else {
+      console.log("cart_code existant récupéré :", code);
+    }
+    return code;
+  });
 
   useEffect(() => {
     const fetchedProducts = {
@@ -50,38 +57,44 @@ const ProductList = () => {
 
     if (fetchedProducts[category]) {
       setProducts(fetchedProducts[category]);
+      console.log("Produits chargés pour la catégorie :", category, fetchedProducts[category]);
 
-      // Vérifie chaque produit pour voir s'il est dans le panier
+      // Vérifie quels produits sont déjà dans le panier
       fetchedProducts[category].forEach((product) => {
-        api.get(`product_in_cart?cart_code=${cart_code}&product_id=${product.id}`)
-        .then(res => {
-          console.log("Produit", product.id, "dans panier ?", res.data);
-        })
-        .catch(err => {
-          console.error("Erreur API :", err);
-        });
-
+        api.get(`product_in_cart?cart_code=${cartCode}&product_id=${product.id}`)
+          .then(res => {
+            // Backend renvoie 'product_in_cart', pas 'in_cart'
+            if (res.data.product_in_cart) {
+              setInCart(prev => ({ ...prev, [product.id]: true }));
+              console.log(`Produit ID ${product.id} est dans le panier`);
+            } else {
+              console.log(`Produit ID ${product.id} n'est PAS dans le panier`);
+            }
+          })
+          .catch(err => {
+            console.error(`Erreur lors de la vérification du produit ${product.id} dans le panier :`, err);
+          });
       });
     }
-  }, [category, cart_code]);
+  }, [category, cartCode]);
 
   const add_item = (product_id) => {
     const newItem = {
-      cart_code: cart_code,
-      product_id: product_id,
+      cart_code: cartCode,
+      item_id: product_id,
+      quantity: 1
     };
+
+    console.log("Ajout du produit ID", product_id, "au panier avec cart_code :", cartCode);
 
     api.post("add_item", newItem)
       .then(res => {
-        console.log(res.data);
+        console.log("Réponse du serveur :", res.data);
         setMessage("Produit ajouté au panier !");
-        setInCart(prev => ({
-          ...prev,
-          [product_id]: true
-        }));
+        setInCart(prev => ({ ...prev, [product_id]: true }));
       })
       .catch(err => {
-        console.log(err.message);
+        console.error("Erreur lors de l'ajout au panier :", err.response ? err.response.data : err.message);
       });
   };
 

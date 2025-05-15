@@ -4,144 +4,145 @@ import { useNavigate } from 'react-router-dom';
 import Loader from "../Loader";
 
 const Cart = () => {
-  const [cart, setCart] = useState(null); // Stocke le panier récupéré
-  const [loading, setLoading] = useState(true); // Indique si le panier est en cours de chargement
-  const [error, setError] = useState(""); // Stocke les messages d'erreur
-  const navigate = useNavigate(); // Utilisé pour la navigation après une commande
+  const [cart, setCart] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  // Fonction pour récupérer le panier depuis l'API
   const fetchCart = async () => {
-    const cart_code = localStorage.getItem("cart_code"); // Récupère le cart_code du localStorage
-    const token = localStorage.getItem("token"); // Récupère le token d'authentification
-
-    // Si aucun cart_code n'est trouvé, on arrête le chargement
+    const cart_code = localStorage.getItem("cart_code");
+    const token = localStorage.getItem("token");
+  
     if (!cart_code) {
       setLoading(false);
       return;
     }
-
+  
     try {
-      // Envoie une requête GET pour récupérer le panier
       const res = await api.get(`http://localhost:8001/get_cart?cart_code=${cart_code}`, {
         headers: {
-          Authorization: token ? `Bearer ${token}` : "", // Ajoute le token si l'utilisateur est connecté
+          Authorization: token ? `Bearer ${token}` : "",
         },
       });
-      setCart(res.data); // Mise à jour de l'état avec les données du panier
+  
+      console.log("Réponse API get_cart :", res.data); // 👈 Vérifie ici si sum_total est bien là
+      setCart(res.data);
     } catch (err) {
       console.error(err);
-      setError("Erreur de chargement du panier. Veuillez réessayer."); // Message d'erreur en cas de problème
+      setError("Erreur de chargement du panier. Veuillez réessayer.");
     } finally {
-      setLoading(false); // Arrête le loader une fois la réponse reçue
+      setLoading(false);
     }
   };
+  
 
-  // On appelle fetchCart dès le chargement de la page
   useEffect(() => {
     fetchCart();
   }, []);
 
-  // Fonction pour mettre à jour la quantité d'un produit dans le panier
   const updateQuantity = async (itemId, delta) => {
-    const cart_code = localStorage.getItem("cart_code"); // Récupère le cart_code
+    const cart_code = localStorage.getItem("cart_code");
     if (!cart_code) return;
 
     try {
-      // Envoie une requête POST pour mettre à jour la quantité
+      console.log(`Mise à jour quantité : item ${itemId}, delta ${delta}`);
       await api.post(`http://localhost:8001/update_quantity?cart_code=${cart_code}`, {
         item_id: itemId,
         delta,
       });
-      fetchCart(); // Rafraîchit le panier après la mise à jour
+      fetchCart();
     } catch (error) {
       console.error("Erreur mise à jour quantité", error);
       setError("Erreur de mise à jour de la quantité.");
     }
   };
 
-  // Fonction pour supprimer un produit du panier
   const removeProduct = async (itemId) => {
-    const cart_code = localStorage.getItem("cart_code"); // Récupère le cart_code
+    const cart_code = localStorage.getItem("cart_code");
     if (!cart_code) return;
 
     try {
-      // Envoie une requête POST pour supprimer le produit
-      await api.post(`http://localhost:8001/remove_item?cart_code=${cart_code}`, { item_id: itemId });
-      fetchCart(); // Rafraîchit le panier après la suppression
+      console.log(`Suppression du produit : item ${itemId}`);
+      await api.post(`http://localhost:8001/remove_item?cart_code=${cart_code}`, {
+        item_id: itemId,
+      });
+      fetchCart();
     } catch (error) {
       console.error("Erreur suppression produit", error);
       setError("Erreur lors de la suppression du produit.");
     }
   };
 
-  // Calcul du total et du prix final (y compris la livraison)
   const totalPrice = cart?.sum_total || 0;
-  const shippingCost = totalPrice >= 70 ? 0 : 4; // Livraison gratuite si le total dépasse 70€
+  const shippingCost = totalPrice >= 70 ? 0 : 4;
   const finalPrice = totalPrice + shippingCost;
 
-  // Fonction pour traiter la commande
   const handleOrder = async () => {
     if (!cart?.items.length) {
-      setError("Votre panier est vide."); // Vérifie que le panier contient des articles
+      setError("Votre panier est vide.");
       return;
     }
 
     try {
-      setLoading(true); // Affiche le loader pendant la création de la commande
+      setLoading(true);
+      console.log("Création de la commande...");
 
-      // Envoie la requête pour créer la commande
       const response = await api.post("http://localhost:8001/create_order", {
-        cart_code: localStorage.getItem("cart_code"), // Envoie le cart_code
+        cart_code: localStorage.getItem("cart_code"),
       });
 
-      console.log(response);
+      console.log("Commande créée avec succès :", response.data);
 
-      setCart(null); // Réinitialise le panier après la commande
-      localStorage.removeItem("cart_code"); // Supprime le cart_code du localStorage
+      setCart(null);
+      localStorage.removeItem("cart_code");
 
-      // Redirige vers la page de commande après un court délai
       setTimeout(() => {
-        navigate(`/commande/${response.data.order_id}`); // Redirige vers la page de la commande avec l'ID de la commande
-      }, 1000); // 1 seconde de délai
+        navigate(`/commande/${response.data.order_id}`);
+      }, 1000);
     } catch (error) {
       console.error("Erreur serveur:", error.response?.data || error.message);
-      setError("Erreur lors de la commande, veuillez réessayer."); // Message d'erreur en cas d'échec
+      setError("Erreur lors de la commande, veuillez réessayer.");
       setLoading(false);
     }
   };
 
-  // Affichage du loader pendant le chargement
   if (loading) {
     return <Loader />;
   }
 
-  // Affichage du panier une fois qu'il est chargé
   return (
     <div className="cart-container">
       <h1 className="center-text">Mon Panier</h1>
 
       {cart?.items.length ? (
-        cart.items.map((item) => (
-          <div key={item.product.id} className="cart-item">
-            <img
-              src={`http://localhost:8001${item.product.image}`}
-              alt={item.product.name}
-              className="product-image"
-            />
-            <div className="product-info">
-              <h2>{item.product.name}</h2>
-              <p>{item.product.price} € x {item.quantity}</p>
-              <div className="quantity-controls">
-                <button onClick={() => updateQuantity(item.id, -1)}>-</button>
-                <span>{item.quantity}</span>
-                <button onClick={() => updateQuantity(item.id, 1)}>+</button>
+        cart.items.map((item) => {
+          console.log("Produit affiché :", item.product);
+          return (
+            <div key={item.product.id} className="cart-item">
+              <img
+                src={`http://localhost:8001${item.product.image}`}
+                alt={item.product.name}
+                className="product-image"
+              />
+              <div className="product-info">
+                <h2>{item.product.name}</h2>
+                <p>
+                  Prix unitaire : {item.product.price} €<br />
+                  Quantité : {item.quantity}<br />
+                  Total : {(item.product.price * item.quantity).toFixed(2)} €
+                </p>
+                <div className="quantity-controls">
+                  <button onClick={() => updateQuantity(item.id, -1)}>-</button>
+                  <span>{item.quantity}</span>
+                  <button onClick={() => updateQuantity(item.id, 1)}>+</button>
+                </div>
+                <button className="remove-button" onClick={() => removeProduct(item.id)}>
+                  Supprimer
+                </button>
               </div>
-              <button className="remove-button" onClick={() => removeProduct(item.id)}>
-                Supprimer
-              </button>
             </div>
-          </div>
-        ))
+          );
+        })
       ) : (
         <p>Votre panier est vide.</p>
       )}

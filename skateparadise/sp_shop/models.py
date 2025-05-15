@@ -4,9 +4,8 @@ from django.conf import settings  # settings est utilisé pour référencer des 
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
 
-# Create your models here.
 
-#----------- Définition du modèle Product --------
+# Create your models here.
 
 #----------- Définition du modèle Category --------
 
@@ -72,6 +71,10 @@ class Cart(models.Model):
     # settings.AUTH_USER_MODEL permet de référencer dynamiquement le modèle User personnalisé défini dans settings.py
     # on_delete pour que si l'utilisateur est supprimé, son panier l'est aussi
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, blank=True, null=True)
+    
+    items = models.ManyToManyField('CartItem', related_name='carts', blank=True)
+
+
 
     # Indique si le panier a été payé. Par défaut, c'est False (non payé).
     paid = models.BooleanField(default=False)
@@ -92,7 +95,7 @@ class CartItem(models.Model):
   # Référence au panier auquel l'article appartient
   # related_name='items'  Permet d'accéder aux articles depuis un panier via   cart.items.all()
   # on_delete=models.CASCADE supprime les articles si le panier est supprimé
-    cart= models.ForeignKey(Cart, related_name='items', on_delete=models.CASCADE)  
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='cart_items')
  
   # Référence au produit ajouté au panier 
   # on_delete=models.CASCADE  supprime l'entrée si le produit est supprimé

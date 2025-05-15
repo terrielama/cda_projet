@@ -19,8 +19,10 @@ const Order = () => {
           throw new Error('Erreur lors du chargement de la commande');
         }
         const data = await response.json();
+        console.log('Détails de la commande récupérés:', data);
         setOrderDetails(data);
       } catch (error) {
+        console.error('Erreur dans la récupération des détails de la commande:', error);
         setError(error.message);
       } finally {
         setLoading(false);
@@ -61,7 +63,7 @@ const Order = () => {
         try {
           const token = localStorage.getItem("access_token");
           if (token) {
-            await fetch(`http://localhost:8001/associate_user_to_order/`, {
+            const response = await fetch(`http://localhost:8001/associate_user_to_order/`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -69,17 +71,16 @@ const Order = () => {
               },
               body: JSON.stringify({ orderId }),
             });
-            console.log("✅ Utilisateur associé à la commande.");
+            console.log("✅ Utilisateur associé à la commande:", response);
           }
         } catch (err) {
           console.error("❌ Erreur lors de l'association :", err);
         }
       };
-  
+
       associateUserToOrder();
     }
   }, [firstName, orderDetails, orderId]);
-  
 
   if (loading) return <div>Chargement...</div>;
   if (error) return <div>Erreur : {error}</div>;

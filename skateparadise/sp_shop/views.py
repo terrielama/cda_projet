@@ -3,14 +3,29 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Product, Cart, CartItem, Order, OrderItem, User
-from .serializers import ProductSerializer, CartItemSerializer, CartSerializer, SimpleCartSerializer, OrderSerializer
+from .serializers import ProductSerializer, CartItemSerializer, CartSerializer, SimpleCartSerializer, OrderSerializer, UserRegisterSerializer
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import NotFound
+import traceback
 
+
+#----- View pour creer un user (Register) ------
+
+@api_view(["POST"])
+def register(request):
+    serializer = UserRegisterSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # ----- View des produits --------------
 @api_view(["GET"])
@@ -20,44 +35,40 @@ def products(request):
     return Response(serializer.data)
 
 # ----- Ajouter un produit au panier -----
-@api_view(["POST"])
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def add_item(request):
+    item_id = request.data.get('item_id')
+    quantity = int(request.data.get('quantity', 1))
+
+    if request.user.is_authenticated:
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+    else:
+        cart_code = request.data.get('cart_code')
+        if not cart_code:
+            return Response({'error': 'cart_code requis pour les utilisateurs non connectés'}, status=400)
+        cart, _ = Cart.objects.get_or_create(cart_code=cart_code)
+
+    # Ajout de l'item
     try:
-        product_id = request.data.get("product_id")
-        cart_code = request.data.get("cart_code")
-
-        if not product_id:
-            return Response({"error": "Le product_id est requis."}, status=400)
-
-        product = Product.objects.get(id=product_id)
-
-        # Cas utilisateur connecté
-        if request.user.is_authenticated:
-            cart, created = Cart.objects.get_or_create(user=request.user, paid=False)
-        # Cas invité
-        elif cart_code:
-            cart, created = Cart.objects.get_or_create(cart_code=cart_code, user=None, paid=False)
-        else:
-            return Response({"error": "Utilisateur non connecté et cart_code manquant."}, status=400)
-
-        # Création ou mise à jour de l'article du panier
-        cartitem, created = CartItem.objects.get_or_create(cart=cart, product=product)
-        if not created:
-            cartitem.quantity += 1
-        else:
-            cartitem.quantity = 1
-        cartitem.save()
-
-        serializer = CartItemSerializer(cartitem)
-        return Response({"data": serializer.data, "message": "Produit ajouté au panier avec succès"})
-    
+        product = Product.objects.get(id=item_id)
     except Product.DoesNotExist:
-        return Response({"error": "Produit introuvable."}, status=404)
-    except Exception as e:
-        return Response({"error": str(e)}, status=400)
+        return Response({'error': 'Produit non trouvé'}, status=404)
 
+    cart_item, created = CartItem.objects.get_or_create(
+        cart=cart, product=product,
+        defaults={'quantity': quantity}
+    )
+
+    if not created:
+        cart_item.quantity += quantity
+        cart_item.save()
+
+    return Response({'message': 'Item ajouté au panier.'}, status=200)
 
 # ----- Vérifier si un produit est dans le panier -----
+
 @api_view(["GET"])
 def product_in_cart(request):
     cart_code = request.query_params.get("cart_code")
@@ -69,10 +80,8 @@ def product_in_cart(request):
     try:
         product = Product.objects.get(id=product_id)
 
-        # Cas utilisateur connecté
         if request.user.is_authenticated:
             cart = Cart.objects.filter(user=request.user, paid=False).first()
-        # Cas invité
         elif cart_code:
             cart = Cart.objects.filter(cart_code=cart_code, user=None, paid=False).first()
         else:
@@ -88,23 +97,44 @@ def product_in_cart(request):
         return Response({'product_in_cart': False})
 
 
+
 # ----- Associer un panier anonyme à un utilisateur connecté -----
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def associate_cart_to_user(request):
-    cart_code = request.data.get("cart_code")
-
-    if not cart_code:
-        return Response({"error": "Le cart_code est requis."}, status=400)
-
     try:
-        cart = Cart.objects.get(cart_code=cart_code, user__isnull=True, paid=False)
-        cart.user = request.user
+        cart_code = request.data.get('cart_code')
+        user = request.user
+
+        print("== ASSOCIATE USER ==")
+        print(f"Utilisateur connecté : {user} (ID: {user.id})")
+        print(f"Cart_code reçu : {cart_code}")
+
+        if not cart_code:
+            print("❌ Aucun cart_code fourni.")
+            return Response({"error": "Le cart_code est requis."}, status=status.HTTP_400_BAD_REQUEST)
+
+        cart = Cart.objects.filter(cart_code=cart_code, user__isnull=True).first()
+
+        if not cart:
+            print(f"❌ Aucun panier anonyme trouvé pour le cart_code {cart_code}")
+            return Response({"error": "Aucun panier anonyme trouvé avec ce cart_code."}, status=status.HTTP_404_NOT_FOUND)
+
+        print(f"✅ Panier trouvé : {cart}")
+        cart.user = user
         cart.save()
-        return Response({"message": "Le panier a été associé à l'utilisateur."})
-    except Cart.DoesNotExist:
-        return Response({"error": "Aucun panier anonyme trouvé avec ce cart_code."}, status=404)
+        print(f"✅ Panier {cart.cart_code} associé à {user.username}")
+
+        return Response({"message": "Panier associé avec succès."}, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        print("❌ Exception attrapée :")
+        traceback.print_exc()
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 # ----- Vue pour obtenir les statistiques du panier -----
+
 @api_view(["GET"])
 def get_cart_stat(request):
     cart_code = request.query_params.get("cart_code")
@@ -129,20 +159,26 @@ def get_cart_stat(request):
         return Response({"error": "Panier non trouvé"}, status=status.HTTP_404_NOT_FOUND)
 
 # ----- View pour récupérer tous les produits du panier -----
+
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def get_cart(request):
     cart_code = request.query_params.get("cart_code")
-    if not cart_code:
-        return Response({"error": "Le cart_code est requis"}, status=status.HTTP_400_BAD_REQUEST)
-    
-    try:
-        cart = Cart.objects.get(cart_code=cart_code, paid=False)
-        serializer = CartSerializer(cart)
-        return Response(serializer.data)
-    except Cart.DoesNotExist:
-        return Response({"error": "Panier non trouvé"}, status=status.HTTP_404_NOT_FOUND)
 
-# ----------- user --------
+    if request.user.is_authenticated:
+        cart = Cart.objects.filter(user=request.user, paid=False).first()
+    elif cart_code:
+        cart = Cart.objects.filter(cart_code=cart_code, paid=False).first()
+    else:
+        return Response({"error": "Cart introuvable"}, status=404)
+
+    if not cart:
+        return Response({"error": "Cart vide ou inexistant"}, status=404)
+
+    serializer = CartSerializer(cart)  # 👈 C’est ce qui permet d’avoir sum_total
+    return Response(serializer.data)
+
+# -----------View du profile d'un user --------
 @api_view(['GET'])
 def get_profile(request):
     if request.user.is_authenticated:
