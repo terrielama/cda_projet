@@ -108,7 +108,6 @@ class CartItem(models.Model):
         return f"{self.quantity} x {self.product.name} in cart {self.cart.id}"
     
 # ----------- Définition du modèle Order --------------------
-
 class Order(models.Model):
     STATUS_CHOICES = (
         ('pending', 'En attente'),
@@ -117,24 +116,37 @@ class Order(models.Model):
     )
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    cart = models.ForeignKey(Cart, related_name='orders', on_delete=models.CASCADE, null=True, blank=True)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)  # Utiliser AUTH_USER_MODEL
+    cart = models.ForeignKey('Cart', related_name='orders', on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    payment_method = models.CharField(max_length=20, choices=[('card', 'Carte Bancaire'), ('paypal', 'PayPal')], default='card')
-
+    payment_method = models.CharField(
+        max_length=20,
+        choices=[('card', 'Carte Bancaire'), ('paypal', 'PayPal')],
+        default=''
+    )
 
     def __str__(self):
         cart_code = self.cart.cart_code if self.cart else "No cart"
         return f"Order #{self.id} - Cart Code: {cart_code}"
 
+    @property
+    def total_price(self):
+        # Calcul du total à partir des items liés
+        return sum(item.total_price for item in self.items.all())
+
 #----------- Définition du modèle OrderItem --------------------
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey('Product', on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(max_digits=10, decimal_places=2)  # prix unitaire
 
     def __str__(self):
         return f"{self.product.name} - {self.quantity} items"
+
+    @property
+    def total_price(self):
+        # Prix total par item (quantité * prix unitaire)
+        return self.price * self.quantity

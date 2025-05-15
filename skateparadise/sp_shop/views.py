@@ -19,13 +19,21 @@ import traceback
 def register(request):
     serializer = UserRegisterSerializer(data=request.data)
     if serializer.is_valid():
-        user = serializer.save()
-        refresh = RefreshToken.for_user(user)
-        return Response({
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        }, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = serializer.save()
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            print("Erreur lors de la création de l'utilisateur :")
+            print(traceback.format_exc())  # Affiche la stack trace complète
+            return Response({"error": "Erreur serveur lors de la création de l'utilisateur."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    else:
+        print("Serializer non valide :", serializer.errors)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
 # ----- View des produits --------------
 @api_view(["GET"])
@@ -170,10 +178,10 @@ def get_cart(request):
     elif cart_code:
         cart = Cart.objects.filter(cart_code=cart_code, paid=False).first()
     else:
-        return Response({"error": "Cart introuvable"}, status=404)
+        return Response({"error": "Panier introuvable"}, status=404)
 
     if not cart:
-        return Response({"error": "Cart vide ou inexistant"}, status=404)
+        return Response({"error": "Panier vide ou inexistant"}, status=404)
 
     serializer = CartSerializer(cart)  # 👈 C’est ce qui permet d’avoir sum_total
     return Response(serializer.data)
@@ -185,7 +193,7 @@ def get_profile(request):
     if request.user.is_authenticated:
         return Response({'username': request.user.username})
     else:
-        return Response({'detail': 'User not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'detail': 'Utilisateur non authentifié'}, status=status.HTTP_401_UNAUTHORIZED)
     
 # ----- View pour mettre à jour la quantité d'un item -----
 @api_view(["PATCH"])
@@ -220,30 +228,33 @@ def remove_item(request):
     try:
         cart_item = CartItem.objects.get(cart__cart_code=cart_code, id=item_id)
         cart_item.delete()
-        return Response({"message": "Item removed successfully"}, status=status.HTTP_200_OK)
+        return Response({"message": "Article retiré du panier avec succès"}, status=status.HTTP_200_OK)
     except CartItem.DoesNotExist:
-        return Response({"error": "Item not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "Article non trouvé"}, status=status.HTTP_404_NOT_FOUND)
 
 # ----- View pour créer une commande -----
-
 @api_view(["POST"])
 def create_order(request):
     cart_code = request.data.get('cart_code')
+    print(f"Création de la commande pour cart_code: {cart_code}")
+
     if not cart_code:
         return JsonResponse({"error": "Code de panier manquant"}, status=400)
 
     try:
-        # Récupérer le panier en fonction du code
         cart = Cart.objects.get(cart_code=cart_code)
+        print(f"Panier trouvé avec {cart.items.count()} articles")
 
-        # Si l'utilisateur est authentifié, associer la commande à cet utilisateur
         if request.user.is_authenticated:
             order = Order.objects.create(cart=cart, user=request.user)
+            print(f"Commande créée avec user id={request.user.id}")
         else:
-            order = Order.objects.create(cart=cart)  # Si invité, laisser user à None
+            order = Order.objects.create(cart=cart)
+            print("Commande créée pour invité")
 
-        # Ajouter les articles du panier à la commande
+        # Création des OrderItem
         for item in cart.items.all():
+            print(f"Ajout de l'article {item.product.name} x {item.quantity}")
             OrderItem.objects.create(
                 order=order,
                 product=item.product,
@@ -251,17 +262,17 @@ def create_order(request):
                 price=item.product.price
             )
 
-        # Retourner une réponse avec l'ID de la commande
+        print("Tous les articles ont été ajoutés à la commande.")
         return JsonResponse({"message": "Commande créée avec succès", "order_id": order.id})
     
     except Cart.DoesNotExist:
-        # Si le panier n'existe pas, renvoyer une erreur
+        print("Panier non trouvé")
         return JsonResponse({"error": "Panier non trouvé"}, status=404)
     
     except Exception as e:
-        # Gestion des autres erreurs
+        print(f"Erreur lors de la création de la commande : {e}")
         return JsonResponse({"error": str(e)}, status=500)
-    
+
 # --------------- Assossier commande a un user ------------
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -298,43 +309,68 @@ def profile(request):
     })
 
 # ----- View pour afficher les détails de la commande -----
+
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def order_details(request, order_id):
     try:
-        # Récupère la commande par son ID
         order = Order.objects.get(id=order_id)
     except Order.DoesNotExist:
         return Response({"error": "Commande non trouvée"}, status=status.HTTP_404_NOT_FOUND)
 
-    # Structure les données de la commande
     order_data = {
         "id": order.id,
         "status": order.status,
-        "cart_code": order.cart.cart_code if order.cart else "No cart",  # Affiche le code du panier s'il existe
+        "cart_code": order.cart.cart_code if order.cart else "No cart",
         "user": {
-            "id": order.user.id if order.user else None,  # Ajoute l'ID de l'utilisateur s'il existe
-            "username": order.user.username if order.user else "Invité",  # Affiche le nom d'utilisateur ou "Invité"
-        } if order.user else {"id": None, "username": "Invité"},  # Gère le cas où il n'y a pas d'utilisateur
+            "id": order.user.id,
+            "username": order.user.username
+        } if order.user else {"id": None, "username": "Invité"},
         "created_at": order.created_at,
         "updated_at": order.updated_at,
         "payment_method": order.payment_method,
     }
 
-    # Ajoute les articles de la commande
-    order_items = [
+    order_items = []
+
+    if order.cart:
+        # Utiliser le bon related_name cart_items
+        items = order.cart.cart_items.all()
+        print(f"Items du panier (cart_code={order.cart.cart_code}): {items}")
+        for item in items:
+            order_items.append({
+                "product_name": item.product.name,
+                "quantity": item.quantity,
+                "price": float(item.product.price) if hasattr(item.product, 'price') else 0,
+                "total_price": float(item.product.price * item.quantity) if hasattr(item.product, 'price') else 0,
+                "product_image": item.product.image.url if item.product.image else None,
+            })
+    else:
+        # fallback : récupérer les OrderItems liés à la commande
+        items = order.items.all()
+        print(f"Items de la commande directement: {items}")
+        for item in items:
+            order_items.append({
+                "product_name": item.product.name,
+                "quantity": item.quantity,
+                "price": float(item.price),
+                "total_price": float(item.price * item.quantity),
+                "product_image": item.product.image.url if item.product.image else None,
+            })
+
+    print(f"Order {order.id} a {len(order_items)} items retournés.")
+    return Response(
         {
-            "product_name": item.product.name,
-            "quantity": item.quantity,
-            "price": item.product.price,
-            "total_price": item.quantity * item.product.price,
-            "product_image": item.product.image.url if item.product.image else None  # Ajout de l'image
-        }
-        for item in order.cart.items.all()  # Récupère tous les articles associés au panier
-    ]
-    
-    return Response({"order": order_data, "items": order_items}, status=status.HTTP_200_OK)
+            "order": order_data,
+            "items": order_items
+        },
+        status=status.HTTP_200_OK
+    )
+
+
 
 # ----- View pour mettre à jour le statut d'une commande -----
+
 @api_view(["PUT"])
 def update_order_status(request, order_id):
     try:
@@ -353,7 +389,12 @@ def update_order_status(request, order_id):
     return Response({"message": f"Statut de la commande mis à jour en {new_status}"}, status=status.HTTP_200_OK)
 
 # ----- View pour récupérer le nom de l'utilisateur connecté -----
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_username(request):
-    return JsonResponse({'first_name': request.user.first_name})
+    user = request.user
+    return JsonResponse({
+        'first_name': user.first_name,
+        'last_name': user.last_name
+    })

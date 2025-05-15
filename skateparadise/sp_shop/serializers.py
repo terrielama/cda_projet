@@ -1,8 +1,9 @@
 from rest_framework import serializers
 from .models import Product, Cart, CartItem, Order, OrderItem, User
-from main.models import CustomUser  # Remplace si ton modèle est ailleurs
+from main.models import CustomUser  
+from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
-
+User = get_user_model()  # Récupère dynamiquement le modèle utilisateurCustomUser
 
 # Serializer les models permet de convertir les objets Product en JSON (et vice versa) pour les API.
 # ------------------------------------------------------------------
@@ -14,26 +15,31 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     confirm_password = serializers.CharField(write_only=True, required=True)
 
     class Meta:
-        model = CustomUser
-        fields = (
-            "username",
-            "email",
-            "first_name",
-            "last_name",
-            "password",
-            "confirm_password",
-        )
+        model = User
+        fields = ('username', 'password', 'confirm_password', 'first_name', 'last_name', 'email')
 
-    def validate(self, attrs):
-        if attrs["password"] != attrs["confirm_password"]:
-            raise serializers.ValidationError({"confirm_password": "Les mots de passe ne correspondent pas."})
-        return attrs
+    def validate(self, data):
+        if data['password'] != data['confirm_password']:
+            raise serializers.ValidationError("Les mots de passe ne correspondent pas.")
+
+        if User.objects.filter(username=data['username']).exists():
+            raise serializers.ValidationError("Ce nom d'utilisateur est déjà pris.")
+
+        if 'email' in data and User.objects.filter(email=data['email']).exists():
+            raise serializers.ValidationError("Cette adresse email est déjà utilisée.")
+
+        return data
 
     def create(self, validated_data):
-        validated_data.pop("confirm_password")
-        user = CustomUser.objects.create_user(**validated_data)
+        validated_data.pop('confirm_password')
+        password = validated_data.pop('password')
+        
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
         return user
-
+        return user
+    
 # -----  Serializer pour le modèle Product --------
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -124,26 +130,25 @@ class OrderItemSerializer(serializers.ModelSerializer):
     def get_total_price(self, obj):
         return obj.price * obj.quantity
 
-
-
 # ------ Serializer pour le modèle Order (commande) ---------
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     user = serializers.SerializerMethodField()
     payment_method = serializers.CharField()
+    cart_code = serializers.CharField(source='cart.cart_code', read_only=True)  # accès via relation cart
 
     class Meta:
         model = Order
-        fields = ['id', 'user', 'status', 'payment_method', 'created_at', 'updated_at', 'items']
+        fields = ['id', 'user', 'status', 'payment_method', 'cart_code', 'created_at', 'updated_at', 'items']
 
     def get_user(self, obj):
         if obj.user:
             return {
                 "username": obj.user.username,
-                "first_name": obj.user.first_name or "Non renseigné",  # Valeur par défaut si first_name est None
-                "last_name": obj.user.last_name or "Non renseigné",  # Valeur par défaut si last_name est None
-                "email": obj.user.email or "Non renseigné",  # Valeur par défaut si email est None
+                "first_name": obj.user.first_name or "Non renseigné",
+                "last_name": obj.user.last_name or "Non renseigné",
+                "email": obj.user.email or "Non renseigné",
             }
         return {
             "username": "Invité",
@@ -151,5 +156,5 @@ class OrderSerializer(serializers.ModelSerializer):
             "last_name": "Non renseigné",
             "email": "Non renseigné",
         }
-
+    
 

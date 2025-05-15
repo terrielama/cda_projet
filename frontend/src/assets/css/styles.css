@@ -665,17 +665,12 @@ h1 {
   flex-direction: column;
   margin-top: 30px;
   padding: 20px ;
-  
-  margin-bottom: 1px solid #eee;
+  border: 1px solid #eee;
+  border-radius: 5px;
 }
 
-.item {
-  display: flex;
-  align-items : center;
-  gap: 15px;
-  margin: 15px;
-  margin-bottom: 1px solid #eee;
-  margin-bottom: 10px;
+.order-item{
+  border-bottom: 1px solid #d4d4d4 ;
 }
 
 .order-items img {
@@ -694,7 +689,7 @@ h1 {
   margin-bottom: 55px;
   font-size: 16px;
   font-weight: bold;
-  margin-bottom: 1px solid #d4d4d4;
+  
 }
 
 .total{
@@ -702,6 +697,16 @@ h1 {
   font-size: 18px;
   font-weight: bold;
   text-align: right;
+}
+
+.order-total h3{
+  margin: auto;
+    margin-top: 200px;
+    padding: 10px;
+    text-align: center;
+  font-weight: bold;
+
+
 }
 
 .payment-method {
