@@ -237,7 +237,7 @@ const AuthModal = ({ toggleModal }) => {
           )}
 
           {/* Bouton soumission */}
-          <button type="submit" disabled={loading}>
+          <button className="submit" type="submit" disabled={loading}>
             {loading ? "Chargement..." : isLogin ? "Se connecter" : "S'inscrire"}
           </button>
 
@@ -246,23 +246,18 @@ const AuthModal = ({ toggleModal }) => {
         </form>
 
         {/* Switch entre connexion et inscription */}
-        <p style={{ marginTop: "1rem" }}>
-          {isLogin ? (
-            <>
-              Pas encore de compte ?{" "}
-              <button type="button" onClick={() => setIsLogin(false)}>
-                S'inscrire
-              </button>
-            </>
-          ) : (
-            <>
-              Vous avez déjà un compte ?{" "}
-              <button type="button" onClick={() => setIsLogin(true)}>
-                Se connecter
-              </button>
-            </>
-          )}
-        </p>
+        <p className="switch-mode">
+        {isLogin ? (
+          
+          <button type="button" onClick={() => setIsLogin(false)}> <hr/> <p>Vous n'avez pas encore de compte ? </p>  Inscrivez-vous !
+          </button>
+        ) : (
+          <button type="button" onClick={() => setIsLogin(true)}>
+           <hr/> Vous avez déjà un compte ?  Connectez-vous !
+          </button>
+        )}
+      </p>
+
       </div>
     </div>
   );

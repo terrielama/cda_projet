@@ -6,6 +6,9 @@ import Cart from "./components/cart/Cart.jsx";
 import Order from "./components/order/Order.jsx";
 import SignInForm from "./components/user/SignInForm.jsx";
 import { AuthProvider } from './components/context/AuthContext.jsx';
+import UserProfile from "./components/user/UserProfile.jsx";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 // import { CartProvider } from "./components/context/CartContext.jsx";
 
 
@@ -14,16 +17,19 @@ const App = () => {
     <AuthProvider>
         <BrowserRouter>
           <Routes>
+            
             <Route element={<MainLayout />}>
               <Route path="/" element={<Home />} />
               <Route path="/panier" element={<Cart />} />
               <Route path="produits/:category" element={<ProductList />} />
               <Route path="/commande/:orderId" element={<Order />} />
               <Route path="/connexion" element={<SignInForm />} />
+              <Route path="/profile" element={<UserProfile />} />
             </Route>
           </Routes>
         </BrowserRouter>
     </AuthProvider>
+    
   );
 };
 

@@ -6,11 +6,11 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [username, setUsername] = useState("");
+  const [user, setUser] = useState(null);  // on stocke tout l'objet utilisateur
 
   // Vérifie la validité du token
   const checkAuth = () => {
-    const token = localStorage.getItem("access_token"); // ici on lit bien 'access_token'
+    const token = localStorage.getItem("access_token");
     if (token) {
       try {
         const decoded = jwtDecode(token);
@@ -28,8 +28,8 @@ export const AuthProvider = ({ children }) => {
     return false;
   };
 
-  // Récupère le nom d'utilisateur
-  const get_username = async () => {
+  // Récupère l'utilisateur connecté
+  const fetchUser = async () => {
     try {
       const token = localStorage.getItem("access_token");
       if (!token) return;
@@ -40,30 +40,29 @@ export const AuthProvider = ({ children }) => {
         },
       });
 
-      console.log("User récupéré dans AuthContext :", res.data);
-      setUsername(res.data.username);
+      console.log("Utilisateur connecté :", res.data);
+      setUser(res.data);
     } catch (err) {
-      console.error("Erreur lors de la récupération du user dans AuthContext :", err);
+      console.error("Erreur lors de la récupération du user :", err);
     }
   };
 
-  // Vérifie l'authentification au démarrage
+  // Déconnexion simple
+  const logout = () => {
+    localStorage.removeItem("access_token");
+    setIsAuthenticated(false);
+    setUser(null);
+  };
+
   useEffect(() => {
     const isValid = checkAuth();
     if (isValid) {
-      get_username();
+      fetchUser();
     }
   }, []);
 
-  const authValue = {
-    isAuthenticated,
-    setIsAuthenticated,
-    username,
-    get_username,
-  };
-
   return (
-    <AuthContext.Provider value={authValue}>
+    <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated, user, fetchUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

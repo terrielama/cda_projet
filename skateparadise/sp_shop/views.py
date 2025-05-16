@@ -400,3 +400,14 @@ def get_username(request):
         'first_name': user.first_name,
         'last_name': user.last_name
     })
+
+
+# ----- View de la page Profil utilisateur -----
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_user_orders(request):
+    user = request.user
+    orders = Order.objects.filter(user=user).order_by('-created_at')
+    serializer = OrderSerializer(orders, many=True)
+    return Response(serializer.data)

@@ -5,6 +5,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import userIcon from '../assets/img/icon/user.svg';
 import shoppingIcon from '../assets/img/icon/shopping.svg';
 import logo from '../assets/img/img_page_accueil/logo.png';
+import AccountButton from './home/AccountButton.jsx';
 
 import { AuthContext } from '../components/context/AuthContext.jsx'; 
 import Input from './Input';
@@ -36,7 +37,7 @@ const NavBar = () => {
             <img src={logo} alt="Skate Paradise" />
           </Link>
 
-          {/* Toggle Button */}
+          {/* Toggle Button (responsive menu) */}
           <button
             className="navbar-toggler"
             type="button"
@@ -64,6 +65,7 @@ const NavBar = () => {
                   <li><Link className="dropdown-item" to="/produits/trucks">Trucks</Link></li>
                 </ul>
               </li>
+
               {/* Autres catégories */}
               <li className="nav-item dropdown">
                 <a className="nav-link dropdown-toggle" href="#" id="navbarDropdownVêtements" role="button" data-bs-toggle="dropdown">
@@ -97,16 +99,15 @@ const NavBar = () => {
               <img src={shoppingIcon} alt="Shopping" className="img-fluid" width="20" />
             </button>
 
-            {/* Condition d'affichage de l'icône utilisateur ou du bouton "Mon compte" */}
+            {/* Condition d'affichage : bouton personnalisé si connecté, sinon icône utilisateur */}
             {isAuthenticated ? (
-              <button className="btn btn-outline-primary me-2" onClick={handleProfileRedirect}>
-                Mon compte
-              </button>
+              <AccountButton onClick={() => navigate('/profile')} />
             ) : (
-              <button className="btn btn-light" onClick={toggleModal}>
-                <img src={userIcon} alt="User" className="img-fluid" width="20" />
+              <button className="btn usr-btn" onClick={toggleModal}>
+                <img src={userIcon} alt="User" className="usr-img" width="20" />
               </button>
             )}
+
           </div>
         </div>
       </nav>
