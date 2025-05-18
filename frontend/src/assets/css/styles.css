@@ -801,6 +801,82 @@ h1 {
   cursor: pointer;
 }
 
+/* ------ Tracking : Suivi de la commande  --------- */
+
+.order-tracking-container {
+  max-width: 900px;
+  margin:85px auto;
+  padding: 20px;
+  font-family: 'Arial', sans-serif;
+  background-color: #fff;
+}
+
+h1, h2 {
+  color: #333;
+  margin-bottom: 25px;
+}
+
+p {
+  margin: 4px 0;
+}
+
+.order-user-info,
+.order-details,
+.order-products,
+.order-steps {
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.product-item {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.product-item img {
+  width: 80px;
+  height: auto;
+  object-fit: cover;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.order-steps ul {
+  list-style-type: disc;
+  padding-left: 20px;
+}
+
+.order-tracking-back-link {
+  display: inline-block;
+  margin-top: 20px;
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.order-tracking-back-link:hover {
+  text-decoration: underline;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 5px solid #eee;
+  border-top: 5px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+.error {
+  color: red;
+  font-weight: bold;
+}
+
 /* ____________ Responsive ____________________ */
 
 @media (max-width: 992px) {
@@ -967,6 +1043,22 @@ h1 {
   .form-grid input,
   .submit {
     font-size: 13px;
+  }
+
+  .order-tracking-container {
+    padding: 15px;
+  }
+
+  .order-tracking-container h1 {
+    font-size: 1.5rem;
+  }
+
+  .order-tracking-info p {
+    font-size: 0.95rem;
+  }
+
+  .order-tracking-steps li {
+    font-size: 0.9rem;
   }
 
 }

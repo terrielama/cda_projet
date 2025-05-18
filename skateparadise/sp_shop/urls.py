@@ -18,6 +18,7 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('profile/', views.profile, name='profile'), 
     path('user/orders/', views.get_user_orders, name='get_user_orders'),
+    path('order/tracking/<int:order_id>/', views.get_order_by_id, name='get_order_by_id'),
 
 
 

@@ -3,6 +3,7 @@ from django.utils.text import slugify
 from django.conf import settings  # settings est utilisé pour référencer des paramètres globaux du projet, comme le modèle utilisateur
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
+import uuid
 
 
 # Create your models here.
@@ -108,6 +109,9 @@ class CartItem(models.Model):
         return f"{self.quantity} x {self.product.name} in cart {self.cart.id}"
     
 # ----------- Définition du modèle Order --------------------
+def generate_tracking_code():
+    return str(uuid.uuid4())
+
 class Order(models.Model):
     STATUS_CHOICES = (
         ('pending', 'En attente'),
@@ -124,6 +128,13 @@ class Order(models.Model):
         max_length=20,
         choices=[('card', 'Carte Bancaire'), ('paypal', 'PayPal')],
         default=''
+    )
+
+    tracking_code = models.CharField(
+        max_length=100,
+        unique=True,
+        default=generate_tracking_code,
+        editable=False,
     )
 
     def __str__(self):

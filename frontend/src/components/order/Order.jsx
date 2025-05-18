@@ -1,51 +1,59 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom'; // Import Link pour le lien de suivi
 import PaiementForm from './PaymentForm';
 
 const Order = () => {
+  // Récupération de l'ID de la commande depuis l'URL
   const { orderId } = useParams();
+
+  // États React pour gérer les données, chargement, erreurs, paiement et utilisateur
   const [orderDetails, setOrderDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedPayment, setSelectedPayment] = useState('');
   const [userName, setUserName] = useState({ first_name: null, last_name: null });
 
-  // 1) Récupération de la commande (order + items)
+  // --- Effet pour récupérer les détails de la commande via l'API ---
   useEffect(() => {
-    async function fetchOrder() {
+    if (!orderId) return; // Stop si pas d'orderId
+
+    const fetchOrder = async () => {
+      console.log(`⏳ Récupération de la commande ID = ${orderId}`);
       try {
-        console.log(`Récupération commande id=${orderId}…`);
         const res = await fetch(`http://localhost:8001/order/${orderId}`, {
           headers: { 'Content-Type': 'application/json' },
         });
-        if (!res.ok) throw new Error(`API error ${res.status}`);
-        const data = await res.json();
-        console.log('Réponse API orderDetails:', data);
+        if (!res.ok) throw new Error(`Erreur API ${res.status}`);
 
-        // Sécurité : items doit être un tableau
-        if (!data.items) {
-          console.warn('Warning: "items" manquant dans orderDetails');
-          data.items = [];
-        } else if (!Array.isArray(data.items)) {
-          console.warn('Warning: "items" n\'est pas un tableau, conversion en tableau');
-          data.items = Object.values(data.items);
+        const data = await res.json();
+
+        // Assurer que data.items est un tableau (parfois peut être objet)
+        if (!Array.isArray(data.items)) {
+          console.warn(`"items" n'est pas un tableau, conversion en tableau...`);
+          data.items = data.items ? Object.values(data.items) : [];
         }
 
         setOrderDetails(data);
+        console.log('✅ Commande récupérée:', data);
       } catch (err) {
-        console.error('Erreur fetchOrderDetails:', err);
+        console.error('❌ Erreur récupération commande:', err);
         setError(err.message);
       } finally {
         setLoading(false);
       }
-    }
-    if (orderId) fetchOrder();
+    };
+
+    fetchOrder();
   }, [orderId]);
 
-  // 2) Récupération du prénom/nom si connecté
+  // --- Effet pour récupérer les infos utilisateur connecté via token dans localStorage ---
   useEffect(() => {
     const token = localStorage.getItem('access_token');
-    if (!token) return;
+    if (!token) {
+      console.log('⚠️ Pas de token, utilisateur non connecté.');
+      return;
+    }
+
     fetch('http://localhost:8001/get_username', {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -54,23 +62,28 @@ const Order = () => {
         return res.json();
       })
       .then(data => {
-        console.log('Utilisateur connecté:', data);
+        console.log('👤 Utilisateur connecté:', data);
         setUserName({ first_name: data.first_name, last_name: data.last_name });
       })
       .catch(err => {
-        console.warn('Erreur get_username:', err);
+        console.warn('⚠️ Impossible de récupérer utilisateur:', err);
         setUserName({ first_name: null, last_name: null });
       });
   }, []);
 
-  // 3) Association user → order si connecté et infos prêtes
+  // --- Effet pour associer la commande à l'utilisateur si les deux existent ---
   useEffect(() => {
-    if (!userName.first_name || !orderDetails) return;
-    async function associate() {
+    if (!userName.first_name || !orderDetails) return; // Pas assez d'infos
+
+    const associateUserToOrder = async () => {
       try {
         const token = localStorage.getItem('access_token');
-        if (!token) return;
-        console.log(`Association user → order ${orderId}…`);
+        if (!token) {
+          console.warn('⚠️ Pas de token pour associer commande.');
+          return;
+        }
+
+        console.log(`🔗 Association utilisateur à commande ${orderId}`);
         const res = await fetch('http://localhost:8001/associate_user_to_order/', {
           method: 'POST',
           headers: {
@@ -79,38 +92,48 @@ const Order = () => {
           },
           body: JSON.stringify({ orderId }),
         });
-        if (!res.ok) throw new Error(`API error ${res.status}`);
-        console.log('Utilisateur associé à la commande avec succès');
+
+        if (!res.ok) throw new Error(`Erreur API ${res.status}`);
+
+        console.log('✅ Utilisateur associé à la commande');
       } catch (err) {
-        console.error('Erreur association:', err);
+        console.error('❌ Erreur association utilisateur/commande:', err);
       }
-    }
-    associate();
+    };
+
+    associateUserToOrder();
   }, [userName, orderDetails, orderId]);
 
-  if (loading) return <div>Chargement…</div>;
-  if (error) return <div>Erreur : {error}</div>;
+  // --- Gestion des états de rendu ---
+
+  // Affiche un message de chargement tant que les données ne sont pas récupérées
+  if (loading) return <div>Chargement...</div>;
+
+  // Affiche l'erreur si la récupération a échoué
+  if (error) return <div style={{ color: 'red' }}>Erreur : {error}</div>;
+
+  // Cas où aucune commande n'a été trouvée
   if (!orderDetails) return <div>Aucune commande trouvée.</div>;
 
-  const { items, order } = orderDetails;
+  // Extraction des données nécessaires
+  const { items = [], order = {} } = orderDetails;
 
-  // Logs utiles avant rendu
-  console.log('order:', order);
-  console.log('items:', items);
+  // Détermine si l'utilisateur est un invité (pas de nom récupéré et pas d'utilisateur associé)
+  const isGuest =
+    !userName.first_name &&
+    (!order.user || !order.user.first_name);
 
-  // Utilisateur invité ?
-  const isGuest = !userName.first_name && (!order.user || !order.user.first_name);
-
-  // Calcul total à payer depuis les items (total_price est déjà float)
+  // Calcul du montant total de la commande
   const totalAmount = items.length
-    ? items.reduce((sum, i) => sum + parseFloat(i.total_price), 0).toFixed(2)
+    ? items.reduce((sum, item) => sum + parseFloat(item.total_price || 0), 0).toFixed(2)
     : '0.00';
 
   return (
-    <div className="order-page">
-      <h1>Détails de la commande #{order.id}</h1>
+    <div className="order-page" style={{ padding: 20 }}>
+      <h1>Détails de la commande #{order.id || orderId}</h1>
 
-      <div className="order-summary">
+      {/* Résumé de la commande */}
+      <div className="order-summary" style={{ marginBottom: 30 }}>
         <p>
           <strong>Client :</strong>{' '}
           {userName.first_name
@@ -120,15 +143,20 @@ const Order = () => {
             : 'Utilisateur inscrit'}
         </p>
 
+        {/* Liste des articles commandés */}
         <div className="order-items">
           {items.length === 0 ? (
             <p>Aucun produit dans cette commande.</p>
           ) : (
-            items.map((item, idx) => (
-              <div key={idx} className="order-item" style={{ display: 'flex', marginBottom: 10 }}>
+            items.map((item, index) => (
+              <div
+                key={item.id || index}
+                className="order-item"
+                style={{ display: 'flex', marginBottom: '10px', alignItems: 'center' }}
+              >
                 <img
                   src={`http://localhost:8001${item.product_image || '/default-image.jpg'}`}
-                  alt={item.product_name}
+                  alt={item.product_name || 'Produit'}
                   style={{ width: 100, height: 100, objectFit: 'cover', marginRight: 10 }}
                   onError={e => {
                     e.target.onerror = null;
@@ -136,48 +164,73 @@ const Order = () => {
                   }}
                 />
                 <div className="order-text">
-                  <h4>{item.product_name}</h4>
+                  <h4>{item.product_name || 'Produit sans nom'}</h4>
                   <p>
-                    Quantité : {item.quantity} | Prix unitaire : {item.price}€ | Total : {item.total_price}€
+                    Quantité : {item.quantity || 1} | Prix unitaire : {item.price || 0}€ | Total :{' '}
+                    {item.total_price || 0}€
                   </p>
                 </div>
               </div>
             ))
-          )} 
-          <div className="order-total">
+          )}
+        </div>
+
+        {/* Total à payer */}
+        <div className="order-total" style={{ marginTop: 20 }}>
           <h3>Total à payer : {totalAmount} €</h3>
         </div>
       </div>
-        </div>
 
-       
-
+      {/* Choix du mode de paiement */}
       <div className="payment-method">
         <h2>Choisissez votre mode de paiement</h2>
         <button
           onClick={() => {
-            console.log('Paiement sélectionné : Carte Bancaire');
+            console.log('💳 Paiement sélectionné : Carte Bancaire');
             setSelectedPayment('card');
           }}
+          style={{ marginRight: 10 }}
         >
           Carte Bancaire
         </button>
         <button
           onClick={() => {
-            console.log('Paiement sélectionné : PayPal');
+            console.log('💸 Paiement sélectionné : PayPal');
             setSelectedPayment('paypal');
           }}
         >
           PayPal
         </button>
 
+        {/* Affichage du mode de paiement sélectionné */}
         {selectedPayment && (
-          <p>
-            Vous avez choisi : <strong>{selectedPayment === 'card' ? 'Carte Bancaire' : 'PayPal'}</strong>
+          <p style={{ marginTop: 10 }}>
+            Vous avez choisi :{' '}
+            <strong>{selectedPayment === 'card' ? 'Carte Bancaire' : 'PayPal'}</strong>
           </p>
         )}
 
+        {/* Affichage conditionnel du formulaire de paiement */}
         {selectedPayment === 'card' && <PaiementForm />}
+      </div>
+
+      {/* --- Lien pour suivre la commande --- */}
+      <div style={{ marginTop: 40 }}>
+        <Link
+          to={`/orderTracking/${orderId}`}
+          onClick={() => console.log(`➡️ Suivi commande demandé pour ID ${orderId}`)}
+          style={{
+            display: 'inline-block',
+            padding: '10px 20px',
+            backgroundColor: '#007bff',
+            color: 'white',
+            textDecoration: 'none',
+            borderRadius: 5,
+            fontWeight: 'bold',
+          }}
+        >
+          Suivre ma commande
+        </Link>
       </div>
     </div>
   );

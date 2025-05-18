@@ -411,3 +411,14 @@ def get_user_orders(request):
     orders = Order.objects.filter(user=user).order_by('-created_at')
     serializer = OrderSerializer(orders, many=True)
     return Response(serializer.data)
+
+# --------- View Tracking_code pour un suivis de commande ----------
+
+@api_view(['GET'])
+def get_order_by_id(request, order_id):
+    try:
+        order = Order.objects.get(id=order_id)
+        serializer = OrderSerializer(order)
+        return Response(serializer.data)
+    except Order.DoesNotExist:
+        return Response({'error': 'Commande introuvable'}, status=status.HTTP_404_NOT_FOUND)

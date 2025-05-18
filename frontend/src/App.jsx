@@ -7,6 +7,8 @@ import Order from "./components/order/Order.jsx";
 import SignInForm from "./components/user/SignInForm.jsx";
 import { AuthProvider } from './components/context/AuthContext.jsx';
 import UserProfile from "./components/user/UserProfile.jsx";
+import OrderTracking from "./components/order/OrderTracking.jsx";
+import OrderConfirmation from "./components/order/OrderConfirmation.jsx";
 // import { CartProvider } from "./components/context/CartContext.jsx";
 
 
@@ -23,7 +25,9 @@ const App = () => {
               <Route path="/commande/:orderId" element={<Order />} />
               <Route path="/connexion" element={<SignInForm />} />
               <Route path="/profile" element={<UserProfile />} />
-            </Route>
+              <Route path="/orderTracking/:trackingCode" element={<OrderTracking />} />
+              <Route path="/orderConfirmation/:orderId" element={<OrderConfirmation />} />
+              </Route>
           </Routes>
         </BrowserRouter>
     </AuthProvider>
