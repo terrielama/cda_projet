@@ -10,6 +10,7 @@ import UserProfile from "./components/user/UserProfile.jsx";
 import OrderTracking from "./components/order/OrderTracking.jsx";
 import OrderConfirmation from "./components/order/OrderConfirmation.jsx";
 // import { CartProvider } from "./components/context/CartContext.jsx";
+import ProductDetail from './components/product/ProductDetail.jsx';
 
 
 const App = () => {
@@ -27,6 +28,7 @@ const App = () => {
               <Route path="/profile" element={<UserProfile />} />
               <Route path="/orderTracking/:trackingCode" element={<OrderTracking />} />
               <Route path="/orderConfirmation/:orderId" element={<OrderConfirmation />} />
+              <Route path="/produit/:productId" element={<ProductDetail />} />
               </Route>
           </Routes>
         </BrowserRouter>

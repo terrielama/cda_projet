@@ -40,7 +40,8 @@ class Product(models.Model):
     stock = models.PositiveIntegerField(default=0)  
     description = models.TextField(blank=True, null=True)  
     available = models.BooleanField(default=True)  
-    created_at = models.DateTimeField(auto_now_add=True)  
+    created_at = models.DateTimeField(auto_now_add=True)
+
 
  # Représentation textuelle d'un produit dans l'admin, etc.
     def __str__(self):

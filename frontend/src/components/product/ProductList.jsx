@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom'; // Import de useNavigate pour la navigation
 import images from '../../importImages.js';
 import axios from 'axios';
+import AddButton from "./AddButton.jsx"
 
 const api = axios.create({
   baseURL: "http://127.0.0.1:8001/",
 });
 
+// Fonction pour générer un code alphanumérique aléatoire
 function generateRandomAlphanumeric(length = 10) {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
@@ -17,11 +19,13 @@ function generateRandomAlphanumeric(length = 10) {
 }
 
 const ProductList = () => {
-  const { category } = useParams();
+  const { category } = useParams(); // Récupère la catégorie depuis l'URL
+  const navigate = useNavigate(); // Hook pour la navigation
   const [products, setProducts] = useState([]);
   const [message, setMessage] = useState('');
   const [inCart, setInCart] = useState({});
 
+  // Récupère ou génère un cartCode unique
   const [cartCode, setCartCode] = useState(() => {
     let code = localStorage.getItem("cart_code");
     if (!code) {
@@ -35,6 +39,7 @@ const ProductList = () => {
   });
 
   useEffect(() => {
+    // Données simulées des produits par catégorie
     const fetchedProducts = {
       planche: [
         { id: 1, name: 'Board ENJOY - KITTEN RIPPER HYBRID - 8.25', price: 65.00, image: images['enjoykitten.jpg'] },
@@ -63,7 +68,6 @@ const ProductList = () => {
       fetchedProducts[category].forEach((product) => {
         api.get(`product_in_cart?cart_code=${cartCode}&product_id=${product.id}`)
           .then(res => {
-            // Backend renvoie 'product_in_cart', pas 'in_cart'
             if (res.data.product_in_cart) {
               setInCart(prev => ({ ...prev, [product.id]: true }));
               console.log(`Produit ID ${product.id} est dans le panier`);
@@ -78,6 +82,7 @@ const ProductList = () => {
     }
   }, [category, cartCode]);
 
+  // Fonction pour ajouter un produit au panier
   const add_item = (product_id) => {
     const newItem = {
       cart_code: cartCode,
@@ -98,6 +103,11 @@ const ProductList = () => {
       });
   };
 
+  // Fonction pour naviguer vers la page de détail du produit
+  const handleProductClick = (productId) => {
+    navigate(`/produit/${productId}`);
+  };
+
   return (
     <div className="container mt-5">
       <h2 className="text-center mb-4">{category?.toUpperCase()}</h2>
@@ -107,17 +117,24 @@ const ProductList = () => {
         {products.map((product) => (
           <div key={product.id} className="col-md-4 mb-4">
             <div className="card shadow-sm">
-              <img src={product.image} className="card-img-top" alt={product.name} />
+              {/* Image cliquable pour naviguer vers la page de détail */}
+              <img
+                src={product.image}
+                className="card-img-top"
+                alt={product.name}
+                style={{ cursor: 'pointer' }}
+                onClick={() => handleProductClick(product.id)}
+              />
               <div className="card-body text-center">
                 <h5 className="card-title">{product.name}</h5>
                 <p className="card-text text-primary fw-bold">{product.price.toFixed(2)}€</p>
-                <button
-                  className="btn btn-dark"
+                 {/* Utilisation du composant AddButton personnalisé */}
+                <AddButton
                   onClick={() => add_item(product.id)}
                   disabled={inCart[product.id]}
                 >
                   {inCart[product.id] ? 'Déjà dans le panier' : 'Ajouter au panier'}
-                </button>
+                </AddButton>
               </div>
             </div>
           </div>

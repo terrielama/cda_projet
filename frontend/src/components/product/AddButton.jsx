@@ -31,7 +31,7 @@ const AddButton = ({ onClick }) => {
 const StyledWrapper = styled.div`
   .addbutton {
   position: relative;
-  width: 185px;
+  width: 175px;
   height: 40px;
   cursor: pointer;
   display: flex;
@@ -60,7 +60,7 @@ const StyledWrapper = styled.div`
     position: absolute;
     transform: translateX(145px);
     height: 100%;
-    width: 39px;
+    width: 30px;
     background-color: #34974d;
     display: flex;
     align-items: center;
@@ -84,7 +84,7 @@ const StyledWrapper = styled.div`
   }
 
   .addbutton:hover .addbutton__icon {
-    width: 178px;
+    width: 175px;
     transform: translateX(0);
   }
 
