@@ -593,10 +593,10 @@ h1 {
   background-color: #ddd;
 }
 
-.quantity-controls
+/* .quantity-controls
 {
-  margin: 0px 10px 0px 20px;
-}
+  
+} */
 
 .remove-button {
   background-color: #cd0b05;
@@ -661,7 +661,7 @@ h1 {
   align-items: center;
   padding: 20px;
   max-width: 1200px;
-  margin: 100px auto;
+  margin: 150px auto;
 }
 
 /* Contenu principal */
@@ -669,8 +669,13 @@ h1 {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 20px;
+  gap: 160px;
   width: 100%;
+}
+
+.product-detail-title {
+  font-size: 24px;
+  font-weight: bold;
 }
 
 /* Image du produit */
@@ -679,6 +684,8 @@ h1 {
   min-width: 300px;
   max-width: 500px;
   text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 5px;
 }
 
 .product-image img {
@@ -694,6 +701,7 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  
 }
 
 /* Prix */
@@ -713,6 +721,7 @@ h1 {
 .size-buttons {
   display: flex;
   gap: 10px;
+  margin-top: 20px;
 }
 
 .size-button {
@@ -727,26 +736,29 @@ h1 {
 
 .size-button.selected {
   padding: 5px 10px;
-  background-color: #979797;
+  background-color: #292929;
   color: white;
 }
 
 .size-button:hover {
-  background-color: #007bff;
+  background-color: #292929;
   color: white;
 }
 
 /* Sélection de la quantité */
 .product-detail-quantity-selector {
+  margin-top: 20px;
   display: flex;
   flex-direction: column;
   gap: 5px;
+  
 }
 
 .quantity-controls {
   display: flex;
   align-items: center;
   gap: 10px;
+  
 }
 
 .quantity-controls button {
@@ -756,10 +768,11 @@ h1 {
   background-color: #f1f1f1;
   border: 1px solid #ccc;
   transition: background-color 0.3s;
+  border-radius: 5px;
 }
 
 .quantity-controls button:hover {
-  background-color: #007bff;
+  background-color: #292929;
   color: white;
 }
 
@@ -772,21 +785,6 @@ h1 {
   border-radius: 5px;
 }
 
-/* Bouton d'ajout au panier */
-.add-to-cart-button {
-  padding: 10px 20px;
-  font-size: 1.2rem;
-  background-color: #28a745;
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  border-radius: 5px;
-}
-
-.add-to-cart-button:hover {
-  background-color: #218838;
-}
 
 /* Message de confirmation */
 .success-message {
@@ -800,19 +798,21 @@ h1 {
 
 /* Bouton pour afficher/masquer les détails */
 .toggle-details-button {
-  margin-top: 10px;
-  padding: 10px 20px;
+  margin-top: 20px;
+  width: 160px;
+  height: 35px;
   font-size: 1rem;
-  background-color: #007bff;
-  color: white;
-  border: none;
+  color: rgb(0, 0, 0);
+  border: 1px solid grey;
+  border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s;
   border-radius: 5px;
 }
 
 .toggle-details-button:hover {
-  background-color: #0056b3;
+  background-color:#292929;
+  color: white;
 }
 
 /* Description détaillée */

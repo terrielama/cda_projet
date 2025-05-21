@@ -36,7 +36,7 @@ const StyledWrapper = styled.div`
   cursor: pointer;
   display: flex;
   align-items: center;
-  border: 1px solid #34974d;
+  border: 1px solid rgb(52, 151, 77);
   background-color:rgb(2, 134, 35);
   border-radius: 5px;
   margin: 0 auto; /* Centrage horizontal */

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import images from '../../importImages.js';
 import axios from 'axios';
-import AddButton from "./AddButton.jsx"
+import AddButton2 from "./AddButton2.jsx"
 
 // Instance Axios pour l'API
 const api = axios.create({
@@ -201,7 +201,7 @@ const ProductDetail = () => {
           {/* Sélecteur de quantité */}
           <div className="product-detail-quantity-selector">
             <div className="quantity-controls">
-              <label htmlFor="quantity">Quantité</label>
+              <p>Quantité</p>
               <button onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
               <input
                 type="number"
@@ -212,9 +212,9 @@ const ProductDetail = () => {
               />
               <button onClick={() => setQuantity(quantity + 1)}>+</button>
            {/* Bouton d'ajout au panier */}
-          <AddButton className="add-to-cart-button" onClick={handleAddToCart}>
+          <AddButton2 className="add-to-cart-button" onClick={handleAddToCart}>
             Ajouter au panier
-          </AddButton> 
+          </AddButton2> 
           </div>
           </div>
 
@@ -225,7 +225,8 @@ const ProductDetail = () => {
 
           {/* Toggle détails produit */}
           <button className="toggle-details-button" onClick={() => setShowDetails(!showDetails)}>
-            {showDetails ? 'Masquer les détails' : 'Détails du produit'}
+            {showDetails ? 'Masquer les détails' : 'Détails du produit ' }
+            
           </button>
 
           {/* Description détaillée */}
