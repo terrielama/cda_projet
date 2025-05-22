@@ -58,36 +58,35 @@ const StyledWrapper = styled.div`
     --color-shadow: #00000080;
   }
 
-  .btn-content {
-    display: flex;
-    align-items: center;
-    padding: 2px 0px;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 500;
-    font-size: 12px;
-    color: var(--color-text);
-    background: var(--color-background);
-    border-radius: 100px;
-    box-shadow: 0 0 0.2em 0 var(--color-background);
-    border: none;
-    cursor: pointer;
+.btn-content {
+  display: flex;
+  align-items: center;
+  padding: 2px 0px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--color-text);
+  background: var(--color-background);
+  border-radius: 100px;
+  box-shadow: 0 0 0.2em 0 var(--color-background);
+  border: none;
+  cursor: pointer;
+  transition: all 0.5s ease-in-out; /* ← très lent et fluide */
+}
 
-    transition: all 0.1s ease; /* Plus fluide */
-  }
-
-  .btn-content:hover,
-  .btn-content:focus {
-    outline: 0.1em solid var(--color-outline);
-    outline-offset: 0.2em;
-    box-shadow: 0 0 0.6em 0 var(--color-outline);
-  }
-
+.btn-content:hover,
+.btn-content:focus {
+  outline: 0.1em solid var(--color-outline);
+  outline-offset: 0.2em;
+  box-shadow: 0 0 0.4em 0 var(--color-outline);
+}
   .icon-arrow {
     width: 15px;
     position: relative;
     top: 0%;
     left: 35%;
-    transform: scale(0.6);
+    transition: margin-left 0.4s ease-in-out;
+
   }
 
   .icon-arrow.left {
