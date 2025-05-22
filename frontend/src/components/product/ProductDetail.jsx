@@ -321,7 +321,8 @@ const ProductDetail = () => {
                 onClick={() => {
                   console.log("Suggestion cliquée :", item);
                   // Ici tu peux rediriger vers ce produit, par ex via react-router :
-                  window.location.href = `/product/${item.id}`;
+                  window.location.href = `/produit/${item.id}`;
+                  
                 }}
               >
                 <img src={item.image} alt={item.name} style={{ width: '100%', height: 'auto' }} />

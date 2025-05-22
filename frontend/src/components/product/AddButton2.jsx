@@ -28,7 +28,7 @@ const StyledWrapper = styled.div`
 .button {
   height: 45px;
   width: 150px;
-  background-color: rgb(2, 134, 35);
+  background-color: rgb(3, 166, 44);
   border: 2px solid rgb(18, 137, 48);
   color: #eee;
   transition: width 0.6s ease, border-radius 0.6s ease;
@@ -47,13 +47,13 @@ const StyledWrapper = styled.div`
 
 .button span {
   transform: translateX(10px);
-  transition: 0.3s ease;
+  transition: 0.7s ease;
   white-space: nowrap;
   position: absolute;
 }
 
 .button svg {
-  transition: 0.4s ease;
+  transition: 0.5s ease;
   height: 23px;
   width: 23px;
   fill: white;
@@ -65,8 +65,8 @@ const StyledWrapper = styled.div`
   padding-left: 15px;
   width: 50px;
   border-radius: 50%;
-  background-color: rgb(2, 134, 35);
-  box-shadow: 20px 20px 96px #bebebe, -20px -20px 96px #ffffff;
+  background-color: rgb(0, 160, 40);
+  box-shadow: 20px 20px 96px rgb(0, 255, 38), -20px -20px 96px rgba(0, 255, 38, 0.47);
 }
 
 .button:hover svg {
