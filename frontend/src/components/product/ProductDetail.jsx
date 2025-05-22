@@ -232,24 +232,23 @@ const ProductDetail = () => {
                 onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
               />
               <button onClick={() => setQuantity(quantity + 1)}>+</button>
-            </div>
-          </div>
-
-          {/* Bouton d'ajout au panier */}
+            {/* Bouton d'ajout au panier */}
           <AddButton2 className="add-to-cart-button" onClick={handleAddToCart}>
             {inCart ? "Déjà dans le panier" : "Ajouter au panier"}
           </AddButton2>
-
-          {/* Message de succès ou erreur */}
-          {message && <div className="success-message">{message}</div>}
+          </div>
+        </div>
 
           {/* Détails supplémentaires */}
           <button className="toggle-details-button" onClick={() => setShowDetails(!showDetails)}>
             {showDetails ? "Masquer les détails" : "Détails du produit"}
           </button>
           {showDetails && <p className="product-detail-description">{product.description}</p>}
+        {/* Message de succès ou erreur */}
+          {message && <div className="success-message">{message}</div>}
+          </div>
+    
         </div>
-      </div>
     </div>
   );
 };

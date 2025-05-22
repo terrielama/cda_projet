@@ -43,13 +43,19 @@ const Cart = () => {
 
   const updateQuantity = async (itemId, delta) => {
     const cart_code = localStorage.getItem("cart_code");
-    if (!cart_code) return;
-
+    if (!cart_code || !cart) return;
+  
+    const item = cart.items.find(i => i.id === itemId);
+    if (!item) return;
+  
+    const newQuantity = item.quantity + delta;
+    if (newQuantity < 1) return; // ou gérer suppression
+  
     try {
-      console.log(`Mise à jour quantité : item ${itemId}, delta ${delta}`);
-      await api.post(`http://localhost:8001/update_quantity?cart_code=${cart_code}`, {
+      console.log(`Mise à jour quantité : item ${itemId}, nouvelle quantité ${newQuantity}`);
+      await api.patch(`http://localhost:8001/update_quantity?cart_code=${cart_code}`, {
         item_id: itemId,
-        delta,
+        quantity: newQuantity,
       });
       fetchCart();
     } catch (error) {
@@ -57,6 +63,7 @@ const Cart = () => {
       setError("Erreur de mise à jour de la quantité.");
     }
   };
+  
 
   const removeProduct = async (itemId) => {
     const cart_code = localStorage.getItem("cart_code");
