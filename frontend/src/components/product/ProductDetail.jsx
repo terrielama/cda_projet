@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import images from '../../importImages.js';
 import axios from 'axios';
 import AddButton2 from "./AddButton2.jsx";
+import NextButton from "./NextButton.jsx";
+import PreviousButton from './PreviousButton.jsx';
 
 // Création de l'instance Axios
 const api = axios.create({
@@ -18,9 +20,11 @@ const ProductDetail = () => {
   const [message, setMessage] = useState('');
   const [cartCode, setCartCode] = useState('');
   const [inCart, setInCart] = useState(false);
+  const [suggestionIndex, setSuggestionIndex] = useState(0);
+
 
   // Simule les produits — à remplacer par une API réelle plus tard
-  const fetchedProducts = [
+  const fetchedProducts  = [
     {
       id: 1,
       name: 'Board ENJOY - KITTEN RIPPER HYBRID - 8.25',
@@ -127,6 +131,8 @@ const ProductDetail = () => {
     },
   ];
 
+  
+
   // Récupère les détails du produit à l'initialisation
   useEffect(() => {
     const code = localStorage.getItem("cart_code");
@@ -140,6 +146,7 @@ const ProductDetail = () => {
       console.log("Produit trouvé :", foundProduct);
       setProduct(foundProduct);
       setSize(foundProduct.sizes[0]);
+      setSuggestionIndex(0);  // reset index suggestions à chaque nouveau produit affiché
 
       if (code) {
         api.get(`product_in_cart?cart_code=${code}&product_id=${foundProduct.id}`)
@@ -191,6 +198,45 @@ const ProductDetail = () => {
 
   if (!product) return <div>Chargement...</div>;
 
+  // Filtrer les suggestions : exclure le produit affiché
+  const filteredSuggestions = fetchedProducts.filter(p => p.id !== product.id);
+  console.log("Produits suggérés (filtrés) :", filteredSuggestions);
+
+  // Nombre de produits affichés simultanément
+  const PRODUCTS_TO_SHOW = 5;
+
+  // Calculer la tranche visible en fonction de suggestionIndex
+  // Boucle circulaire sur filteredSuggestions
+  const endIndex = suggestionIndex + PRODUCTS_TO_SHOW;
+  let visibleSuggestions = [];
+
+  if (endIndex <= filteredSuggestions.length) {
+    visibleSuggestions = filteredSuggestions.slice(suggestionIndex, endIndex);
+  } else {
+    // Si dépasse la fin, on boucle au début
+    visibleSuggestions = filteredSuggestions.slice(suggestionIndex).concat(
+      filteredSuggestions.slice(0, endIndex - filteredSuggestions.length)
+    );
+  }
+  console.log("Suggestions visibles :", visibleSuggestions);
+
+  // Handlers pour les boutons précédent / suivant
+  const handlePrev = () => {
+    // Décale vers la gauche avec boucle circulaire
+    setSuggestionIndex((prevIndex) => {
+      const newIndex = prevIndex - PRODUCTS_TO_SHOW;
+      return newIndex < 0 ? filteredSuggestions.length + newIndex : newIndex;
+    });
+    console.log("Bouton précédent cliqué, nouvel index :", suggestionIndex);
+  };
+
+  const handleNext = () => {
+    const newIndex = (suggestionIndex + PRODUCTS_TO_SHOW) % filteredSuggestions.length;
+    setSuggestionIndex(newIndex);
+    console.log("Bouton suivant cliqué, nouvel index :", newIndex);
+  };
+  
+
   return (
     <div className="product-detail-container">
       <div className="product-detail-content">
@@ -232,23 +278,63 @@ const ProductDetail = () => {
                 onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
               />
               <button onClick={() => setQuantity(quantity + 1)}>+</button>
-            {/* Bouton d'ajout au panier */}
-          <AddButton2 className="add-to-cart-button" onClick={handleAddToCart}>
-            {inCart ? "Déjà dans le panier" : "Ajouter au panier"}
-          </AddButton2>
+            
+            <AddButton2 className="add-to-cart-button" onClick={handleAddToCart}>
+              {inCart ? "Déjà dans le panier" : "Ajouter au panier"}
+            </AddButton2>
+            </div>
           </div>
-        </div>
 
           {/* Détails supplémentaires */}
           <button className="toggle-details-button" onClick={() => setShowDetails(!showDetails)}>
             {showDetails ? "Masquer les détails" : "Détails du produit"}
           </button>
           {showDetails && <p className="product-detail-description">{product.description}</p>}
-        {/* Message de succès ou erreur */}
+
+          {/* Message de succès ou erreur */}
           {message && <div className="success-message">{message}</div>}
-          </div>
-    
         </div>
+      </div>
+
+      {/* Section produits suggérés */}
+      <div className="suggested-products-section">
+        <h3>Suggestions pour vous</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Bouton précédent */}
+          <PreviousButton onClick={handlePrev} />
+          {/* Liste des suggestions visibles */}
+          <div
+            className="suggested-products-list"
+            style={{ display: 'flex', overflow: 'hidden', gap: '10px', flexGrow: 1 }}
+          >
+            {visibleSuggestions.map((item) => (
+              <div
+                key={item.id}
+                className="suggested-product-card"
+                style={{
+                  flex: '0 0 calc(25% - 10px)', // 4 produits par ligne
+                  border: '1px solid #ccc',
+                  padding: '10px',
+                  boxSizing: 'border-box',
+                  cursor: 'pointer',
+                }}
+                onClick={() => {
+                  console.log("Suggestion cliquée :", item);
+                  // Ici tu peux rediriger vers ce produit, par ex via react-router :
+                  window.location.href = `/product/${item.id}`;
+                }}
+              >
+                <img src={item.image} alt={item.name} style={{ width: '100%', height: 'auto' }} />
+                <p style={{ margin: '5px 0' }}>{item.name}</p>
+                <p style={{ fontWeight: 'bold' }}>{item.price.toFixed(2)}€</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Bouton suivant */}
+          <NextButton onClick={handleNext} ></NextButton>
+        </div>
+      </div>
     </div>
   );
 };

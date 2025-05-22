@@ -822,18 +822,78 @@ h1 {
   color: #555;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .product-detail-content {
-    flex-direction: column;
-    align-items: center;
-  }
+/* --suggestion page detail---  */
 
-  .product-image,
-  .product-detail-info {
-    max-width: 100%;
-  }
+.suggested-products-section {
+  padding-top: 30px; /* espace en haut */
+  margin-top: 40px;
+  border-top: 1px solid #ccc; /* ligne au-dessus */
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
 }
+
+.suggested-products-section > h3 {
+  margin-top: 10px; /* espace entre ligne et titre */
+  margin-bottom: 20px;
+  font-size: 20px;
+  font-weight: 600;
+  text-align: left;
+  color: #000000;
+}
+
+.suggested-products-list {
+  display: flex;
+  overflow-x: auto; /* scroll horizontal si trop large */
+  gap: 15px;
+  padding-bottom: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: #888 #ddd;
+ 
+}
+
+.suggested-products-list::-webkit-scrollbar {
+  height: 8px;
+}
+
+.suggested-products-list::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
+}
+
+.suggested-product-card {
+  margin: 20px auto;
+  min-width: 150px; /* taille fixe pour afficher 5 à l'horizontale */
+  flex-shrink: 0; /* ne rétrécit pas */
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.1);
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.suggested-product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgb(0 0 0 / 0.15);
+}
+
+.suggested-product-card img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  object-fit: contain;
+}
+
+.suggested-product-card p {
+  margin: 6px 0;
+  font-size: 0.9rem;
+  color: #000000;
+}
+
+
+
 
 /* -------- recherche  --------- */
 
@@ -1164,6 +1224,27 @@ p {
   .product-image,
   .product-info {
     width: 100%;
+  }
+
+  .product-detail-content {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .product-image,
+  .product-detail-info {
+    max-width: 100%;
+  }
+
+  .suggested-products-list {
+    gap: 10px;
+  }
+  .suggested-product-card {
+    min-width: 140px;
+    padding: 8px;
+  }
+  .suggested-products-section > h3 {
+    font-size: 1.25rem;
   }
 }
 
