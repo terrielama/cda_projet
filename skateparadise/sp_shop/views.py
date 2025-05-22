@@ -49,6 +49,10 @@ def products(request):
 def add_item(request):
     item_id = request.data.get('item_id')
     quantity = int(request.data.get('quantity', 1))
+    size = request.data.get('size')  # 🔥 on récupère la taille
+
+    if not size:
+        return Response({'error': 'Le champ size est requis.'}, status=400)
 
     if request.user.is_authenticated:
         cart, _ = Cart.objects.get_or_create(user=request.user)
@@ -58,14 +62,15 @@ def add_item(request):
             return Response({'error': 'cart_code requis pour les utilisateurs non connectés'}, status=400)
         cart, _ = Cart.objects.get_or_create(cart_code=cart_code)
 
-    # Ajout de l'item
     try:
         product = Product.objects.get(id=item_id)
     except Product.DoesNotExist:
         return Response({'error': 'Produit non trouvé'}, status=404)
 
     cart_item, created = CartItem.objects.get_or_create(
-        cart=cart, product=product,
+        cart=cart,
+        product=product,
+        size=size,  # 🔥 inclus dans les critères
         defaults={'quantity': quantity}
     )
 

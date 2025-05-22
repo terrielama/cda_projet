@@ -94,21 +94,14 @@ class Cart(models.Model):
 #----------- Définition du modèle CartItem ( Les produits qui sont dans le panier ) ----
 
 class CartItem(models.Model):
-  # Référence au panier auquel l'article appartient
-  # related_name='items'  Permet d'accéder aux articles depuis un panier via   cart.items.all()
-  # on_delete=models.CASCADE supprime les articles si le panier est supprimé
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='cart_items')
- 
-  # Référence au produit ajouté au panier 
-  # on_delete=models.CASCADE  supprime l'entrée si le produit est supprimé
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
- 
-  # Quantité du produit dans le panier. Par défaut : 1
     quantity = models.IntegerField(default=1)
+    size = models.CharField(max_length=10, null=True, blank=True)
 
     def __str__(self):
-        return f"{self.quantity} x {self.product.name} in cart {self.cart.id}"
-    
+        return f"{self.quantity} x {self.product.name} (taille {self.size}) dans le panier {self.cart.id}"
+
 # ----------- Définition du modèle Order --------------------
 def generate_tracking_code():
     return str(uuid.uuid4())
