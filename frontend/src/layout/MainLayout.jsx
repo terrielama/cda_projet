@@ -1,6 +1,6 @@
 import React from 'react';
 import NavBar from '../components/NavBar.jsx';  // Assure-toi que le chemin est correct
-// import Footer from '../components/Footer.jsx';  
+import Footer from '../components/Footer.jsx';  
 import { Outlet } from 'react-router-dom';
 
 const MainLayout = () => {
@@ -14,6 +14,7 @@ const MainLayout = () => {
 
       {/* Uncomment Footer if you need it */}
       {/* <Footer /> */}
+      <Footer/>
     </div>
   );
 };

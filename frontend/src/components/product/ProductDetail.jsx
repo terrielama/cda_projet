@@ -167,7 +167,23 @@ const ProductDetail = () => {
     }
   }, [productId]);
 
-  // Gestion ajout au panier
+
+    // const handleSizeChange = (productId, size) => {
+    //   setSelectedSizes(prev => ({ ...prev, [productId]: size }));
+    //   console.log(`Taille sélectionnée pour le produit ${productId} :`, size);
+    // };
+  
+    // const add_item = (product_id) => {
+    //   const selectedSize = selectedSizes[product_id];
+  
+    //   if (!selectedSize) {
+    //     alert("Veuillez sélectionner une taille !");
+    //     console.warn("Taille manquante pour le produit :", product_id);
+    //     return;
+    //   }
+
+
+  // -- Gestion ajout au panier
   const handleAddToCart = () => {
     if (!cartCode || !product) {
       console.error("Impossible d'ajouter : cartCode ou produit manquant");
@@ -252,8 +268,9 @@ const ProductDetail = () => {
 
           {/* Sélecteur de taille */}
           <div className="product-detail-size-selector">
-            <p>Taille :</p>
+           
             <div className="size-buttons">
+               <p>Taille :</p>
               {product.sizes.map((s, index) => (
                 <button
                   key={index}
@@ -268,7 +285,7 @@ const ProductDetail = () => {
 
           {/* Sélecteur de quantité */}
           <div className="product-detail-quantity-selector">
-            <p>Quantité</p>
+            <p>Quantité :</p>
             <div className="quantity-controls">
               <button onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
               <input
@@ -298,7 +315,7 @@ const ProductDetail = () => {
 
       {/* Section produits suggérés */}
       <div className="suggested-products-section">
-        <h3>Suggestions pour vous</h3>
+        <h3>VOUS ALLEZ ADORER ÇA</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {/* Bouton précédent */}
           <PreviousButton onClick={handlePrev} />

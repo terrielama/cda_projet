@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom'; // Import de useNavigate pour la navigation
+import { useParams, useNavigate } from 'react-router-dom';
 import images from '../../importImages.js';
 import axios from 'axios';
-import AddButton from "./AddButton.jsx"
+import AddButton from "./AddButton.jsx";
 
 const api = axios.create({
   baseURL: "http://127.0.0.1:8001/",
 });
 
-// Fonction pour générer un code alphanumérique aléatoire
+// Génère un cart_code unique alphanumérique
 function generateRandomAlphanumeric(length = 10) {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
@@ -19,13 +19,13 @@ function generateRandomAlphanumeric(length = 10) {
 }
 
 const ProductList = () => {
-  const { category } = useParams(); // Récupère la catégorie depuis l'URL
-  const navigate = useNavigate(); // Hook pour la navigation
+  const { category } = useParams();
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [message, setMessage] = useState('');
   const [inCart, setInCart] = useState({});
 
-  // Récupère ou génère un cartCode unique
+  // Récupère ou génère le cart_code
   const [cartCode, setCartCode] = useState(() => {
     let code = localStorage.getItem("cart_code");
     if (!code) {
@@ -42,11 +42,11 @@ const ProductList = () => {
     // Données simulées des produits par catégorie
     const fetchedProducts = {
       planche: [
-        { id: 1, name: 'Board ENJOY - KITTEN RIPPER HYBRID - 8.25', price: 65.00, image: images['enjoykitten.jpg'] },
-        { id: 2, name: 'Board ELEMENT - SWXE X WING - 7.75', price: 69.00, image: images['almost.jpg'] },
-        { id: 3, name: 'Board ALMOST - GRADIENT RINGS - 8.25', price: 75.00, image: images['chocolate.jpg'] },
-        { id: 4, name: 'Board Chocolate - Lifted Chunk Roberts', price: 80.00, image: images['girlspike.jpg'] },
-        { id: 5, name: 'Board Girl - Spike Jonze Photo Series 2.0 Kim Deal', price: 85.00, image: images['almost.jpg'] },
+        { id: 1, name: 'Board Enjoy - Kitten Ripper Hybrid', price: 65.00, image: images['enjoykitten.jpg'] },
+        { id: 2, name: 'Board Element - SWXE X WING ', price: 69.00, image: images['element.jpg'] },
+        { id: 3, name: 'Board Almost - Gradient Rings ', price: 75.00, image: images['almost.jpg'] },
+        { id: 4, name: 'Board Chocolate - Lifted Chunk Roberts', price: 80.00, image: images['chocolate.jpg'] },
+        { id: 5, name: 'Board Girl - Spike Jonze  Series 2.0', price: 85.00, image: images['girlspike.jpg'] },
         { id: 6, name: 'Board Magenta - Brush Team Board', price: 60.00, image: images['magenta.jpg'] },
         { id: 7, name: 'Board Baker Brand Logo Black', price: 90.00, image: images['baker.jpg'] },
         { id: 8, name: 'Board Krooked - Team Staten Slick', price: 80.00, image: images['krooked.jpg'] },
@@ -82,16 +82,15 @@ const ProductList = () => {
     }
   }, [category, cartCode]);
 
-  // Fonction pour ajouter un produit au panier
+  // Ajoute un produit au panier (sans taille coté front)
   const add_item = (product_id) => {
     const newItem = {
       cart_code: cartCode,
       item_id: product_id,
-      quantity: 1
+      quantity: 1,
+      size: "8.25",  // taille par défaut envoyée au backend
     };
-
-    console.log("Ajout du produit ID", product_id, "au panier avec cart_code :", cartCode);
-
+  
     api.post("add_item", newItem)
       .then(res => {
         console.log("Réponse du serveur :", res.data);
@@ -103,7 +102,6 @@ const ProductList = () => {
       });
   };
 
-  // Fonction pour naviguer vers la page de détail du produit
   const handleProductClick = (productId) => {
     navigate(`/produit/${productId}`);
   };
@@ -117,7 +115,6 @@ const ProductList = () => {
         {products.map((product) => (
           <div key={product.id} className="col-md-4 mb-4">
             <div className="card shadow-sm">
-              {/* Image cliquable pour naviguer vers la page de détail */}
               <img
                 src={product.image}
                 className="card-img-top"
@@ -128,7 +125,9 @@ const ProductList = () => {
               <div className="card-body text-center">
                 <h5 className="card-title">{product.name}</h5>
                 <p className="card-text text-primary fw-bold">{product.price.toFixed(2)}€</p>
-                 {/* Utilisation du composant AddButton personnalisé */}
+
+                {/* PAS DE SÉLECTION DE TAILLE */}
+
                 <AddButton
                   onClick={() => add_item(product.id)}
                   disabled={inCart[product.id]}

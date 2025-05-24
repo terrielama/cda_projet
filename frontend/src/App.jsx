@@ -29,6 +29,7 @@ const App = () => {
               <Route path="/orderTracking/:trackingCode" element={<OrderTracking />} />
               <Route path="/orderConfirmation/:orderId" element={<OrderConfirmation />} />
               <Route path="/produit/:productId" element={<ProductDetail />} />
+              
               </Route>
           </Routes>
         </BrowserRouter>

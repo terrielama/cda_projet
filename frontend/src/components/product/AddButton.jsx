@@ -39,7 +39,7 @@ const StyledWrapper = styled.div`
   border: 1px solid rgb(52, 151, 77);
   background-color:rgb(2, 134, 35);
   border-radius: 5px;
-  margin: 0 auto; /* Centrage horizontal */
+  margin: 20px auto; 
 }
 
 

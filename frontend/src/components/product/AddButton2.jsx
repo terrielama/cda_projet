@@ -28,7 +28,7 @@ const StyledWrapper = styled.div`
 .button {
   height: 45px;
   width: 150px;
-  background-color: rgb(3, 166, 44);
+  background-color: rgb(1, 135, 34);
   border: 2px solid rgb(18, 137, 48);
   color: #eee;
   transition: width 0.6s ease, border-radius 0.6s ease;

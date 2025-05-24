@@ -130,16 +130,16 @@ const Cart = () => {
               <img
                 src={`http://localhost:8001${item.product.image}`}
                 alt={item.product.name}
-                className="product-image"
+                className="cart-product-image"
               />
               <div className="product-info">
                 <h2>{item.product.name}</h2>
                 <p>
                   Prix unitaire : {item.product.price} €<br />
                   Quantité : {item.quantity}<br />
-                  Total : {(item.product.price * item.quantity).toFixed(2)} €
                 </p>
-                <div className="quantity-controls">
+                </div>
+                <div className="cart-quantity-controls">
                   <button onClick={() => updateQuantity(item.id, -1)}>-</button>
                   <span>{item.quantity}</span>
                   <button onClick={() => updateQuantity(item.id, 1)}>+</button>
@@ -147,7 +147,7 @@ const Cart = () => {
                 <button className="remove-button" onClick={() => removeProduct(item.id)}>
                   Supprimer
                 </button>
-              </div>
+              
             </div>
           );
         })

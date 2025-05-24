@@ -2,6 +2,7 @@
 
 // Importation de toutes les images manuellement ici (obligatoire dans React client)
 import enjoykitten from "./assets/img/img_galerie/skateboard/Boards/enjoykitten.jpg";
+import element from "./assets/img/img_galerie/skateboard/Boards/element.jpg";
 import almost from "./assets/img/img_galerie/skateboard/Boards/almost.jpg";
 import chocolate from "./assets/img/img_galerie/skateboard/Boards/chocolate.jpg";
 import girlspike from "./assets/img/img_galerie/skateboard/Boards/girlspike.jpg";
@@ -16,6 +17,7 @@ import obey from "./assets/img/img_galerie/vet/Sweat/obey.jpg";
 
 const images = {
   "enjoykitten.jpg": enjoykitten,
+  "element.jpg": element,
   "almost.jpg": almost,
   "chocolate.jpg": chocolate,
   "girlspike.jpg": girlspike,
