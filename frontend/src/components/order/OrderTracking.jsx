@@ -48,7 +48,7 @@ const OrderTracking = () => {
       {/* Informations utilisateur */}
       <div className="order-user-info">
         <h2>Informations client</h2>
-        <p><strong>Nom :</strong> {trackingInfo.user.first_name} {trackingInfo.user.last_name}</p>
+        <p><strong>Nom et Prénom :</strong> {trackingInfo.user.first_name} {trackingInfo.user.last_name}</p>
         <p><strong>Email :</strong> {trackingInfo.user.email}</p>
       </div>
 

@@ -178,18 +178,23 @@ def get_cart_stat(request):
 def get_cart(request):
     cart_code = request.query_params.get("cart_code")
 
-    if request.user.is_authenticated:
-        cart = Cart.objects.filter(user=request.user, paid=False).first()
-    elif cart_code:
-        cart = Cart.objects.filter(cart_code=cart_code, paid=False).first()
-    else:
-        return Response({"error": "Panier introuvable"}, status=404)
+    if not cart_code:
+        return Response({"error": "Cart code manquant"}, status=400)
+
+    # Essayer de récupérer le panier avec le cart_code
+    cart = Cart.objects.filter(cart_code=cart_code, paid=False).first()
 
     if not cart:
         return Response({"error": "Panier vide ou inexistant"}, status=404)
 
-    serializer = CartSerializer(cart)  # 👈 C’est ce qui permet d’avoir sum_total
+    # Si l'utilisateur est connecté et que le panier n'est pas encore lié à un utilisateur
+    if request.user.is_authenticated and cart.user is None:
+        cart.user = request.user
+        cart.save()
+
+    serializer = CartSerializer(cart)
     return Response(serializer.data)
+
 
 # -----------View du profile d'un user --------
 

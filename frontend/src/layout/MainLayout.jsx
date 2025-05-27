@@ -6,17 +6,16 @@ import { Outlet } from 'react-router-dom';
 const MainLayout = () => {
   return (
     <div className="min-h-screen flex flex-col">
-      <NavBar />  {/* Assure-toi que NavBar.jsx est bien dans le bon dossier */}
+      <NavBar /> 
       
       <main className="flex-grow">
-        <Outlet /> {/* Affiche le contenu dynamique des pages */}
+        <Outlet />
       </main>
 
-      {/* Uncomment Footer if you need it */}
-      {/* <Footer /> */}
-      <Footer/>
+      <Footer />
     </div>
   );
 };
+
 
 export default MainLayout;

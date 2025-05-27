@@ -29,7 +29,7 @@ const Footer = () => {
             <li>Gérer les cookies</li>
           </ul>
         </div>
-      </footer>
+      
 
       {/* Barre du dessous */}
       <div className="footer-bottom">
@@ -40,6 +40,7 @@ const Footer = () => {
           </span>
         </div>
       </div>
+      </footer>
     </>
   );
 };

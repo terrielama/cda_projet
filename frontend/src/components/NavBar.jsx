@@ -19,13 +19,13 @@ const NavBar = () => {
   const toggleModal = () => setIsModalOpen(!isModalOpen);
 
   // Fonction pour rediriger l'utilisateur vers son profil s'il est authentifié
-  const handleProfileRedirect = () => {
-    if (isAuthenticated) {
-      navigate('/profile'); // Redirection vers la page profil
-    } else {
-      toggleModal(); // Si l'utilisateur n'est pas authentifié, ouvrir le modal de connexion
-    }
-  };
+  // const handleProfileRedirect = () => {
+  //   if (isAuthenticated) {
+  //     navigate('/profile'); // Redirection vers la page profil
+  //   } else {
+  //     toggleModal(); // Si l'utilisateur n'est pas authentifié, ouvrir le modal de connexion
+  //   }
+  // };
 
   return (
     <div>
@@ -96,7 +96,7 @@ const NavBar = () => {
 
             {/* Icône Panier */}
             <button className="btn btn-light me-2" onClick={() => navigate('/panier')}>
-              <img src={shoppingIcon} alt="Shopping" className="img-fluid" width="20" />
+              <img src={shoppingIcon} alt="Shopping" className="img-fluid" width="18" />
             </button>
 
             {/* Condition d'affichage : bouton personnalisé si connecté, sinon icône utilisateur */}
@@ -104,7 +104,7 @@ const NavBar = () => {
               <AccountButton onClick={() => navigate('/profile')} />
             ) : (
               <button className="btn usr-btn" onClick={toggleModal}>
-                <img src={userIcon} alt="User" className="usr-img" width="20" />
+                <img src={userIcon} alt="User" className="usr-img" width="18" />
               </button>
             )}
 
