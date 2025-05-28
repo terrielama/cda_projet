@@ -100,7 +100,7 @@ const Cart = () => {
       setLoading(true);
       console.log("📦 Création de la commande...");
 
-      const response = await api.post("http://localhost:8001/api/create_order", {
+      const response = await api.post("http://localhost:8001/create_order", {
         cart_code: localStorage.getItem("cart_code"),
       });
 
