@@ -1,21 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom'; // Import Link pour le lien de suivi
-import PaiementForm from './PaymentForm';
+import { useParams, Link, useNavigate } from 'react-router-dom'; // Ajout useNavigate
 
 const Order = () => {
-  // Récupération de l'ID de la commande depuis l'URL
   const { orderId } = useParams();
+  const navigate = useNavigate();
 
-  // États React pour gérer les données, chargement, erreurs, paiement et utilisateur
   const [orderDetails, setOrderDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedPayment, setSelectedPayment] = useState('');
   const [userName, setUserName] = useState({ first_name: null, last_name: null });
 
-  // --- Effet pour récupérer les détails de la commande via l'API ---
+  // Nouvel état pour le formulaire client
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    address: '',
+    phone: '',
+  });
+
   useEffect(() => {
-    if (!orderId) return; // Stop si pas d'orderId
+    if (!orderId) return;
 
     const fetchOrder = async () => {
       console.log(`⏳ Récupération de la commande ID = ${orderId}`);
@@ -26,8 +31,6 @@ const Order = () => {
         if (!res.ok) throw new Error(`Erreur API ${res.status}`);
 
         const data = await res.json();
-
-        // Assurer que data.items est un tableau (parfois peut être objet)
         if (!Array.isArray(data.items)) {
           console.warn(`"items" n'est pas un tableau, conversion en tableau...`);
           data.items = data.items ? Object.values(data.items) : [];
@@ -46,7 +49,6 @@ const Order = () => {
     fetchOrder();
   }, [orderId]);
 
-  // --- Effet pour récupérer les infos utilisateur connecté via token dans localStorage ---
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     if (!token) {
@@ -71,9 +73,8 @@ const Order = () => {
       });
   }, []);
 
-  // --- Effet pour associer la commande à l'utilisateur si les deux existent ---
   useEffect(() => {
-    if (!userName.first_name || !orderDetails) return; // Pas assez d'infos
+    if (!userName.first_name || !orderDetails) return;
 
     const associateUserToOrder = async () => {
       try {
@@ -104,35 +105,52 @@ const Order = () => {
     associateUserToOrder();
   }, [userName, orderDetails, orderId]);
 
-  // --- Gestion des états de rendu ---
-
-  // Affiche un message de chargement tant que les données ne sont pas récupérées
   if (loading) return <div>Chargement...</div>;
-
-  // Affiche l'erreur si la récupération a échoué
   if (error) return <div style={{ color: 'red' }}>Erreur : {error}</div>;
-
-  // Cas où aucune commande n'a été trouvée
   if (!orderDetails) return <div>Aucune commande trouvée.</div>;
 
-  // Extraction des données nécessaires
   const { items = [], order = {} } = orderDetails;
-
-  // Détermine si l'utilisateur est un invité (pas de nom récupéré et pas d'utilisateur associé)
-  const isGuest =
-    !userName.first_name &&
-    (!order.user || !order.user.first_name);
-
-  // Calcul du montant total de la commande
+  const isGuest = !userName.first_name && (!order.user || !order.user.first_name);
   const totalAmount = items.length
     ? items.reduce((sum, item) => sum + parseFloat(item.total_price || 0), 0).toFixed(2)
     : '0.00';
+
+  // Gestion formulaire
+  const handleInputChange = e => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const validateForm = () => {
+    const { firstName, lastName, address, phone } = formData;
+    if (!firstName || !lastName || !address || !phone) {
+      alert('Veuillez remplir tous les champs du formulaire.');
+      return false;
+    }
+    if (!selectedPayment) {
+      alert('Veuillez choisir un mode de paiement.');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = e => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    console.log('📤 Données formulaire:', formData);
+    console.log('💳 Mode de paiement:', selectedPayment);
+
+    // Redirection vers page de suivi avec passage des données dans state
+    navigate(`/orderTracking/${orderId}`, {
+      state: { clientInfo: formData, paymentMethod: selectedPayment },
+    });
+  };
 
   return (
     <div className="order-page" style={{ padding: 20 }}>
       <h1>Détails de la commande #{order.id || orderId}</h1>
 
-      {/* Résumé de la commande */}
       <div className="order-summary" style={{ marginBottom: 30 }}>
         <p>
           <strong>Client :</strong>{' '}
@@ -143,7 +161,6 @@ const Order = () => {
             : 'Utilisateur inscrit'}
         </p>
 
-        {/* Liste des articles commandés */}
         <div className="order-items">
           {items.length === 0 ? (
             <p>Aucun produit dans cette commande.</p>
@@ -175,46 +192,102 @@ const Order = () => {
           )}
         </div>
 
-        {/* Total à payer */}
         <div className="order-total" style={{ marginTop: 20 }}>
           <h3>Total à payer : {totalAmount} €</h3>
         </div>
       </div>
 
-      {/* Choix du mode de paiement */}
-      <div className="payment-method">
-        <h2>Choisissez votre mode de paiement</h2>
-        <button
-          onClick={() => {
-            console.log('💳 Paiement sélectionné : Carte Bancaire');
-            setSelectedPayment('card');
-          }}
-          style={{ marginRight: 10 }}
-        >
-          Carte Bancaire
+      {/* Formulaire infos client */}
+      <form onSubmit={handleSubmit} style={{ marginBottom: 30 }}>
+        <h2>Informations client</h2>
+
+        <div style={{ marginBottom: 10 }}>
+          <label>
+            Prénom : <br />
+            <input
+              type="text"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleInputChange}
+              required
+            />
+          </label>
+        </div>
+
+        <div style={{ marginBottom: 10 }}>
+          <label>
+            Nom : <br />
+            <input
+              type="text"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleInputChange}
+              required
+            />
+          </label>
+        </div>
+
+        <div style={{ marginBottom: 10 }}>
+          <label>
+            Adresse : <br />
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleInputChange}
+              required
+            />
+          </label>
+        </div>
+
+        <div style={{ marginBottom: 10 }}>
+          <label>
+            Téléphone : <br />
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleInputChange}
+              required
+            />
+          </label>
+        </div>
+
+        {/* Choix du mode de paiement */}
+        <div style={{ marginBottom: 20 }}>
+          <h2>Choisissez votre mode de paiement</h2>
+          <button
+            type="button"
+            onClick={() => {
+              console.log('💳 Paiement sélectionné : Carte Bancaire');
+              setSelectedPayment('card');
+            }}
+            style={{ marginRight: 10 }}
+          >
+            Carte Bancaire
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              console.log('💸 Paiement sélectionné : PayPal');
+              setSelectedPayment('paypal');
+            }}
+          >
+            PayPal
+          </button>
+
+          {selectedPayment && (
+            <p style={{ marginTop: 10 }}>
+              Vous avez choisi : <strong>{selectedPayment === 'card' ? 'Carte Bancaire' : 'PayPal'}</strong>
+            </p>
+          )}
+        </div>
+
+        <button type="submit" style={{ padding: '10px 20px', fontWeight: 'bold' }}>
+          Valider la commande
         </button>
-        <button
-          onClick={() => {
-            console.log('💸 Paiement sélectionné : PayPal');
-            setSelectedPayment('paypal');
-          }}
-        >
-          PayPal
-        </button>
+      </form>
 
-        {/* Affichage du mode de paiement sélectionné */}
-        {selectedPayment && (
-          <p style={{ marginTop: 10 }}>
-            Vous avez choisi :{' '}
-            <strong>{selectedPayment === 'card' ? 'Carte Bancaire' : 'PayPal'}</strong>
-          </p>
-        )}
-
-        {/* Affichage conditionnel du formulaire de paiement */}
-        {selectedPayment === 'card' && <PaiementForm />}
-      </div>
-
-      {/* --- Lien pour suivre la commande --- */}
       <div style={{ marginTop: 40 }}>
         <Link
           to={`/orderTracking/${orderId}`}
