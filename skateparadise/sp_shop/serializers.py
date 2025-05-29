@@ -54,17 +54,19 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
-    price = serializers.FloatField()
 
     class Meta:
         model = Product
-        fields = ["id", "name", "slug", "image", "description", "category", "price"]
+        fields = '__all__'
 
     def get_image(self, obj):
-        request = self.context.get('request')
-        if obj.image and request:
+        request = self.context.get('request', None)
+        if request and obj.image:
             return request.build_absolute_uri(obj.image.url)
+        elif obj.image:
+            return obj.image.url  # Fallback au chemin relatif
         return None
+
 
 
 # ------ Serializer pour le modèle CartItem  ---------

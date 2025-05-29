@@ -72,7 +72,7 @@ const NavBar = () => {
                   Vêtements
                 </a>
                 <ul className="dropdown-menu">
-                  <li><Link className="dropdown-item" to="/produits/sweat-shirts">Sweat-shirts</Link></li>
+                  <li><Link className="dropdown-item" to="/produits/sweats">Sweat-shirts</Link></li>
                   <li><Link className="dropdown-item" to="/produits/jeans">Jeans</Link></li>
                 </ul>
               </li>

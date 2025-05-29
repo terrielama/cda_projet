@@ -25,7 +25,6 @@ class Product(models.Model):
         ("Grips", "GRIPS"),
         ("Roues", "ROUES"),
         ("Sweats", "SWEATS"),
-        ("vestes", "VESTES"),
         ("Chaussures", "CHAUSSURES"),
         ("Bonnets", "BONNETS"),
         ("Ceintures", "CEINTURES"),
