@@ -78,7 +78,6 @@ const OrderTracking = () => {
           <h2>Détails de la commande</h2>
           <p><strong>Statut :</strong> {orderDetails.order?.status || 'Statut non disponible'}</p>
           <p><strong>Date :</strong> {formatDate(orderDetails.order?.created_at)}</p>
-          <p><strong>Montant total :</strong> {orderDetails.order?.total || '0.00'} €</p>
 
           <h3>Produits :</h3>
           {Array.isArray(orderDetails.items) && orderDetails.items.length > 0 ? (
