@@ -2,7 +2,11 @@
   {
     "id": 1,
     "name": "Board ENJOY - KITTEN RIPPER HYBRID",
-    "size": "8.25",
+    "sizes": [
+    {"name": "7.75"},
+    {"name": "8.375"},
+    {"name": "8.25"}
+  ],
     "price": 65.0,
     "image": "enjoykitten.jpg",
     "category": "planche",
@@ -13,7 +17,7 @@
   {
     "id": 2,
     "name": "Board ELEMENT - SWXE X WING",
-    "size": "7.75",
+    "sizes": [{ "name": "7.75" }, { "name": "8.375" }, { "name": "8.25" }],
     "price": 69.0,
     "image": "element.jpg",
     "category": "planche",
@@ -24,7 +28,7 @@
   {
     "id": 3,
     "name": "Board ALMOST - GRADIENT RINGS",
-    "size": "8.25",
+    "sizes": [{ "name": "7.75" }, { "name": "8.375" }, { "name": "8.25" }],
     "price": 75.0,
     "image": "almost.jpg",
     "category": "planche",
@@ -35,6 +39,7 @@
   {
     "id": 4,
     "name": "Board Chocolate - Lifted Chunk Roberts",
+    "sizes": [{ "name": "7.75" }, { "name": "8.375" }, { "name": "8.25" }],
     "price": 80.0,
     "image": "chocolate.jpg",
     "category": "planche",
@@ -45,6 +50,7 @@
   {
     "id": 5,
     "name": "Board Girl - Spike Jonze Photo Series 2.0 Kim Deal",
+    "sizes": [{ "name": "7.75" }, { "name": "8.375" }, { "name": "8.25" }],
     "price": 85.0,
     "image": "girlspike.jpg",
     "category": "planche",
@@ -55,6 +61,7 @@
   {
     "id": 6,
     "name": "Board Magenta - Brush Team Board",
+    "sizes": [{ "name": "7.75" }, { "name": "8.375" }, { "name": "8.25" }],
     "price": 60.0,
     "image": "magenta.jpg",
     "category": "planche",
@@ -65,6 +72,7 @@
   {
     "id": 7,
     "name": "Board Baker Brand Logo Black",
+    "sizes": [{ "name": "7.75" }, { "name": "8.375" }, { "name": "8.25" }],
     "price": 90.0,
     "image": "baker.jpg",
     "category": "planche",
@@ -75,6 +83,7 @@
   {
     "id": 8,
     "name": "Board Krooked - Team Staten Slick",
+    "sizes": [{ "name": "7.75" }, { "name": "8.375" }, { "name": "8.25" }],
     "price": 80.0,
     "image": "krooked.jpg",
     "category": "planche",
@@ -85,6 +94,7 @@
   {
     "id": 9,
     "name": "Board Poetic Collective - Earth",
+    "sizes": [{ "name": "7.75" }, { "name": "8.375" }, { "name": "8.25" }],
     "price": 70.0,
     "image": "poeticcollective.jpg",
     "category": "planche",
@@ -95,6 +105,7 @@
   {
     "id": 10,
     "name": "Board Polar - Everything Is Normal C",
+    "sizes": [{ "name": "7.75" }, { "name": "8.375" }, { "name": "8.25" }],
     "price": 80.0,
     "image": "polar.jpg",
     "category": "planche",
@@ -105,6 +116,7 @@
   {
     "id": 11,
     "name": "Board Quasi De Keyzer Mental",
+    "sizes": [{ "name": "7.75" }, { "name": "8.375" }, { "name": "8.25" }],
     "price": 110.0,
     "image": "quasi.jpg",
     "category": "planche",
@@ -115,6 +127,7 @@
   {
     "id": 12,
     "name": "Board Rassvet - Titaev Pro F24",
+    "sizes": [{ "name": "7.75" }, { "name": "8.375" }, { "name": "8.25" }],
     "price": 89.0,
     "image": "rassvet.jpg",
     "category": "planche",
@@ -125,6 +138,7 @@
   {
     "id": 13,
     "name": "Sweatshirt homme Obey",
+    "sizes": [{ "name": "S" }, { "name": "M" }, { "name": "L" }],
     "price": 140.0,
     "image": "obeySweat.jpg",
     "category": "sweat-shirts",

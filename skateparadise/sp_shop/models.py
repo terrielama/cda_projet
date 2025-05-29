@@ -15,7 +15,15 @@ class Category(models.Model):
     def __str__(self):
         return self.name
     
+# ----- Taille de produit ------------
+
+class Size(models.Model):
+    name = models.CharField(max_length=10)
+
 #----------- Définition du modèle Product --------
+
+from django.db import models
+from django.utils.text import slugify
 
 class Product(models.Model):
     CATEGORY = (
@@ -33,29 +41,41 @@ class Product(models.Model):
     slug = models.SlugField(blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     image = models.ImageField(upload_to='products/', null=False, default='products/default-image.png')
-    
-    # ✅ Nouveau champ simple CharField avec des choix
     category = models.CharField(max_length=50, choices=CATEGORY, default="Boards")
-    
-    stock = models.PositiveIntegerField(default=0)  
-    description = models.TextField(blank=True, null=True)  
-    available = models.BooleanField(default=True)  
+    stock = models.PositiveIntegerField(default=0)
+    description = models.TextField(blank=True, null=True)
+    available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    size = models.CharField(max_length=10, blank=True, null=True)
+    sizes = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return self.name
 
     def save(self, *args, **kwargs):
+        # Gestion du slug unique
         if not self.slug:
-            self.slug = slugify(self.name)
-            unique_slug = self.slug
-            counter = 1 
+            base_slug = slugify(self.name)
+            unique_slug = base_slug
+            counter = 1
             while Product.objects.filter(slug=unique_slug).exists():
-                unique_slug = f'{self.slug}-{counter}'
+                unique_slug = f'{base_slug}-{counter}'
                 counter += 1
             self.slug = unique_slug
+
+        # Gestion automatique des tailles selon catégorie
+        cat = self.category.lower()
+        if cat == 'boards':
+            self.sizes = ["7.5", "7.75", "8.0", "8.25", "8.5"]
+        elif cat == 'chaussures':
+            self.sizes = ["38", "39", "40", "41", "42", "43", "44"]
+        elif cat == 'sweats':
+            self.sizes = ["XS", "S", "M", "L", "XL"]
+        else:
+            self.sizes = []
+
         super().save(*args, **kwargs)
+
+
 
 
 

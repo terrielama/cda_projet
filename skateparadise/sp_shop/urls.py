@@ -29,6 +29,7 @@ urlpatterns = [
     path('favorites/', views.favorite_list_create_view, name='favorite-list-create'),
     path('favorites/<int:pk>/', views.favorite_delete_view, name='favorite-delete'),
     path('products/detail/<int:pk>/', views.product_detail, name='product_detail'),
+    path('cart/add_item/', views.add_item, name='add_item'),
 
 
 

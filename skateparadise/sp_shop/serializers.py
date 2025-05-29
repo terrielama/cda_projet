@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, Cart, CartItem, Order, OrderItem, User, Category, Favorite
+from .models import Product, Cart, CartItem, Order, OrderItem, User, Category, Favorite, Size
 from main.models import CustomUser  
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
@@ -50,14 +50,26 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ['id', 'name']
 
+# ------ Serializer pour le modèle taille -----
+
+class SizeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Size
+        fields = ['name']
+
+
 # -----  Serializer pour le modèle Product --------
 
 class ProductSerializer(serializers.ModelSerializer):
-    image = serializers.SerializerMethodField()
+    sizes = serializers.SlugRelatedField(
+        many=True,
+        read_only=True,
+        slug_field='name'
+    )
 
     class Meta:
         model = Product
-        fields = '__all__'
+        fields = ['id', 'name', 'price', 'image', 'sizes', 'category', 'stock', 'description', 'available']
 
     def get_image(self, obj):
         request = self.context.get('request', None)
@@ -66,6 +78,7 @@ class ProductSerializer(serializers.ModelSerializer):
         elif obj.image:
             return obj.image.url  # Fallback au chemin relatif
         return None
+    
 
 # ------ Serializer pour le modèle Favori  ---------
 
