@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Product, Cart, CartItem, Order, OrderItem, User
-from .serializers import ProductSerializer, CartItemSerializer, CartSerializer, SimpleCartSerializer, OrderSerializer, UserRegisterSerializer
+from .serializers import ProductSerializer, CartItemSerializer, CartSerializer, SimpleCartSerializer, OrderSerializer, UserRegisterSerializer, OrderUpdateSerializer
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
@@ -49,28 +49,31 @@ def products(request):
 def add_item(request):
     item_id = request.data.get('item_id')
     quantity = int(request.data.get('quantity', 1))
-    size = request.data.get('size')  # 🔥 on récupère la taille
+    size = request.data.get('size')
 
     if not size:
         return Response({'error': 'Le champ size est requis.'}, status=400)
 
+    # Récupérer ou créer le panier
     if request.user.is_authenticated:
-        cart, _ = Cart.objects.get_or_create(user=request.user)
+        cart, _ = Cart.objects.get_or_create(user=request.user, paid=False)
     else:
         cart_code = request.data.get('cart_code')
         if not cart_code:
             return Response({'error': 'cart_code requis pour les utilisateurs non connectés'}, status=400)
-        cart, _ = Cart.objects.get_or_create(cart_code=cart_code)
+        cart, _ = Cart.objects.get_or_create(cart_code=cart_code, user=None, paid=False)
 
+    # Vérifier que le produit existe
     try:
         product = Product.objects.get(id=item_id)
     except Product.DoesNotExist:
         return Response({'error': 'Produit non trouvé'}, status=404)
 
+    # Vérifier si le produit (avec la même taille) est déjà dans le panier
     cart_item, created = CartItem.objects.get_or_create(
         cart=cart,
         product=product,
-        size=size,  # 🔥 inclus dans les critères
+        size=size,
         defaults={'quantity': quantity}
     )
 
@@ -79,7 +82,6 @@ def add_item(request):
         cart_item.save()
 
     return Response({'message': 'Item ajouté au panier.'}, status=200)
-
 # ----- Vérifier si un produit est dans le panier -----
 
 @api_view(["GET"])
@@ -432,3 +434,32 @@ def get_order_by_id(request, order_id):
         return Response(serializer.data)
     except Order.DoesNotExist:
         return Response({'error': 'Commande introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+# --------- View Info ----------
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def update_client_info(request, order_id):
+    try:
+        order = Order.objects.get(id=order_id)
+    except Order.DoesNotExist:
+        return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = OrderUpdateSerializer(data=request.data)
+    if not serializer.is_valid():
+        print(serializer.errors)  # Affiche les erreurs dans la console
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    data = serializer.validated_data
+
+    order.first_name = data['first_name']
+    order.last_name = data['last_name']
+    order.address = data['address']
+    order.phone = data['phone']
+    order.payment_method = data['payment_method']
+
+    order.save()
+
+    return Response({"message": "Order updated successfully"})
+

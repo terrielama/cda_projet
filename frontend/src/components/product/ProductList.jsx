@@ -8,7 +8,7 @@ const api = axios.create({
   baseURL: "http://127.0.0.1:8001/",
 });
 
-// Génère un cart_code unique alphanumérique
+// Génère un cart_code alphanumérique unique
 function generateRandomAlphanumeric(length = 10) {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
@@ -25,7 +25,7 @@ const ProductList = () => {
   const [message, setMessage] = useState('');
   const [inCart, setInCart] = useState({});
 
-  // Récupère ou génère le cart_code
+  // Récupère ou génère le cart_code unique et le stocke en localStorage
   const [cartCode, setCartCode] = useState(() => {
     let code = localStorage.getItem("cart_code");
     if (!code) {
@@ -39,7 +39,7 @@ const ProductList = () => {
   });
 
   useEffect(() => {
-    // Données simulées des produits par catégorie
+    // Produits simulés par catégorie
     const fetchedProducts = {
       planche: [
         { id: 1, name: 'Board Enjoy - Kitten Ripper Hybrid', price: 65.00, image: images['enjoykitten.jpg'] },
@@ -64,8 +64,8 @@ const ProductList = () => {
       setProducts(fetchedProducts[category]);
       console.log("Produits chargés pour la catégorie :", category, fetchedProducts[category]);
 
-      // Vérifie quels produits sont déjà dans le panier
-      fetchedProducts[category].forEach((product) => {
+      // Vérifie quels produits sont déjà dans le panier côté backend
+      fetchedProducts[category].forEach(product => {
         api.get(`product_in_cart?cart_code=${cartCode}&product_id=${product.id}`)
           .then(res => {
             if (res.data.product_in_cart) {
@@ -76,21 +76,21 @@ const ProductList = () => {
             }
           })
           .catch(err => {
-            console.error(`Erreur lors de la vérification du produit ${product.id} dans le panier :`, err);
+            console.error(`Erreur vérification panier produit ${product.id} :`, err);
           });
       });
     }
   }, [category, cartCode]);
 
-  // Ajoute un produit au panier (sans taille coté front)
+  // Fonction pour ajouter un produit au panier avec taille par défaut "8.25"
   const add_item = (product_id) => {
     const newItem = {
       cart_code: cartCode,
       item_id: product_id,
       quantity: 1,
-      size: "8.25",  // taille par défaut envoyée au backend
+      size: "8.25",  // taille envoyée au backend
     };
-  
+
     api.post("add_item", newItem)
       .then(res => {
         console.log("Réponse du serveur :", res.data);
@@ -112,13 +112,13 @@ const ProductList = () => {
       {message && <div className="alert alert-success text-center">{message}</div>}
 
       <div className="row row-card">
-        {products.map((product) => (
+        {products.map(product => (
           <div key={product.id} className="col-md-4 mb-4">
             <div className="card shadow-sm">
               <img
                 src={product.image}
-                className="card-img-top"
                 alt={product.name}
+                className="card-img-top"
                 style={{ cursor: 'pointer' }}
                 onClick={() => handleProductClick(product.id)}
               />
@@ -126,7 +126,7 @@ const ProductList = () => {
                 <h5 className="card-title">{product.name}</h5>
                 <p className="card-text text-primary fw-bold">{product.price.toFixed(2)}€</p>
 
-                {/* PAS DE SÉLECTION DE TAILLE */}
+                {/* Pas de sélection de taille côté frontend */}
 
                 <AddButton
                   onClick={() => add_item(product.id)}

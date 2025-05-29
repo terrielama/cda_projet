@@ -140,7 +140,12 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'user', 'status', 'payment_method', 'cart_code', 'created_at', 'updated_at', 'items']
+        fields = [
+            'id', 'user', 'status', 'payment_method', 'cart_code', 
+            'created_at', 'updated_at', 'items',
+            # Ajout des champs client :
+            'first_name', 'last_name', 'address', 'phone',
+        ]
 
     def get_user(self, obj):
         if obj.user:
@@ -156,5 +161,13 @@ class OrderSerializer(serializers.ModelSerializer):
             "last_name": "Non renseigné",
             "email": "Non renseigné",
         }
-    
 
+
+# --- Serializer pour récupérer les données infos  reçues
+
+class OrderUpdateSerializer(serializers.Serializer):
+    first_name = serializers.CharField(required=True, max_length=100)
+    last_name = serializers.CharField(required=True, max_length=100)
+    address = serializers.CharField(required=True, max_length=255)
+    phone = serializers.CharField(required=True, max_length=20)
+    payment_method = serializers.ChoiceField(choices=Order.PAYMENT_METHOD_CHOICES, required=True)

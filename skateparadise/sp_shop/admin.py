@@ -30,13 +30,42 @@ class CartItemAdmin(admin.ModelAdmin):
     autocomplete_fields = ('product', 'cart')
     ordering = () 
 
-
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'cart_code_display', 'user_display', 'status', 'created_at', 'total_order_price')
-    search_fields = ('user__username', 'id', 'cart__cart_code')
-    list_filter = ('status', 'created_at')
+    list_display = (
+        'id',
+        'cart_code_display',
+        'user_display',
+        'customer_name',
+        'get_address',
+        'get_phone',
+        'payment_method',
+        'status',
+        'total_order_price',
+        'created_at',
+    )
+    search_fields = (
+        'user__username',
+        'id',
+        'cart__cart_code',
+        'first_name',
+        'last_name',
+        'phone',
+    )
+    list_filter = ('status', 'payment_method', 'created_at')
     ordering = ('-created_at',)
+
+    def customer_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}"
+    customer_name.short_description = 'Client'
+
+    def get_address(self, obj):
+        return obj.address
+    get_address.short_description = 'Adresse'
+
+    def get_phone(self, obj):
+        return obj.phone
+    get_phone.short_description = 'Téléphone'
 
     def user_display(self, obj):
         return obj.user.username if obj.user else "invité"
@@ -47,9 +76,8 @@ class OrderAdmin(admin.ModelAdmin):
     cart_code_display.short_description = 'Cart Code'
 
     def total_order_price(self, obj):
-        # Utilise le related_name 'items' pour accéder aux OrderItem liés
         return sum(item.price * item.quantity for item in obj.items.all())
-    total_order_price.short_description = 'Total'
+    total_order_price.short_description = 'Total (€)'
 
 
 @admin.register(OrderItem)

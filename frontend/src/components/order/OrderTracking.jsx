@@ -1,100 +1,105 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import BackButton from './BackButton'; // Composant bouton de retour personnalisé
+import { useParams, useLocation, Link } from 'react-router-dom';
 
 const OrderTracking = () => {
-  const { trackingCode } = useParams();
-  const [trackingInfo, setTrackingInfo] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { orderId } = useParams();
+  const location = useLocation();
+
+  const [orderDetails, setOrderDetails] = useState(location.state?.orderDetails || null);
+  const [loading, setLoading] = useState(!orderDetails);
   const [error, setError] = useState(null);
 
+  const clientInfo = location.state?.clientInfo || null;
+  const paymentMethod = location.state?.paymentMethod || null;
+
   useEffect(() => {
-    if (!trackingCode) return;
+    console.log('🚀 location.state:', location.state);
+  }, [location.state]);
 
-    const fetchTracking = async () => {
-      try {
-        const res = await fetch(`http://localhost:8001/order/tracking/${trackingCode}`, {
-          headers: { 'Content-Type': 'application/json' },
-        });
-        if (!res.ok) throw new Error(`Erreur API ${res.status}`);
+  useEffect(() => {
+    if (!orderDetails) {
+      const fetchOrderDetails = async () => {
+        setLoading(true);
+        try {
+          const res = await fetch(`http://localhost:8001/order/${orderId}`);
+          if (!res.ok) throw new Error('Erreur API ' + res.status);
+          const data = await res.json();
+          setOrderDetails(data);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
 
-        const data = await res.json();
-        setTrackingInfo(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+      fetchOrderDetails();
+    }
+  }, [orderDetails, orderId]);
 
-    fetchTracking();
-  }, [trackingCode]);
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'Date non disponible';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+  };
 
-  if (loading)
-    return (
-      <div className="order-tracking-container">
-        <div className="spinner"></div>
-        <p>Chargement des infos de suivi...</p>
-      </div>
-    );
-
-  if (error) return <div className="order-tracking-container error">Erreur : {error}</div>;
-  if (!trackingInfo) return <div className="order-tracking-container">Aucune information de suivi trouvée.</div>;
+  if (loading) return <div>Chargement...</div>;
+  if (error) return <div style={{ color: 'red' }}>Erreur : {error}</div>;
 
   return (
-    <div className="order-tracking-container">
-      <h1>Suivi de la commande : {trackingCode}</h1>
+    <div style={{ padding: 20 }}>
+      <h1>Suivi de la commande #{orderId}</h1>
 
-      {/* Informations utilisateur */}
-      <div className="order-user-info">
-        <h2>Informations client</h2>
-        <p><strong>Nom et Prénom :</strong> {trackingInfo.user.first_name} {trackingInfo.user.last_name}</p>
-        <p><strong>Email :</strong> {trackingInfo.user.email}</p>
-      </div>
-
-      {/* Détails de la commande */}
-      <div className="order-details">
-        <h2>Détails de la commande</h2>
-        <p><strong>Statut :</strong> {trackingInfo.status}</p>
-        <p><strong>Méthode de paiement :</strong> {trackingInfo.payment_method || "Non renseignée"}</p>
-        <p><strong>Date de commande :</strong> {new Date(trackingInfo.created_at).toLocaleString()}</p>
-        <p><strong>Dernière mise à jour :</strong> {new Date(trackingInfo.updated_at).toLocaleString()}</p>
-        <p><strong>Code panier :</strong> {trackingInfo.cart_code}</p>
-      </div>
-
-      {/* Produits commandés */}
-      <div className="order-products">
-        <h2>Produits commandés</h2>
-        {trackingInfo.items && trackingInfo.items.map((item, idx) => (
-          <div key={idx} className="product-item">
-            <div>
-              <p><strong>{item.product_name}</strong></p>
-              <p>Quantité : {item.quantity}</p>
-              <p>Prix unitaire : {item.product_price} €</p>
-              <p>Total : {item.total_price} €</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Étapes de livraison */}
-      {trackingInfo.steps && (
-        <div className="order-steps">
-          <h2>Étapes de livraison</h2>
-          <ul>
-            {trackingInfo.steps.map((step, idx) => (
-              <li key={idx}>
-                {step.date} - {step.description}
-              </li>
-            ))}
-          </ul>
-        </div>
+      {/* Infos client */}
+      {clientInfo ? (
+        <section style={{ marginBottom: 20 }}>
+          <h2>Informations client</h2>
+          <p><strong>Prénom :</strong> {clientInfo.firstName}</p>
+          <p><strong>Nom :</strong> {clientInfo.lastName}</p>
+          <p><strong>Adresse :</strong> {clientInfo.address}</p>
+          <p><strong>Téléphone :</strong> {clientInfo.phone}</p>
+        </section>
+      ) : (
+        <p style={{ color: 'gray' }}>Aucune information client disponible.</p>
       )}
 
-      {/* Bouton Retour à la commande */}
-      <div className="order-tracking-back">
-      <BackButton />
-      </div>
+      {/* Mode de paiement */}
+      {paymentMethod ? (
+        <section style={{ marginBottom: 20 }}>
+          <h2>Mode de paiement</h2>
+          <p>{paymentMethod === 'card' ? 'Carte Bancaire' : paymentMethod === 'paypal' ? 'PayPal' : paymentMethod}</p>
+        </section>
+      ) : (
+        <p style={{ color: 'gray' }}>Aucun mode de paiement sélectionné.</p>
+      )}
+
+      {/* Détails de la commande */}
+      {orderDetails ? (
+        <section style={{ marginBottom: 20 }}>
+          <h2>Détails de la commande</h2>
+          <p><strong>Statut :</strong> {orderDetails.order?.status || 'Statut non disponible'}</p>
+          <p><strong>Date :</strong> {formatDate(orderDetails.order?.created_at)}</p>
+          <p><strong>Montant total :</strong> {orderDetails.order?.total || '0.00'} €</p>
+
+          <h3>Produits :</h3>
+          {Array.isArray(orderDetails.items) && orderDetails.items.length > 0 ? (
+            <ul>
+              {orderDetails.items.map((item, idx) => (
+                <li key={item.id || idx} style={{ marginBottom: 10 }}>
+                  <strong>{item.product_name}</strong> — Quantité : {item.quantity} — Prix total : {item.total_price} €
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>Aucun produit dans cette commande.</p>
+          )}
+        </section>
+      ) : (
+        <p style={{ color: 'gray' }}>Détails de la commande non disponibles.</p>
+      )}
+
+      <Link to="/" style={{ marginTop: 30, display: 'inline-block', color: '#007bff' }}>
+        ← Retour à l'accueil
+      </Link>
     </div>
   );
 };

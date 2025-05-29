@@ -26,8 +26,7 @@ const App = () => {
               <Route path="/commande/:orderId" element={<Order />} />
               <Route path="/connexion" element={<SignInForm />} />
               <Route path="/profile" element={<UserProfile />} />
-              <Route path="/orderTracking/:trackingCode" element={<OrderTracking />} />
-              <Route path="/orderConfirmation/:orderId" element={<OrderConfirmation />} />
+              <Route path="/orderTracking/:orderId" element={<OrderTracking />} />              <Route path="/orderConfirmation/:orderId" element={<OrderConfirmation />} />
               <Route path="/produit/:productId" element={<ProductDetail />} />
               
               </Route>

@@ -41,6 +41,7 @@ class Product(models.Model):
     description = models.TextField(blank=True, null=True)  
     available = models.BooleanField(default=True)  
     created_at = models.DateTimeField(auto_now_add=True)
+    size = models.CharField(max_length=10, blank=True, null=True)
 
 
  # Représentation textuelle d'un produit dans l'admin, etc.
@@ -106,6 +107,7 @@ class CartItem(models.Model):
 def generate_tracking_code():
     return str(uuid.uuid4())
 
+
 class Order(models.Model):
     STATUS_CHOICES = (
         ('pending', 'En attente'),
@@ -113,23 +115,40 @@ class Order(models.Model):
         ('cancelled', 'Annulée'),
     )
 
+    PAYMENT_METHOD_CHOICES = [
+    ('CB', 'Carte bancaire'),
+    ('PP', 'PayPal'),
+    ]
+
+
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     cart = models.ForeignKey('Cart', related_name='orders', on_delete=models.CASCADE, null=True, blank=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    
+    # # Infos client
+    first_name = models.CharField(max_length=100, null=True, blank=True)
+    last_name = models.CharField(max_length=100, null=True, blank=True)
+    address = models.CharField(max_length=255, null=True, blank=True)
+    phone = models.CharField(max_length=20, null=True, blank=True)
+
+    # Paiement et tracking
     payment_method = models.CharField(
         max_length=20,
-        choices=[('card', 'Carte Bancaire'), ('paypal', 'PayPal')],
-        default=''
+        choices=PAYMENT_METHOD_CHOICES,
+        default='' 
+    )
+    tracking_code = models.CharField(
+    max_length=100,
+    default=generate_tracking_code,
+    editable=False,
+    null=False,
+    blank=False,
+    unique=True,
     )
 
-    tracking_code = models.CharField(
-        max_length=100,
-        unique=True,
-        default=generate_tracking_code,
-        editable=False,
-    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         cart_code = self.cart.cart_code if self.cart else "No cart"

@@ -14,12 +14,15 @@ def import_products_from_json():
         image_path = os.path.join(settings.MEDIA_ROOT, 'product_images', item['image'])
 
         product = Product(
-            name=item['name'],
-            description=item['description'],
-            price=item['price'],
-            category=item['category'],
-            stock=item['stock']
-        )
+        name=item['name'],
+        description=item['description'],
+        price=item['price'],
+        category=item['category'],
+        stock=item['stock'],
+        available=item.get('available', True),
+        size=item.get('size', '')  # si le champ existe
+    )
+
 
         if os.path.exists(image_path):
             with open(image_path, 'rb') as img_file:
