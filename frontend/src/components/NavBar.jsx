@@ -4,6 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import userIcon from '../assets/img/icon/user.svg';
 import shoppingIcon from '../assets/img/icon/shopping.svg';
+import LikeIcone from './LikeIcone.jsx';
 import logo from '../assets/img/img_page_accueil/logo.png';
 import AccountButton from './home/AccountButton.jsx';
 
@@ -17,15 +18,6 @@ const NavBar = () => {
   const navigate = useNavigate();
 
   const toggleModal = () => setIsModalOpen(!isModalOpen);
-
-  // Fonction pour rediriger l'utilisateur vers son profil s'il est authentifié
-  // const handleProfileRedirect = () => {
-  //   if (isAuthenticated) {
-  //     navigate('/profile'); // Redirection vers la page profil
-  //   } else {
-  //     toggleModal(); // Si l'utilisateur n'est pas authentifié, ouvrir le modal de connexion
-  //   }
-  // };
 
   return (
     <div>
@@ -94,16 +86,25 @@ const NavBar = () => {
             {/* Champ de recherche */}
             <Input />
 
+            {/* Bouton Favoris via LikeButton */}
+            <LikeIcone />
+
             {/* Icône Panier */}
-            <button className="btn btn-light me-2" onClick={() => navigate('/panier')}>
+            <button
+              className="btn btn-light me-2"
+              onClick={() => navigate('/panier')}
+              aria-label="Voir le panier"
+              title="Panier"
+            >
               <img src={shoppingIcon} alt="Shopping" className="img-fluid" width="18" />
             </button>
+
 
             {/* Condition d'affichage : bouton personnalisé si connecté, sinon icône utilisateur */}
             {isAuthenticated ? (
               <AccountButton onClick={() => navigate('/profile')} />
             ) : (
-              <button className="btn usr-btn" onClick={toggleModal}>
+              <button className="btn usr-btn" onClick={toggleModal} aria-label="Se connecter" title="Connexion">
                 <img src={userIcon} alt="User" className="usr-img" width="18" />
               </button>
             )}

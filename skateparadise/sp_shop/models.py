@@ -6,7 +6,6 @@ from django.utils.translation import gettext_lazy as _
 import uuid
 
 
-# Create your models here.
 
 #----------- Définition du modèle Category --------
 
@@ -58,6 +57,23 @@ class Product(models.Model):
             self.slug = unique_slug
         super().save(*args, **kwargs)
 
+
+
+
+#------- Définition du modèle Favori ---------
+
+class Favorite(models.Model):
+    session_code = models.CharField(max_length=100, db_index=True, help_text="Code de session pour identifier les favoris d'un utilisateur anonyme.")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="favorites")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('session_code', 'product')
+        verbose_name = "Favori"
+        verbose_name_plural = "Favoris"
+
+    def __str__(self):
+        return f"Favori - Produit {self.product_id} | Session {self.session_code}"
 
 
 #----------- Définition du modèle Cart (Panier) ------------

@@ -2,8 +2,8 @@ from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Product, Cart, CartItem, Order, OrderItem, User
-from .serializers import ProductSerializer, CartItemSerializer, CartSerializer, SimpleCartSerializer, OrderSerializer, UserRegisterSerializer, OrderUpdateSerializer
+from .models import Product, Cart, CartItem, Order, OrderItem, User, Favorite
+from .serializers import ProductSerializer, CartItemSerializer, CartSerializer, SimpleCartSerializer, OrderSerializer, UserRegisterSerializer, OrderUpdateSerializer,  FavoriteSerializer
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
@@ -473,3 +473,44 @@ def update_client_info(request, order_id):
 
     return Response({"message": "Order updated successfully"})
 
+# -------- Fav  ------------------
+
+@api_view(['GET', 'POST'])
+def favorite_list_create_view(request):
+    if request.method == 'GET':
+        session_code = request.query_params.get('session_code')
+        favorites = Favorite.objects.filter(session_code=session_code)
+        serializer = FavoriteSerializer(favorites, many=True)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        session_code = request.data.get('session_code')
+        data = request.data.copy()
+        data['session_code'] = session_code
+        serializer = FavoriteSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save(session_code=session_code)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+@api_view(['DELETE'])
+def favorite_delete_view(request, pk):
+    session_code = request.query_params.get('session_code')
+    try:
+        favorite = Favorite.objects.get(pk=pk, session_code=session_code)
+    except Favorite.DoesNotExist:
+        return Response({"detail": "Favorite not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    favorite.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET'])
+def product_detail(request, pk):
+    try:
+        product = Product.objects.get(pk=pk)
+    except Product.DoesNotExist:
+        return Response({'detail': 'Produit non trouvé'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = ProductSerializer(product)
+    return Response(serializer.data)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, Cart, CartItem, Order, OrderItem, User, Category
+from .models import Product, Cart, CartItem, Order, OrderItem, User, Category, Favorite
 from main.models import CustomUser  
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
@@ -67,6 +67,14 @@ class ProductSerializer(serializers.ModelSerializer):
             return obj.image.url  # Fallback au chemin relatif
         return None
 
+# ------ Serializer pour le modèle Favori  ---------
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+
+    class Meta:
+        model = Favorite
+        fields = ['id', 'product']
 
 
 # ------ Serializer pour le modèle CartItem  ---------

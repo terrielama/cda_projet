@@ -31,7 +31,7 @@ const AddButton = ({ onClick }) => {
 const StyledWrapper = styled.div`
   .addbutton {
   position: relative;
-  width: 175px;
+  width: 155px;
   height: 40px;
   cursor: pointer;
   display: flex;
@@ -40,6 +40,7 @@ const StyledWrapper = styled.div`
   background-color:rgb(2, 134, 35);
   border-radius: 5px;
   margin: 20px auto; 
+  margin-left:30px;
 }
 
 
@@ -50,7 +51,7 @@ const StyledWrapper = styled.div`
   }
 
   .addbutton .addbutton__text {
-    transform: translateX(20px); /* réduit pour créer plus d'espace avec l'icône */
+    transform: translateX(8px); /* réduit pour créer plus d'espace avec l'icône */
     color: #fff;
     font-weight: 600;
     font-size: 12px;
@@ -58,7 +59,7 @@ const StyledWrapper = styled.div`
 
   .addbutton .addbutton__icon {
     position: absolute;
-    transform: translateX(145px);
+    transform: translateX(123px);
     height: 100%;
     width: 30px;
     background-color: #34974d;
@@ -84,7 +85,7 @@ const StyledWrapper = styled.div`
   }
 
   .addbutton:hover .addbutton__icon {
-    width: 175px;
+    width: 155px;
     transform: translateX(0);
   }
 

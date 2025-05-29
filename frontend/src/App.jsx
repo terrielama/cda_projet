@@ -11,7 +11,7 @@ import OrderTracking from "./components/order/OrderTracking.jsx";
 import OrderConfirmation from "./components/order/OrderConfirmation.jsx";
 // import { CartProvider } from "./components/context/CartContext.jsx";
 import ProductDetail from './components/product/ProductDetail.jsx';
-
+import FavoritesPage from "./components/product/FavoritesPage.jsx";
 
 const App = () => {
   return (
@@ -28,8 +28,7 @@ const App = () => {
               <Route path="/profile" element={<UserProfile />} />
               <Route path="/orderTracking/:orderId" element={<OrderTracking />} />              <Route path="/orderConfirmation/:orderId" element={<OrderConfirmation />} />
               <Route path="/produit/:productId" element={<ProductDetail />} />
-              
-              </Route>
+              <Route path="/favoris" element={<FavoritesPage />} />              </Route>
           </Routes>
         </BrowserRouter>
     </AuthProvider>
