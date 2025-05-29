@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, Cart, CartItem, Order, OrderItem, User
+from .models import Product, Cart, CartItem, Order, OrderItem, User, Category
 from main.models import CustomUser  
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
@@ -7,6 +7,8 @@ User = get_user_model()  # Récupère dynamiquement le modèle utilisateurCustom
 
 # Serializer les models permet de convertir les objets Product en JSON (et vice versa) pour les API.
 # ------------------------------------------------------------------
+
+
 
 # ------- Serializer pour le modèle Register-----------
 
@@ -40,20 +42,30 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return user
         return user
     
+
+# -----  Serializer pour le modèle catégorie --------
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name']
+
 # -----  Serializer pour le modèle Product --------
 
 class ProductSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
+    price = serializers.FloatField()
 
     class Meta:
-        model = Product  # Spécifie le modèle lié à ce serializer
-        fields = [ "id", "name", "slug", "image", "description", "category", "price"]
+        model = Product
+        fields = ["id", "name", "slug", "image", "description", "category", "price"]
 
     def get_image(self, obj):
-        # Retourne l'URL de l'image ou None si elle n'existe pas
-        if obj.image:
-            return obj.image.url
+        request = self.context.get('request')
+        if obj.image and request:
+            return request.build_absolute_uri(obj.image.url)
         return None
+
 
 # ------ Serializer pour le modèle CartItem  ---------
 

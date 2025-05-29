@@ -38,9 +38,19 @@ def register(request):
 # ----- View des produits --------------
 @api_view(["GET"])
 def products(request):
-    products = Product.objects.all()  # Récupère tous les produits
-    serializer = ProductSerializer(products, many=True)  # Sérialise les produits
+    products = Product.objects.select_related('category').all()  # Important !
+    serializer = ProductSerializer(products, many=True, context={'request': request})
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+def product_list_by_category(request, category):
+    try:
+        products = Product.objects.filter(category__iexact=category)
+        serializer = ProductSerializer(products, many=True, context={'request': request})
+        return Response(serializer.data)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # ----- Ajouter un produit au panier -----
 
