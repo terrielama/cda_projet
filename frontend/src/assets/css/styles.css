@@ -626,51 +626,99 @@ body {
 
 
 /* -------- Page produit --------- */
-.shadow-sm{
-  max-height: 500px;
-  max-width: 400px;
-  height: 500px;
+.container-product {
+  max-width: 1200px;
+  margin: 110px auto;
+  padding: 0 20px;
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.alert {
+  text-align: center;
+  padding: 10px 15px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+.alert.success {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.alert.info {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.row-card {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center; /* centre les cartes */
+}
+
+.card-wrapper {
+  flex: 1 1 calc(33.333% - 20px); /* 3 cartes par ligne avec gap */
+  max-width: calc(33.333% - 20px);
+  box-sizing: border-box;
+}
+
+
+
+.shadow-sm {
   border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .card-img-top {
-  max-width: 100%;  
-  max-height: 250px; 
+  width: 100%;
+  max-height: 250px;
   object-fit: contain;
-  margin: 20px auto;
+  cursor: pointer;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
 }
 
-.row
-{
-  justify-content: center;
+.card-body {
+  padding: 15px;
+  text-align: center;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
-
-.mb-4 {
-  margin-bottom: 1.5rem !important;
-  padding-top: 30px;
-  font-size: 26px;
-}
-
 
 .card-title {
-  margin: 15px auto;
-  padding: 12px;
-  max-height: 55px;
-}
-
-.card-body{
-  padding: 0%;
-}
-
-.text-primary{
-  color: #000000 !important;
   font-size: 20px;
   margin-bottom: 10px;
+  font-weight: 600;
 }
 
-.btn-dark{
-  background-color: #018849;
+.card-price {
+  font-size: 18px;
+  font-weight: bold;
+  color: #018849;
+  margin-bottom: 15px;
 }
+
+.no-product {
+  width: 100%;
+  text-align: center;
+  font-style: italic;
+  color: #666;
+  margin-top: 30px;
+}
+
 
 
 /*------ Page Detail --------------*/
@@ -1089,6 +1137,156 @@ p {
   font-weight: bold;
 }
 
+/* -------- Page Favoris ---------------- */
+
+/* Container principal */
+.container-fav {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 80px auto;
+}
+
+/* Titre favoris */
+.fav-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 50px;
+  text-align: center;
+}
+
+/* Message aucun favori */
+.no-fav-message {
+  text-align: center;
+  font-style: italic;
+  color: #777;
+}
+
+/* Row des cards */
+.row-card {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
+
+/* Animation des cards */
+.transition-card {
+  transition: opacity 0.5s ease, transform 0.3s ease;
+}
+
+/* Disparition */
+.fade-out {
+  opacity: 0;
+  transform: translateX(-50px);
+  pointer-events: none;
+}
+
+/* Apparition */
+.fade-in {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Carte produit */
+.card-fav {
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  width: 280px;
+  transition: box-shadow 0.3s ease;
+
+}
+
+.card-fav:hover {
+  box-shadow: 0 8px 20px rgba(193, 0, 83, 0.452);
+}
+
+/* Image du produit */
+.card-fav-img {
+  width: 200px;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  margin: 15px auto;
+}
+
+.card-fav-img:hover {
+  transform: scale(1.05);
+}
+
+/* Contenu texte de la carte */
+.card-body-fav {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Nom du produit */
+.card-title {
+  font-weight: 500;
+  color: #000000;
+  font-size: 16px;
+}
+
+/* Prix */
+.card-text {
+  margin: auto;
+  font-size: 1.25rem;
+  color: #000000;
+  font-weight: bold;
+}
+
+/* Sélecteur de taille */
+.select-size {
+  width: 65%;
+  margin: auto;
+  padding: 8px;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.select-size:focus {
+  border-color: #d6336c;
+  box-shadow: 0 0 6px rgba(214, 51, 108, 0.4);
+  outline: none;
+}
+
+.cIsfgi .addbutton {
+  position: relative;
+  width: 155px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  border: 1px solid rgb(52, 151, 77);
+  background-color: rgb(2, 134, 35);
+  border-radius: 5px;
+  margin: 20px auto;
+  margin-left: 40px;
+}
+
+/* Texte taille indisponible */
+.text-muted {
+  color: #999;
+  font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .card-fav {
+    width: 100%;
+  }
+}
+
+
+
 /* -------- Footer ---------- */
 /* Footer principal */
 .footer {
@@ -1249,6 +1447,13 @@ p {
   }
 }   
 
+@media (max-width: 900px) {
+  .card-wrapper {
+    flex: 1 1 calc(50% - 20px); /* 2 cartes par ligne sous 900px */
+    max-width: calc(50% - 20px);
+  }
+}
+
 
 
 /* Mise en page en colonne pour les écrans étroits */
@@ -1334,6 +1539,19 @@ p {
   }
 }
 
+@media (max-width: 767px) {
+  .row-card {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .col-md-4 {
+    flex: 0 0 90%;
+    max-width: 90%;
+    margin-bottom: 1rem;
+  }
+}
+
 
 @media screen and (max-width: 600px) {
   .prf {
@@ -1398,5 +1616,9 @@ p {
     margin-top: 10px;
     margin-bottom: 20px;
   }
-
+.card-wrapper {
+  margin: auto 40px;
+    flex: 1 1 100%; /* 1 carte par ligne sur petit écran */
+    max-width: 100%;
+  }
 }

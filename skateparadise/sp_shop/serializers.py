@@ -40,7 +40,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
-        return user
+
     
 
 # -----  Serializer pour le modèle catégorie --------
@@ -61,11 +61,8 @@ class SizeSerializer(serializers.ModelSerializer):
 # -----  Serializer pour le modèle Product --------
 
 class ProductSerializer(serializers.ModelSerializer):
-    sizes = serializers.SlugRelatedField(
-        many=True,
-        read_only=True,
-        slug_field='name'
-    )
+    sizes = serializers.JSONField()
+    image = serializers.SerializerMethodField()  
 
     class Meta:
         model = Product
@@ -76,8 +73,9 @@ class ProductSerializer(serializers.ModelSerializer):
         if request and obj.image:
             return request.build_absolute_uri(obj.image.url)
         elif obj.image:
-            return obj.image.url  # Fallback au chemin relatif
+            return obj.image.url
         return None
+
     
 
 # ------ Serializer pour le modèle Favori  ---------

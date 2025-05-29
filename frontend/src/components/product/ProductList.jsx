@@ -129,49 +129,44 @@ const ProductList = () => {
   };
 
   return (
-    <div className="container mt-5">
-      <h2 className="text-center mb-4">{category ? category.toUpperCase() : "Produits"}</h2>
-
-      {/* Message d'ajout au panier */}
-      {message && <div className="alert alert-success text-center">{message}</div>}
-
-      {/* Message like/unlike */}
-      {likeMessage && <div className="alert alert-info text-center">{likeMessage}</div>}
-
-      <div className="row row-card">
-        {products.length === 0 && <p className="text-center">Aucun produit trouvé pour cette catégorie.</p>}
-
+    <div className="container-product">
+      <h2 className="title">{category ? category.toUpperCase() : "Produits"}</h2>
+  
+      {message && <div className="alert success">{message}</div>}
+      {likeMessage && <div className="alert info">{likeMessage}</div>}
+  
+      <div className="row-card">
+        {products.length === 0 && <p className="no-product">Aucun produit trouvé pour cette catégorie.</p>}
+  
         {products.map(product => {
           const priceNumber = Number(product.price);
           const priceFormatted = isNaN(priceNumber) ? "N/A" : priceNumber.toFixed(2);
-
+  
           return (
-            <div key={product.id} className="col-md-4 mb-4">
+            <div key={product.id} className="card-wrapper">
               <div className="card shadow-sm">
                 <img
                   src={product.image}
                   alt={product.name}
                   className="card-img-top"
-                  style={{ cursor: 'pointer' }}
                   onClick={() => handleProductClick(product.id)}
                 />
-                <div className="card-body text-center">
+                <div className="card-body">
                   <h5 className="card-title">{product.name}</h5>
-                  <p className="card-text text-primary fw-bold">{priceFormatted}€</p>
-
+                  <p className="card-price">{priceFormatted}€</p>
+  
                   <AddButton
                     onClick={() => add_item(product.id)}
                     disabled={inCart[product.id]}
                   >
                     {inCart[product.id] ? 'Déjà dans le panier' : 'Ajouter au panier'}
                   </AddButton>
-
+  
                   <LikeButton
-                  productId={product.id}
-                  isLiked={favorites[product.id] || false}
-                  toggleFavorite={toggleFavorite}
-                />
-
+                    productId={product.id}
+                    isLiked={favorites[product.id] || false}
+                    toggleFavorite={toggleFavorite}
+                  />
                 </div>
               </div>
             </div>
@@ -180,6 +175,7 @@ const ProductList = () => {
       </div>
     </div>
   );
+  
 };
 
 export default ProductList;
