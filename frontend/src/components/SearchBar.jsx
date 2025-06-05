@@ -102,6 +102,7 @@ const Wrapper = styled.div`
   z-index: 10;
   border: 1px solid #ccc;
   border-radius:50%;
+  margin-right: 7px;
 `;
 
 const SearchBox = styled.div`

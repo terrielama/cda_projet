@@ -71,9 +71,16 @@ body {
   
 }
 
-.search {
-  margin-right: 10px;
-  width: 16px;
+.shopping-button{
+  border: none;
+  border-radius: 5px;
+  margin: 5px;
+  background-color: #ffffff00;
+}
+
+.usr-btn{
+  position: relative;
+  right: -5px;
 }
 
 .rounded
@@ -1335,9 +1342,9 @@ p {
   background-color: #222;
   color: #ccc;
   width: 100%;
-  padding: 5px;
+  padding: 2px;
   box-sizing: border-box;
-  margin: auto;
+  
 }
 
 .footer-bottom-content {
@@ -1374,8 +1381,8 @@ p {
   }
 
   .navbar {
-    padding-left: -0px;
-    padding-top: 60px;
+    padding-left: 0px;
+    padding-top: 140px;
     
   }
 
@@ -1386,7 +1393,7 @@ p {
   .navbar-brand {
     
     position: absolute;
-    top: -10px; 
+    top: -5px; 
   }
 
   .navbar-brand img {
@@ -1395,10 +1402,26 @@ p {
     padding-left: 40px;
 }
 
+  .d-flex 
+  {
+    position: absolute;
+    right: 6px;
+    top: 90px;
+  }
+
   .navbar-toggler{
     position: absolute;
-    left: 30px;
-    top: 15px;
+    left: 15px;
+    top: 100px;
+    width: 45px;
+    height: 35px;
+  }
+
+  .navbar-toggler-icon{
+    position: relative;
+    left: -5px;
+    top: -3px;
+
   }
 
   .rounded {

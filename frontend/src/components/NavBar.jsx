@@ -86,19 +86,19 @@ const NavBar = () => {
             {/* Champ de recherche */}
             <SearchBar />
 
-            {/* Bouton Favoris via LikeButton */}
-            <LikeIcone />
 
             {/* Icône Panier */}
             <button
-              className="btn btn-light me-2"
+              className="shopping-button"
               onClick={() => navigate('/panier')}
               aria-label="Voir le panier"
               title="Panier"
             >
-              <img src={shoppingIcon} alt="Shopping" className="img-fluid" width="18" />
+              <img src={shoppingIcon} alt="Shopping" className="shopping-button" width="18" />
             </button>
 
+            {/* Bouton Favoris via LikeButton */}
+                        <LikeIcone />
 
             {/* Condition d'affichage : bouton personnalisé si connecté, sinon icône utilisateur */}
             {isAuthenticated ? (

@@ -164,45 +164,6 @@ const ProductList = () => {
 
   return (
     <div className="container-product">
-      <h2 className="title">{category ? category.toUpperCase() : "Tous les produits"}</h2>
-
-      <form onSubmit={handleSearchSubmit} style={{ position: 'relative' }}>
-        <input
-          type="text"
-          placeholder="Rechercher un produit..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          style={{ width: "300px", padding: "0.5rem" }}
-        />
-
-        {suggestions.length > 0 && (
-          <ul style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            width: '300px',
-            background: 'white',
-            border: '1px solid #ccc',
-            maxHeight: '200px',
-            overflowY: 'auto',
-            zIndex: 999
-          }}>
-            {suggestions.map((product) => (
-              <li
-                key={product.id}
-                onClick={() => handleSuggestionClick(product.id)}
-                style={{
-                  padding: '0.5rem',
-                  cursor: 'pointer',
-                  borderBottom: '1px solid #eee'
-                }}
-              >
-                {product.name}
-              </li>
-            ))}
-          </ul>
-        )}
-      </form>
 
       {message && <div className="alert success">{message}</div>}
       {likeMessage && <div className="alert info">{likeMessage}</div>}

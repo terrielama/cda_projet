@@ -37,6 +37,7 @@ const StyledWrapper = styled.div`
     user-select: none;
     transition: transform 100ms;
     margin-top: 16px;
+    margin-right:-10px;
   }
 
   .container input {
