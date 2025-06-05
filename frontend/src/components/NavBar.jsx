@@ -9,7 +9,7 @@ import logo from '../assets/img/img_page_accueil/logo.png';
 import AccountButton from './home/AccountButton.jsx';
 
 import { AuthContext } from '../components/context/AuthContext.jsx'; 
-import Input from './Input';
+import SearchBar from './SearchBar.jsx';
 import SignInForm from '../components/user/SignInForm.jsx';
 
 const NavBar = () => {
@@ -84,7 +84,7 @@ const NavBar = () => {
           {/* Icônes à droite */}
           <div className="d-flex align-items-center">
             {/* Champ de recherche */}
-            <Input />
+            <SearchBar />
 
             {/* Bouton Favoris via LikeButton */}
             <LikeIcone />

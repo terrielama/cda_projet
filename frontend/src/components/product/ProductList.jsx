@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import AddButton from "./AddButton.jsx";
 import LikeButton from './LikeButton.jsx';
@@ -40,12 +40,13 @@ const saveFavoritesToStorage = (favorites) => {
 const ProductList = () => {
   const { category } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
   const [products, setProducts] = useState([]);
   const [message, setMessage] = useState('');
   const [inCart, setInCart] = useState({});
   const [favorites, setFavorites] = useState(getFavoritesFromStorage());
-
-  // Message spécifique pour like/unlike
   const [likeMessage, setLikeMessage] = useState('');
 
   const [cartCode] = useState(() => {
@@ -66,9 +67,15 @@ const ProductList = () => {
       return;
     }
 
-    api.get(`products/${backendCategory}/`)
+    console.log("Chargement produits pour catégorie :", backendCategory);
+    console.log("Recherche active :", query);
+
+    api.get(`products/${backendCategory}/`, {
+      params: { search: query }
+    })
       .then(res => {
         setProducts(res.data);
+        console.log("Produits récupérés :", res.data);
 
         res.data.forEach(product => {
           api.get(`product_in_cart?cart_code=${cartCode}&product_id=${product.id}`)
@@ -80,10 +87,26 @@ const ProductList = () => {
             .catch(() => {});
         });
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("Erreur lors de la récupération des produits :", err);
         setProducts([]);
       });
-  }, [category, cartCode]);
+  }, [category, cartCode, query]);
+
+  useEffect(() => {
+    if (query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    const delayDebounceFn = setTimeout(() => {
+      api.get(`/search_products/`, { params: { search: query } })
+        .then((res) => {
+          setSuggestions(res.data);
+        });
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [query]);
 
   const add_item = (product_id) => {
     api.post("add_item", {
@@ -113,7 +136,6 @@ const ProductList = () => {
     setFavorites(updatedFavorites);
     saveFavoritesToStorage(updatedFavorites);
 
-    // Log console pour trace
     if (updatedFavorites[productId]) {
       console.log(`Produit ${productId} liké 👍`);
       setLikeMessage(`Vous avez aimé le produit ${productId} !`);
@@ -122,26 +144,76 @@ const ProductList = () => {
       setLikeMessage(`Vous avez retiré le like du produit ${productId}.`);
     }
 
-    // Effacer le message après 2 secondes
     setTimeout(() => {
       setLikeMessage('');
     }, 2000);
   };
 
+  const handleSuggestionClick = (productId) => {
+    navigate(`/produit/${productId}`);
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    api.get(`/search_products/`, { params: { search: query } })
+      .then((res) => {
+        setProducts(res.data);
+        setSuggestions([]);
+      });
+  };
+
   return (
     <div className="container-product">
-      <h2 className="title">{category ? category.toUpperCase() : "Produits"}</h2>
-  
+      <h2 className="title">{category ? category.toUpperCase() : "Tous les produits"}</h2>
+
+      <form onSubmit={handleSearchSubmit} style={{ position: 'relative' }}>
+        <input
+          type="text"
+          placeholder="Rechercher un produit..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          style={{ width: "300px", padding: "0.5rem" }}
+        />
+
+        {suggestions.length > 0 && (
+          <ul style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            width: '300px',
+            background: 'white',
+            border: '1px solid #ccc',
+            maxHeight: '200px',
+            overflowY: 'auto',
+            zIndex: 999
+          }}>
+            {suggestions.map((product) => (
+              <li
+                key={product.id}
+                onClick={() => handleSuggestionClick(product.id)}
+                style={{
+                  padding: '0.5rem',
+                  cursor: 'pointer',
+                  borderBottom: '1px solid #eee'
+                }}
+              >
+                {product.name}
+              </li>
+            ))}
+          </ul>
+        )}
+      </form>
+
       {message && <div className="alert success">{message}</div>}
       {likeMessage && <div className="alert info">{likeMessage}</div>}
-  
+
       <div className="row-card">
         {products.length === 0 && <p className="no-product">Aucun produit trouvé pour cette catégorie.</p>}
-  
+
         {products.map(product => {
           const priceNumber = Number(product.price);
           const priceFormatted = isNaN(priceNumber) ? "N/A" : priceNumber.toFixed(2);
-  
+
           return (
             <div key={product.id} className="card-wrapper">
               <div className="card shadow-sm">
@@ -154,14 +226,14 @@ const ProductList = () => {
                 <div className="card-body">
                   <h5 className="card-title">{product.name}</h5>
                   <p className="card-price">{priceFormatted}€</p>
-  
+
                   <AddButton
                     onClick={() => add_item(product.id)}
                     disabled={inCart[product.id]}
                   >
                     {inCart[product.id] ? 'Déjà dans le panier' : 'Ajouter au panier'}
                   </AddButton>
-  
+
                   <LikeButton
                     productId={product.id}
                     isLiked={favorites[product.id] || false}
@@ -175,7 +247,6 @@ const ProductList = () => {
       </div>
     </div>
   );
-  
 };
 
 export default ProductList;

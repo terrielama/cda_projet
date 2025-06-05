@@ -11,6 +11,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import NotFound
 import traceback
+from django.db.models import Q
 
 
 #----- View pour creer un user (Register) ------
@@ -46,9 +47,18 @@ def products(request):
 @api_view(['GET'])
 def product_list_by_category(request, category):
     try:
+        search_query = request.GET.get('search', '')
+        
+        # Filtrer d'abord par catégorie
         products = Product.objects.filter(category__iexact=category)
+        
+        # Puis filtrer par nom si "search" est présent
+        if search_query:
+            products = products.filter(Q(name__icontains=search_query))
+
         serializer = ProductSerializer(products, many=True, context={'request': request})
         return Response(serializer.data)
+        
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -447,7 +457,8 @@ def get_order_by_id(request, order_id):
 
 
 
-# --------- View Info ----------
+# --------- View Info -------------
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def update_client_info(request, order_id):
@@ -514,3 +525,29 @@ def product_detail(request, pk):
 
     serializer = ProductSerializer(product)
     return Response(serializer.data)
+
+
+# ------------ Barre de recherche ---------------
+
+@api_view(['GET'])
+def search_products(request):
+    query = request.GET.get('search', '')
+    if query:
+        products = Product.objects.filter(name__icontains=query)
+    else:
+        products = Product.objects.all()
+    serializer = ProductSerializer(products, many=True, context={'request': request})
+    return Response(serializer.data)
+
+
+
+
+
+
+
+
+
+
+
+
+ 
