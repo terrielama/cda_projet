@@ -1,39 +1,73 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { jwtDecode } from "jwt-decode";
+import api from "../../api";
 
-// Création du contexte d'authentification
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
-// Provider qui englobe l'application et gère l'état d'authentification
 export const AuthProvider = ({ children }) => {
-  const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);  // on stocke tout l'objet utilisateur
 
-  // Vérifie si un token est présent dans le localStorage au chargement
-  useEffect(() => {
+  // Vérifie la validité du token
+  const checkAuth = () => {
     const token = localStorage.getItem("access_token");
     if (token) {
-      setIsUserLoggedIn(true);
+      try {
+        const decoded = jwtDecode(token);
+        const expiry = decoded.exp;
+        const now = Date.now() / 1000;
+        if (expiry >= now) {
+          setIsAuthenticated(true);
+          return true;
+        }
+      } catch (error) {
+        console.error("Token invalide :", error);
+      }
+    }
+    setIsAuthenticated(false);
+    return false;
+  };
+
+  // Récupère l'utilisateur connecté
+  const fetchUser = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) return;
+
+      const res = await api.get("get_username", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log("Utilisateur connecté :", res.data);
+      setUser(res.data);
+    } catch (err) {
+      console.error("Erreur lors de la récupération du user :", err);
+    }
+  };
+
+  // Déconnexion simple
+  const logout = () => {
+    localStorage.removeItem("access_token");
+    setIsAuthenticated(false);
+    setUser(null);
+  };
+
+  useEffect(() => {
+    const isValid = checkAuth();
+    if (isValid) {
+      fetchUser();
     }
   }, []);
 
-  // Fonction de connexion
-  const login = () => {
-    setIsUserLoggedIn(true);
-  };
-
-  // Fonction de déconnexion (sans navigation)
-  const logout = () => {
-    localStorage.removeItem("access_token"); // Supprime le token
-    setIsUserLoggedIn(false); // Met à jour l'état
-  };
-
   return (
-    <AuthContext.Provider value={{ isUserLoggedIn, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated, user, fetchUser, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Hook personnalisé pour utiliser l'authentification facilement
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

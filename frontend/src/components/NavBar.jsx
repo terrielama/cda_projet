@@ -1,27 +1,23 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import userIcon from '../assets/img/icon/user.svg';
 import shoppingIcon from '../assets/img/icon/shopping.svg';
+import LikeIcone from './LikeIcone.jsx';
 import logo from '../assets/img/img_page_accueil/logo.png';
+import AccountButton from './home/AccountButton.jsx';
 
-
-import Input from './Input';
-// import SignInForm from '../SignInForm';
+import { AuthContext } from '../components/context/AuthContext.jsx'; 
+import SearchBar from './SearchBar.jsx';
+import SignInForm from '../components/user/SignInForm.jsx';
 
 const NavBar = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const { isAuthenticated, username } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const toggleModal = () => setIsModalOpen(!isModalOpen);
-
-  const handleProfileRedirect = () => {
-    isUserLoggedIn ? navigate('/') : toggleModal();
-  };
-
-
 
   return (
     <div>
@@ -33,7 +29,7 @@ const NavBar = () => {
             <img src={logo} alt="Skate Paradise" />
           </Link>
 
-          {/* Toggle Button */}
+          {/* Toggle Button (responsive menu) */}
           <button
             className="navbar-toggler"
             type="button"
@@ -49,6 +45,7 @@ const NavBar = () => {
           {/* Navigation centrale */}
           <div className="collapse navbar-collapse" id="navbarNav">
             <ul className="navbar-nav mx-auto">
+              {/* Catégories de produits */}
               <li className="nav-item dropdown">
                 <a className="nav-link dropdown-toggle" href="#" id="navbarDropdown1" role="button" data-bs-toggle="dropdown">
                   Skateboard
@@ -60,12 +57,14 @@ const NavBar = () => {
                   <li><Link className="dropdown-item" to="/produits/trucks">Trucks</Link></li>
                 </ul>
               </li>
+
+              {/* Autres catégories */}
               <li className="nav-item dropdown">
                 <a className="nav-link dropdown-toggle" href="#" id="navbarDropdownVêtements" role="button" data-bs-toggle="dropdown">
                   Vêtements
                 </a>
                 <ul className="dropdown-menu">
-                  <li><Link className="dropdown-item" to="/produits/sweat-shirts">Sweat-shirts</Link></li>
+                  <li><Link className="dropdown-item" to="/produits/sweats">Sweat-shirts</Link></li>
                   <li><Link className="dropdown-item" to="/produits/jeans">Jeans</Link></li>
                 </ul>
               </li>
@@ -85,19 +84,31 @@ const NavBar = () => {
           {/* Icônes à droite */}
           <div className="d-flex align-items-center">
             {/* Champ de recherche */}
-            <Input />
+            <SearchBar />
 
-          {/* Icône Panier */}
-          <button className="btn btn-light me-2" onClick={() => navigate('/panier')}>
-            <img src={shoppingIcon} alt="Shopping" className="img-fluid" width="20" />
-          </button>
 
-             
-      
-              <button className="btn btn-light" onClick={toggleModal}>
-                <img src={userIcon} alt="User" className="img-fluid" width="20" />
+            {/* Icône Panier */}
+            <button
+              className="shopping-button"
+              onClick={() => navigate('/panier')}
+              aria-label="Voir le panier"
+              title="Panier"
+            >
+              <img src={shoppingIcon} alt="Shopping" className="shopping-button" width="18" />
+            </button>
+
+            {/* Bouton Favoris via LikeButton */}
+                        <LikeIcone />
+
+            {/* Condition d'affichage : bouton personnalisé si connecté, sinon icône utilisateur */}
+            {isAuthenticated ? (
+              <AccountButton onClick={() => navigate('/profile')} />
+            ) : (
+              <button className="btn usr-btn" onClick={toggleModal} aria-label="Se connecter" title="Connexion">
+                <img src={userIcon} alt="User" className="usr-img" width="18" />
               </button>
-            
+            )}
+
           </div>
         </div>
       </nav>
