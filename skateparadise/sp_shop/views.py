@@ -64,32 +64,44 @@ def product_list_by_category(request, category):
 
 # ----- Ajouter un produit au panier -----
 
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def add_item(request):
     item_id = request.data.get('item_id')
-    quantity = int(request.data.get('quantity', 1))
     size = request.data.get('size')
+    cart_code = request.data.get('cart_code')
 
+    # Vérification des champs requis
+    if not item_id:
+        return Response({'error': "L'ID du produit est requis."}, status=400)
     if not size:
         return Response({'error': 'Le champ size est requis.'}, status=400)
+
+    try:
+        quantity = int(request.data.get('quantity', 1))
+    except (TypeError, ValueError):
+        return Response({'error': 'Quantité invalide.'}, status=400)
 
     # Récupérer ou créer le panier
     if request.user.is_authenticated:
         cart, _ = Cart.objects.get_or_create(user=request.user, paid=False)
     else:
-        cart_code = request.data.get('cart_code')
         if not cart_code:
             return Response({'error': 'cart_code requis pour les utilisateurs non connectés'}, status=400)
-        cart, _ = Cart.objects.get_or_create(cart_code=cart_code, user=None, paid=False)
 
-    # Vérifier que le produit existe
+        # Récupère le panier si cart_code existe déjà, sinon le crée
+        cart = Cart.objects.filter(cart_code=cart_code).first()
+        if not cart:
+            cart = Cart.objects.create(cart_code=cart_code, user=None, paid=False)
+
+    # Vérifie que le produit existe
     try:
         product = Product.objects.get(id=item_id)
     except Product.DoesNotExist:
-        return Response({'error': 'Produit non trouvé'}, status=404)
+        return Response({'error': 'Produit non trouvé.'}, status=404)
 
-    # Vérifier si le produit (avec la même taille) est déjà dans le panier
+    # Vérifie si le produit (avec la même taille) est déjà dans le panier
     cart_item, created = CartItem.objects.get_or_create(
         cart=cart,
         product=product,
@@ -102,6 +114,7 @@ def add_item(request):
         cart_item.save()
 
     return Response({'message': 'Item ajouté au panier.'}, status=200)
+
 # ----- Vérifier si un produit est dans le panier -----
 
 @api_view(["GET"])

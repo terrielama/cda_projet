@@ -99,7 +99,7 @@ class Favorite(models.Model):
 #----------- Définition du modèle Cart (Panier) ------------
 
 class Cart(models.Model):
-    cart_code = models.CharField(max_length=11, unique=True)
+    cart_code = models.CharField(max_length=11)
 
     # settings.AUTH_USER_MODEL permet de référencer dynamiquement le modèle User personnalisé défini dans settings.py
     # on_delete pour que si l'utilisateur est supprimé, son panier l'est aussi
