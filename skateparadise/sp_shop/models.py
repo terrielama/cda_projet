@@ -140,9 +140,9 @@ def generate_tracking_code():
 
 class Order(models.Model):
     STATUS_CHOICES = (
-        ('pending', 'En attente'),
-        ('completed', 'Complétée'),
-        ('cancelled', 'Annulée'),
+        ('attente', 'En attente'),
+        ('expédié', 'Expédié'),
+        ('livrée', 'Livrée'),
     )
 
     PAYMENT_METHOD_CHOICES = [
@@ -151,7 +151,7 @@ class Order(models.Model):
     ]
 
 
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='attente')
     cart = models.ForeignKey('Cart', related_name='orders', on_delete=models.CASCADE, null=True, blank=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     
