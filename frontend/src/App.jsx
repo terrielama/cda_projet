@@ -12,7 +12,6 @@ import OrderConfirmation from "./components/order/OrderConfirmation.jsx";
 // import { CartProvider } from "./components/context/CartContext.jsx";
 import ProductDetail from './components/product/ProductDetail.jsx';
 import FavoritesPage from "./components/product/FavoritesPage.jsx";
-import SearchPage from "./components/SearchPage.jsx";
 
 const App = () => {
   return (
@@ -31,7 +30,6 @@ const App = () => {
               <Route path="/orderConfirmation/:orderId" element={<OrderConfirmation />} />
               <Route path="/produit/:productId" element={<ProductDetail />} />
               <Route path="/favoris" element={<FavoritesPage />} /> 
-              <Route path="/produits/search" element={<SearchPage />} />
               </Route>
           </Routes>
         </BrowserRouter>
