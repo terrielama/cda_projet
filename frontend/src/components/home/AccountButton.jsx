@@ -44,6 +44,7 @@ const AccountButton = () => {
   }
 
   .button-message {
+    margin-left: 7px;
     display: flex;
     justify-content: center;
     align-items: center;
