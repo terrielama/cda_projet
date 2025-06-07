@@ -18,18 +18,16 @@ const App = () => {
     <AuthProvider>
         <BrowserRouter>
           <Routes>
-            
             <Route element={<MainLayout />}>
               <Route path="/" element={<Home />} />
               <Route path="/panier" element={<Cart />} />
               <Route path="produits/:category" element={<ProductList />} />
-              <Route path="/produit/:id" element={<ProductDetail />} />
               <Route path="/commande/:orderId" element={<Order />} />
               <Route path="/connexion" element={<SignInForm />} />
               <Route path="/profile" element={<UserProfile />} />
               <Route path="/orderTracking/:orderId" element={<OrderTracking />} />              
               <Route path="/orderConfirmation/:orderId" element={<OrderConfirmation />} />
-              
+              <Route path="/produit/:id" element={<ProductDetail />} />
               <Route path="/favoris" element={<FavoritesPage />} /> 
               </Route>
           </Routes>

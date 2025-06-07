@@ -12,6 +12,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.exceptions import NotFound
 import traceback
 from django.db.models import Q
+import random
 
 
 #----- View pour creer un user (Register) ------
@@ -550,6 +551,15 @@ def search_products(request):
     else:
         products = Product.objects.all()
     serializer = ProductSerializer(products, many=True, context={'request': request})
+    return Response(serializer.data)
+
+# ------------ Suggestion de produit  ---------------
+@api_view(['GET'])
+def suggested_products(request):
+    all_products = list(Product.objects.all())
+    # On prend au hasard 5 produits (ou moins si il y en a moins)
+    suggested = random.sample(all_products, min(len(all_products), 5))
+    serializer = ProductSerializer(suggested, many=True)
     return Response(serializer.data)
 
 

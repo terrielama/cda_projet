@@ -5,8 +5,7 @@ urlpatterns = [
     path('products/<str:category>/', views.product_list_by_category, name='products-by-category'),
     path("products/", views.products, name="products"),
     path("add_item", views.add_item, name="add_item"),
-    path('products/<int:pk>/', views.product_detail, name='product_detail'),
-    path('product/<int:pk>/', views.product_detail, name='product_detail_single'),  # ✅ ajout
+    path('product/<int:pk>/', views.product_detail, name='product_detail'),
     path('product_in_cart', views.product_in_cart, name='product_in_cart'),
     path("get_cart", views.get_cart, name="get_cart"),
     path("get_cart_stat", views.get_cart_stat, name="get_cart_stat"),
@@ -25,4 +24,6 @@ urlpatterns = [
     path('order/<int:order_id>/update_client_info/', views.update_client_info, name='update_client_info'),
     path('favorites/', views.favorite_list_create_view, name='favorite-list-create'),
     path('favorites/<int:pk>/', views.favorite_delete_view, name='favorite-delete'),
+    path('products/suggested/', views.suggested_products, name='suggested-products'),
+
 ]

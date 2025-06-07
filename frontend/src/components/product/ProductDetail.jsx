@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom'; // Import useNavigate pour navigation client-side
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AddButton2 from "./AddButton2.jsx";
-import PreviousButton from "./PreviousButton.jsx";
-import NextButton from "./NextButton.jsx";
 
 const api = axios.create({
   baseURL: "http://127.0.0.1:8001/",
@@ -36,9 +34,8 @@ const saveFavoritesToStorage = (favorites) => {
 
 const ProductDetail = () => {
   const { id, category } = useParams();
-  const navigate = useNavigate(); // Hook React Router pour la navigation
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
-  const [products, setProducts] = useState([]);
   const [inCart, setInCart] = useState({});
   const [message, setMessage] = useState('');
   const [likeMessage, setLikeMessage] = useState('');
@@ -46,8 +43,8 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [size, setSize] = useState('');
   const [showDetails, setShowDetails] = useState(false);
-  const [visibleSuggestions, setVisibleSuggestions] = useState([]);
-  const [suggestions, setSuggestions] = useState([]);
+
+  const [suggestedProducts, setSuggestedProducts] = useState([]);
 
   const [cartCode] = useState(() => {
     let code = localStorage.getItem("cart_code");
@@ -59,7 +56,7 @@ const ProductDetail = () => {
     return code;
   });
 
-  // Chargement du produit en fonction de l'ID
+  // Chargement du produit principal
   useEffect(() => {
     if (!id) return;
 
@@ -83,48 +80,25 @@ const ProductDetail = () => {
       });
   }, [id]);
 
-  // Chargement des produits suggérés par catégorie
+  // Chargement des produits suggérés
   useEffect(() => {
-    console.log("Category dans useEffect suggestions :", category);
-    if (!category) {
-      console.warn("La catégorie est vide ou non définie");
-      setProducts([]);
-      setVisibleSuggestions([]);
-      return;
-    }
-  
-    const backendCategory = categoryMap[category.toLowerCase()];
-    console.log("Catégorie front:", category, "→ backend:", backendCategory);
-  
-    if (!backendCategory) {
-      console.warn("Catégorie backend non trouvée pour :", category);
-      setProducts([]);
-      setVisibleSuggestions([]);
-      return;
-    }
-  
-    api.get(`products/${backendCategory}/`)
-      .then(res => {
-        console.log("Réponse API produits suggérés :", res.data);
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          setProducts(res.data);
-          setVisibleSuggestions(res.data.slice(0, 4));
-          console.log("Suggestions visibles :", res.data.slice(0, 4));
-        } else {
-          console.warn("La liste des produits suggérés est vide !");
-          setProducts([]);
-          setVisibleSuggestions([]);
-        }
+    if (!category) return;
+
+    const cat = categoryMap[category];
+    console.log("Catégorie pour produits suggérés :", cat);
+
+    api.get(`products?category=${cat}`)
+      .then((res) => {
+        console.log("Produits suggérés reçus :", res.data);
+        const filtered = res.data.filter(p => p.id !== Number(id));
+        console.log("Produits suggérés après filtrage :", filtered);
+        setSuggestedProducts(filtered);
       })
-      .catch(err => {
-        console.error("Erreur lors du chargement des produits suggérés :", err);
-        setProducts([]);
-        setVisibleSuggestions([]);
+      .catch((err) => {
+        console.error("Erreur lors de la récupération des produits suggérés :", err);
       });
-  }, [category, cartCode]);
-  
-  
-  // Ajout au panier
+  }, [category, id]);
+
   const addToCart = () => {
     if (!product) return;
 
@@ -158,7 +132,6 @@ const ProductDetail = () => {
       });
   };
 
-  // Gestion des favoris
   const toggleFavorite = (productId) => {
     const updated = { ...favorites, [productId]: !favorites[productId] };
     setFavorites(updated);
@@ -168,28 +141,9 @@ const ProductDetail = () => {
     setTimeout(() => setLikeMessage(''), 2000);
   };
 
-  // Gestion suggestions suivante/précédente
-  const handleNext = () => {
-    setVisibleSuggestions(prev => [...prev.slice(1), prev[0]]);
-    console.log("Suggestion suivante");
-  };
-
-  const handlePrev = () => {
-    setVisibleSuggestions(prev => [prev[prev.length - 1], ...prev.slice(0, -1)]);
-    console.log("Suggestion précédente");
-  };
-
-  // Navigation client-side vers la page produit depuis une suggestion
-  const handleSuggestionClick = (productId) => {
-    console.log("Suggestion cliquée, navigation vers produit :", productId);
-    navigate(`/produit/${productId}`);
-  };
-
   if (!product) return <div>Chargement...</div>;
 
   const priceFormatted = Number(product.price).toFixed(2);
-
-  console.log("visibleSuggestions:", visibleSuggestions);
 
   return (
     <div className="product-detail-container">
@@ -272,45 +226,34 @@ const ProductDetail = () => {
         </div>
       </div>
 
-      {/* Section produits suggérés */}
-      <div className="suggested-products-section">
-        <h3>VOUS ALLEZ ADORER ÇA</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* Bouton précédent */}
-          <PreviousButton onClick={handlePrev} />
-          {/* Liste des suggestions visibles */}
-          <div
-            className="suggested-products-list"
-            style={{ display: 'flex', overflow: 'hidden', gap: '10px', flexGrow: 1 }}
-          >
-            {visibleSuggestions.map((item) => (
+      <div className="suggested-products-section" style={{ marginTop: '2rem' }}>
+        <h3>Produits suggérés</h3>
+        {suggestedProducts.length === 0 ? (
+          <p>Aucun produit suggéré disponible.</p>
+        ) : (
+          <div className="suggested-products-list" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            {suggestedProducts.map((p) => (
               <div
-                key={item.id}
+                key={p.id}
                 className="suggested-product-card"
-                style={{
-                  flex: '0 0 calc(25% - 10px)', // 4 produits par ligne
-                  border: '1px solid #ccc',
-                  padding: '10px',
-                  boxSizing: 'border-box',
-                  cursor: 'pointer',
-                }}
+                style={{ border: '1px solid #ccc', padding: '1rem', width: '150px', cursor: 'pointer' }}
                 onClick={() => {
-                  console.log("Suggestion cliquée :", item);
-                  // Ici tu peux rediriger vers ce produit, par ex via react-router :
-                  window.location.href = `/produit/${item.id}`;
-                  
+                  console.log("Produit suggéré cliqué :", p.id);
+                  navigate(`/product/${p.id}/${category}`);
                 }}
               >
-                <img src={item.image} alt={item.name} style={{ width: '100%', height: 'auto' }} />
-                <p style={{ margin: '5px 0' }}>{item.name}</p>
-                <p style={{ fontWeight: 'bold' }}>{item.price.toFixed(2)}€</p>
+                <img
+                  src={`http://127.0.0.1:8001${p.image}`}
+                  alt={p.name}
+                  style={{ width: '100%', height: '100px', objectFit: 'cover' }}
+                  onError={(e) => { e.target.src = "/default-image.jpg"; }}
+                />
+                <p style={{ marginTop: '0.5rem', fontWeight: 'bold' }}>{p.name}</p>
+                <p>{Number(p.price).toFixed(2)} €</p>
               </div>
             ))}
           </div>
-
-          {/* Bouton suivant */}
-          <NextButton onClick={handleNext} ></NextButton>
-        </div>
+        )}
       </div>
     </div>
   );

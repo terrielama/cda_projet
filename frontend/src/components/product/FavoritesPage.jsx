@@ -56,7 +56,7 @@ const FavoritesPage = () => {
     Promise.all(
       likedIds.map((id) =>
         api
-          .get(`products/detail/${id}/`)
+          .get(`product/${id}/`)
           .then((res) => res.data)
           .catch(() => null)
       )
