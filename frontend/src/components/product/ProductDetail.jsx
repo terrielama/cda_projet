@@ -1,315 +1,274 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import images from '../../importImages.js';
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom'; // Import useNavigate pour navigation client-side
 import axios from 'axios';
 import AddButton2 from "./AddButton2.jsx";
+import PreviousButton from "./PreviousButton.jsx";
 import NextButton from "./NextButton.jsx";
-import PreviousButton from './PreviousButton.jsx';
 
-// Création de l'instance Axios
 const api = axios.create({
   baseURL: "http://127.0.0.1:8001/",
 });
 
+const categoryMap = {
+  planche: "Boards",
+  trucks: "Trucks",
+  grips: "Grips",
+  roues: "Roues",
+  sweats: "Sweats",
+  chaussures: "Chaussures",
+  bonnets: "Bonnets",
+  ceintures: "Ceintures",
+};
+
+function generateRandomAlphanumeric(length = 10) {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  return Array.from({ length }, () => characters[Math.floor(Math.random() * characters.length)]).join('');
+}
+
+const getFavoritesFromStorage = () => {
+  const stored = localStorage.getItem('favorites');
+  return stored ? JSON.parse(stored) : {};
+};
+
+const saveFavoritesToStorage = (favorites) => {
+  localStorage.setItem('favorites', JSON.stringify(favorites));
+};
+
 const ProductDetail = () => {
-  const { productId } = useParams();
+  const { id, category } = useParams();
+  const navigate = useNavigate(); // Hook React Router pour la navigation
   const [product, setProduct] = useState(null);
-  const [quantity, setQuantity] = useState(1);
-  const [size, setSize] = useState(8.25);
-  const [showDetails, setShowDetails] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [inCart, setInCart] = useState({});
   const [message, setMessage] = useState('');
-  const [cartCode, setCartCode] = useState('');
-  const [inCart, setInCart] = useState(false);
-  const [suggestionIndex, setSuggestionIndex] = useState(0);
+  const [likeMessage, setLikeMessage] = useState('');
+  const [favorites, setFavorites] = useState(getFavoritesFromStorage());
+  const [quantity, setQuantity] = useState(1);
+  const [size, setSize] = useState('');
+  const [showDetails, setShowDetails] = useState(false);
+  const [visibleSuggestions, setVisibleSuggestions] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
 
-
-  // Simule les produits — à remplacer par une API réelle plus tard
-  const fetchedProducts  = [
-    {
-      id: 1,
-      name: 'Board ENJOY - KITTEN RIPPER HYBRID - 8.25',
-      price: 65.00,
-      image: images['enjoykitten.jpg'],
-      description: 'Une planche de qualité supérieure pour les skateurs passionnés.',
-      sizes: [8.25, 8.375],
-    },
-    {
-      id: 2,
-      name: 'Board ELEMENT - SWXE X WING - 7.75',
-      price: 69.00,
-      image: images['almost.jpg'],
-      description: 'Planche ELEMENT pour performance et style.',
-      sizes: [7.75, 8.25],
-    },
-    {
-      id: 3,
-      name: 'Board ALMOST - GRADIENT RINGS - 8.25',
-      price: 75.00,
-      image: images['chocolate.jpg'],
-      description: 'Planche ALMOST avec design Gradient Rings.',
-      sizes: [8.25, 8.5],
-    },
-    {
-      id: 4,
-      name: 'Board Chocolate - Lifted Chunk Roberts',
-      price: 80.00,
-      image: images['girlspike.jpg'],
-      description: 'Planche Chocolate robuste et stylée.',
-      sizes: [8.25, 8.375],
-    },
-    {
-      id: 5,
-      name: 'Board Girl - Spike Jonze Photo Series 2.0 Kim Deal',
-      price: 85.00,
-      image: images['almost.jpg'],
-      description: 'Planche Girl avec photo série spéciale Kim Deal.',
-      sizes: [8.25, 8.375],
-    },
-    {
-      id: 6,
-      name: 'Board Magenta - Brush Team Board',
-      price: 60.00,
-      image: images['magenta.jpg'],
-      description: 'Planche Magenta avec design artistique unique.',
-      sizes: [7.75, 8.25],
-    },
-    {
-      id: 7,
-      name: 'Board Baker Brand Logo Black',
-      price: 90.00,
-      image: images['baker.jpg'],
-      description: 'Planche Baker avec logo classique en noir.',
-      sizes: [8.25, 8.5],
-    },
-    {
-      id: 8,
-      name: 'Board Krooked - Team Staten Slick',
-      price: 80.00,
-      image: images['krooked.jpg'],
-      description: 'Planche Krooked pour le team Staten.',
-      sizes: [7.75, 8.0, 8.25],
-    },
-    {
-      id: 9,
-      name: 'Board Poetic Collective - Earth',
-      price: 70.00,
-      image: images['poeticcollective.jpg'],
-      description: 'Planche Poetic Collective Earth Edition.',
-      sizes: [8.25, 8.375],
-    },
-    {
-      id: 10,
-      name: 'Board Polar - Everything Is Normal C',
-      price: 80.00,
-      image: images['polar.jpg'],
-      description: 'Planche Polar avec un design “Everything Is Normal”.',
-      sizes: [8.25, 8.375],
-    },
-    {
-      id: 11,
-      name: 'Board Quasi De Keyzer Mental',
-      price: 110.00,
-      image: images['quasi.jpg'],
-      description: 'Planche Quasi avec design mental unique.',
-      sizes: [8.25, 8.5],
-    },
-    {
-      id: 12,
-      name: 'Board Rassvet - Titaev Pro F24',
-      price: 89.00,
-      image: images['rassvet.jpg'],
-      description: 'Planche Rassvet édition Titaev Pro F24.',
-      sizes: [8.0, 8.25, 8.375],
-    },
-    {
-      id: 13,
-      name: 'Sweatshirt Obey massive graphic',
-      price: 174.99,
-      image: images['obey.jpg'],
-      description: 'Sweat-shirt Obey avec graphisme massif.',
-      sizes: ['S', 'M', 'L'],
-    },
-  ];
-
-  
-
-  // Récupère les détails du produit à l'initialisation
-  useEffect(() => {
-    const code = localStorage.getItem("cart_code");
+  const [cartCode] = useState(() => {
+    let code = localStorage.getItem("cart_code");
     if (!code) {
-      console.warn("Aucun cart_code détecté !");
+      code = generateRandomAlphanumeric();
+      localStorage.setItem("cart_code", code);
     }
-    setCartCode(code);
+    console.log("Cart code utilisé :", code);
+    return code;
+  });
 
-    const foundProduct = fetchedProducts.find(p => p.id === parseInt(productId));
-    if (foundProduct) {
-      console.log("Produit trouvé :", foundProduct);
-      setProduct(foundProduct);
-      setSize(foundProduct.sizes[0]);
-      setSuggestionIndex(0);  // reset index suggestions à chaque nouveau produit affiché
+  // Chargement du produit en fonction de l'ID
+  useEffect(() => {
+    if (!id) return;
 
-      if (code) {
-        api.get(`product_in_cart?cart_code=${code}&product_id=${foundProduct.id}`)
-          .then(res => {
-            if (res.data.product_in_cart) {
-              setInCart(true);
-              console.log(`Produit ID ${foundProduct.id} est déjà dans le panier`);
-            } else {
-              console.log(`Produit ID ${foundProduct.id} n'est pas encore dans le panier`);
-            }
-          })
-          .catch(err => {
-            console.error("Erreur vérification panier :", err);
-          });
-      }
-    } else {
-      console.warn("Produit introuvable pour l'ID :", productId);
+    console.log("Chargement du produit avec ID :", id);
+
+    api.get(`product/${id}/`)
+      .then((res) => {
+        setProduct(res.data);
+        console.log("Produit récupéré :", res.data);
+        if (Array.isArray(res.data.sizes) && res.data.sizes.length > 0) {
+          setSize(res.data.sizes[0]);
+          console.log("Taille sélectionnée par défaut :", res.data.sizes[0]);
+        } else {
+          setSize('');
+          console.log("Aucune taille disponible pour ce produit");
+        }
+      })
+      .catch((err) => {
+        setProduct(null);
+        console.error("Erreur lors de la récupération du produit :", err);
+      });
+  }, [id]);
+
+  // Chargement des produits suggérés par catégorie
+  useEffect(() => {
+    console.log("Category dans useEffect suggestions :", category);
+    if (!category) {
+      console.warn("La catégorie est vide ou non définie");
+      setProducts([]);
+      setVisibleSuggestions([]);
+      return;
     }
-  }, [productId]);
-
-
-    // const handleSizeChange = (productId, size) => {
-    //   setSelectedSizes(prev => ({ ...prev, [productId]: size }));
-    //   console.log(`Taille sélectionnée pour le produit ${productId} :`, size);
-    // };
   
-    // const add_item = (product_id) => {
-    //   const selectedSize = selectedSizes[product_id];
+    const backendCategory = categoryMap[category.toLowerCase()];
+    console.log("Catégorie front:", category, "→ backend:", backendCategory);
   
-    //   if (!selectedSize) {
-    //     alert("Veuillez sélectionner une taille !");
-    //     console.warn("Taille manquante pour le produit :", product_id);
-    //     return;
-    //   }
+    if (!backendCategory) {
+      console.warn("Catégorie backend non trouvée pour :", category);
+      setProducts([]);
+      setVisibleSuggestions([]);
+      return;
+    }
+  
+    api.get(`products/${backendCategory}/`)
+      .then(res => {
+        console.log("Réponse API produits suggérés :", res.data);
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setProducts(res.data);
+          setVisibleSuggestions(res.data.slice(0, 4));
+          console.log("Suggestions visibles :", res.data.slice(0, 4));
+        } else {
+          console.warn("La liste des produits suggérés est vide !");
+          setProducts([]);
+          setVisibleSuggestions([]);
+        }
+      })
+      .catch(err => {
+        console.error("Erreur lors du chargement des produits suggérés :", err);
+        setProducts([]);
+        setVisibleSuggestions([]);
+      });
+  }, [category, cartCode]);
+  
+  
+  // Ajout au panier
+  const addToCart = () => {
+    if (!product) return;
 
+    console.log("Ajout au panier :", {
+      cart_code: cartCode,
+      item_id: product.id,
+      quantity,
+      size
+    });
 
-  // -- Gestion ajout au panier
-  const handleAddToCart = () => {
-    if (!cartCode || !product) {
-      console.error("Impossible d'ajouter : cartCode ou produit manquant");
-      setMessage("Erreur : panier ou produit non défini.");
+    if (Array.isArray(product.sizes) && product.sizes.length > 0 && !size) {
+      setMessage("Veuillez sélectionner une taille.");
+      console.warn("Ajout au panier annulé : taille non sélectionnée");
       return;
     }
 
-    const newItem = {
+    api.post("add_item", {
       cart_code: cartCode,
       item_id: product.id,
-      quantity: quantity,
-      size: size,
-    };
-
-    console.log("Ajout du produit au panier :", newItem);
-
-    api.post("add_item", newItem)
-      .then(res => {
-        console.log("Réponse ajout :", res.data);
+      quantity,
+      size,
+    })
+      .then(() => {
         setMessage("Produit ajouté au panier !");
-        setInCart(true);
+        setInCart(prev => ({ ...prev, [product.id]: true }));
+        console.log("Produit ajouté avec succès !");
       })
       .catch(err => {
-        console.error("Erreur ajout :", err.response ? err.response.data : err.message);
         setMessage("Erreur lors de l'ajout au panier.");
+        console.error("Erreur ajout panier :", err);
       });
+  };
+
+  // Gestion des favoris
+  const toggleFavorite = (productId) => {
+    const updated = { ...favorites, [productId]: !favorites[productId] };
+    setFavorites(updated);
+    saveFavoritesToStorage(updated);
+    setLikeMessage(updated[productId] ? "Produit liké !" : "Produit retiré des favoris.");
+    console.log("Favoris mis à jour :", updated);
+    setTimeout(() => setLikeMessage(''), 2000);
+  };
+
+  // Gestion suggestions suivante/précédente
+  const handleNext = () => {
+    setVisibleSuggestions(prev => [...prev.slice(1), prev[0]]);
+    console.log("Suggestion suivante");
+  };
+
+  const handlePrev = () => {
+    setVisibleSuggestions(prev => [prev[prev.length - 1], ...prev.slice(0, -1)]);
+    console.log("Suggestion précédente");
+  };
+
+  // Navigation client-side vers la page produit depuis une suggestion
+  const handleSuggestionClick = (productId) => {
+    console.log("Suggestion cliquée, navigation vers produit :", productId);
+    navigate(`/produit/${productId}`);
   };
 
   if (!product) return <div>Chargement...</div>;
 
-  // Filtrer les suggestions : exclure le produit affiché
-  const filteredSuggestions = fetchedProducts.filter(p => p.id !== product.id);
-  console.log("Produits suggérés (filtrés) :", filteredSuggestions);
+  const priceFormatted = Number(product.price).toFixed(2);
 
-  // Nombre de produits affichés simultanément
-  const PRODUCTS_TO_SHOW = 5;
-
-  // Calculer la tranche visible en fonction de suggestionIndex
-  // Boucle circulaire sur filteredSuggestions
-  const endIndex = suggestionIndex + PRODUCTS_TO_SHOW;
-  let visibleSuggestions = [];
-
-  if (endIndex <= filteredSuggestions.length) {
-    visibleSuggestions = filteredSuggestions.slice(suggestionIndex, endIndex);
-  } else {
-    // Si dépasse la fin, on boucle au début
-    visibleSuggestions = filteredSuggestions.slice(suggestionIndex).concat(
-      filteredSuggestions.slice(0, endIndex - filteredSuggestions.length)
-    );
-  }
-  console.log("Suggestions visibles :", visibleSuggestions);
-
-  // Handlers pour les boutons précédent / suivant
-  const handlePrev = () => {
-    // Décale vers la gauche avec boucle circulaire
-    setSuggestionIndex((prevIndex) => {
-      const newIndex = prevIndex - PRODUCTS_TO_SHOW;
-      return newIndex < 0 ? filteredSuggestions.length + newIndex : newIndex;
-    });
-    console.log("Bouton précédent cliqué, nouvel index :", suggestionIndex);
-  };
-
-  const handleNext = () => {
-    const newIndex = (suggestionIndex + PRODUCTS_TO_SHOW) % filteredSuggestions.length;
-    setSuggestionIndex(newIndex);
-    console.log("Bouton suivant cliqué, nouvel index :", newIndex);
-  };
-  
+  console.log("visibleSuggestions:", visibleSuggestions);
 
   return (
     <div className="product-detail-container">
       <div className="product-detail-content">
-        {/* Image produit */}
         <div className="product-image">
-          <img src={product.image} alt={product.name} className="img-fluid" />
+          <img
+            src={`http://127.0.0.1:8001${product.image}`}
+            alt={product.name}
+            className="img-fluid"
+            onError={(e) => { e.target.src = "/default-image.jpg"; }}
+          />
         </div>
 
-        {/* Infos produit */}
         <div className="product-detail-info">
           <h2 className="product-detail-title">{product.name}</h2>
-          <p className="product-detail-price">{product.price.toFixed(2)}€</p>
 
-          {/* Sélecteur de taille */}
           <div className="product-detail-size-selector">
-           
             <div className="size-buttons">
-               <p>Taille :</p>
-              {product.sizes.map((s, index) => (
-                <button
-                  key={index}
-                  className={`size-button ${size === s ? 'selected' : ''}`}
-                  onClick={() => setSize(s)}
-                >
-                  {s}
-                </button>
-              ))}
+              <p>Taille :</p>
+              {Array.isArray(product.sizes) && product.sizes.length > 0 ? (
+                product.sizes.map((s, index) => (
+                  <button
+                    key={index}
+                    className={`size-button ${size === s ? 'selected' : ''}`}
+                    onClick={() => {
+                      setSize(s);
+                      console.log("Taille sélectionnée :", s);
+                    }}
+                  >
+                    {s}
+                  </button>
+                ))
+              ) : (
+                <p>Aucune taille disponible</p>
+              )}
             </div>
           </div>
 
-          {/* Sélecteur de quantité */}
           <div className="product-detail-quantity-selector">
             <p>Quantité :</p>
             <div className="quantity-controls">
-              <button onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
+              <button onClick={() => {
+                const newQty = Math.max(1, quantity - 1);
+                setQuantity(newQty);
+                console.log("Quantité réduite à :", newQty);
+              }}>-</button>
               <input
                 type="number"
                 value={quantity}
                 min="1"
-                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 1;
+                  setQuantity(val);
+                  console.log("Quantité saisie :", val);
+                }}
               />
-              <button onClick={() => setQuantity(quantity + 1)}>+</button>
-            
-            <AddButton2 className="add-to-cart-button" onClick={handleAddToCart}>
-              {inCart ? "Déjà dans le panier" : "Ajouter au panier"}
-            </AddButton2>
+              <button onClick={() => {
+                const newQty = quantity + 1;
+                setQuantity(newQty);
+                console.log("Quantité augmentée à :", newQty);
+              }}>+</button>
+
+              <AddButton2 className="add-to-cart-button" onClick={addToCart}>
+                {inCart[product.id] ? "Déjà dans le panier" : "Ajouter au panier"}
+              </AddButton2>
             </div>
           </div>
 
-          {/* Détails supplémentaires */}
-          <button className="toggle-details-button" onClick={() => setShowDetails(!showDetails)}>
+          <button className="toggle-details-button" onClick={() => {
+            setShowDetails(!showDetails);
+            console.log("Toggle détails produit :", !showDetails);
+          }}>
             {showDetails ? "Masquer les détails" : "Détails du produit"}
           </button>
+
           {showDetails && <p className="product-detail-description">{product.description}</p>}
 
-          {/* Message de succès ou erreur */}
           {message && <div className="success-message">{message}</div>}
+          {likeMessage && <div className="like-message">{likeMessage}</div>}
         </div>
       </div>
 

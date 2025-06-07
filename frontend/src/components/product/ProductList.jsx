@@ -42,7 +42,6 @@ const ProductList = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [query, setQuery] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
   const [products, setProducts] = useState([]);
   const [message, setMessage] = useState('');
   const [inCart, setInCart] = useState({});
@@ -93,20 +92,6 @@ const ProductList = () => {
       });
   }, [category, cartCode, query]);
 
-  useEffect(() => {
-    if (query.length < 2) {
-      setSuggestions([]);
-      return;
-    }
-    const delayDebounceFn = setTimeout(() => {
-      api.get(`/search_products/`, { params: { search: query } })
-        .then((res) => {
-          setSuggestions(res.data);
-        });
-    }, 300);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [query]);
 
   const add_item = (product_id) => {
     api.post("add_item", {
@@ -153,14 +138,6 @@ const ProductList = () => {
     navigate(`/produit/${productId}`);
   };
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    api.get(`/search_products/`, { params: { search: query } })
-      .then((res) => {
-        setProducts(res.data);
-        setSuggestions([]);
-      });
-  };
 
   return (
     <div className="container-product">
