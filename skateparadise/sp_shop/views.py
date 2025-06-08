@@ -13,6 +13,7 @@ from rest_framework.exceptions import NotFound
 import traceback
 from django.db.models import Q
 import random
+from django.db.models import F
 
 
 #----- View pour creer un user (Register) ------
@@ -85,7 +86,6 @@ def add_item(request):
     size = request.data.get('size')
     cart_code = request.data.get('cart_code')
 
-    # Vérification des champs requis
     if not item_id:
         return Response({'error': "L'ID du produit est requis."}, status=400)
     if not size:
@@ -93,40 +93,40 @@ def add_item(request):
 
     try:
         quantity = int(request.data.get('quantity', 1))
+        if quantity <= 0:
+            raise ValueError
     except (TypeError, ValueError):
         return Response({'error': 'Quantité invalide.'}, status=400)
 
-    # Récupérer ou créer le panier
     if request.user.is_authenticated:
         cart, _ = Cart.objects.get_or_create(user=request.user, paid=False)
     else:
         if not cart_code:
             return Response({'error': 'cart_code requis pour les utilisateurs non connectés'}, status=400)
-
-        # Récupère le panier si cart_code existe déjà, sinon le crée
-        cart = Cart.objects.filter(cart_code=cart_code).first()
+        cart = Cart.objects.filter(cart_code=cart_code, paid=False).first()
         if not cart:
             cart = Cart.objects.create(cart_code=cart_code, user=None, paid=False)
 
-    # Vérifie que le produit existe
     try:
         product = Product.objects.get(id=item_id)
     except Product.DoesNotExist:
         return Response({'error': 'Produit non trouvé.'}, status=404)
 
-    # Vérifie si le produit (avec la même taille) est déjà dans le panier
-    cart_item, created = CartItem.objects.get_or_create(
-        cart=cart,
-        product=product,
-        size=size,
-        defaults={'quantity': quantity}
-    )
+    existing_item = CartItem.objects.filter(cart=cart, product=product, size=size).first()
+    already_in_cart_qty = existing_item.quantity if existing_item else 0
+    total_requested = already_in_cart_qty + quantity
 
-    if not created:
-        cart_item.quantity += quantity
-        cart_item.save()
+    if total_requested > product.stock:
+        return Response({'error': f'Stock insuffisant : {product.stock} disponible, {total_requested} demandé.'}, status=400)
+
+    if existing_item:
+        existing_item.quantity = total_requested
+        existing_item.save()
+    else:
+        CartItem.objects.create(cart=cart, product=product, size=size, quantity=quantity)
 
     return Response({'message': 'Item ajouté au panier.'}, status=200)
+
 
 # ----- Vérifier si un produit est dans le panier -----
 
@@ -146,16 +146,20 @@ def product_in_cart(request):
         elif cart_code:
             cart = Cart.objects.filter(cart_code=cart_code, user=None, paid=False).first()
         else:
-            return Response({'product_in_cart': False})
+            return Response({'quantity': 0})
 
         if not cart:
-            return Response({'product_in_cart': False})
+            return Response({'quantity': 0})
 
-        exists = CartItem.objects.filter(cart=cart, product=product).exists()
-        return Response({'product_in_cart': exists})
-    
+        cart_item = CartItem.objects.filter(cart=cart, product=product).first()
+        if cart_item:
+            return Response({'quantity': cart_item.quantity})
+        else:
+            return Response({'quantity': 0})
+
     except Product.DoesNotExist:
-        return Response({'product_in_cart': False})
+        return Response({'quantity': 0})
+
 
 
 
@@ -295,43 +299,31 @@ def remove_item(request):
 @api_view(["POST"])
 def create_order(request):
     cart_code = request.data.get('cart_code')
-    print(f"Création de la commande pour cart_code: {cart_code}")
-
     if not cart_code:
-        return JsonResponse({"error": "Code de panier manquant"}, status=400)
+        return Response({"error": "Code de panier manquant"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
         cart = Cart.objects.get(cart_code=cart_code)
-        print(f"Panier trouvé avec {cart.cart_items.count()} articles")
+        order = Order.objects.create(cart=cart, user=request.user if request.user.is_authenticated else None)
 
-        if request.user.is_authenticated:
-            order = Order.objects.create(cart=cart, user=request.user)
-            print(f"Commande créée avec user id={request.user.id}")
-        else:
-            order = Order.objects.create(cart=cart)
-            print("Commande créée pour invité")
-
-        # Création des OrderItem à partir des CartItem liés au panier
         for item in cart.cart_items.all():
-            print(f"Ajout de l'article {item.product.name} x {item.quantity}")
-            order_item = OrderItem.objects.create(
-                order=order,
-                product=item.product,
-                quantity=item.quantity,
-                price=item.product.price
-            )
-            print(f"OrderItem créé : {order_item}")
+            product = item.product
+            if product.stock >= item.quantity:
+                # Décrémenter le stock de manière atomique
+                product.stock = F('stock') - item.quantity
+                product.save()
+                OrderItem.objects.create(order=order, product=product, quantity=item.quantity, price=product.price)
+            else:
+                # Si le stock est insuffisant, marquer le produit comme non disponible
+                product.available = False
+                product.save()
 
-        print("Tous les articles ont été ajoutés à la commande.")
-        return JsonResponse({"message": "Commande créée avec succès", "order_id": order.id})
-    
+        return Response({"message": "Commande créée avec succès", "order_id": order.id}, status=status.HTTP_201_CREATED)
+
     except Cart.DoesNotExist:
-        print("Panier non trouvé")
-        return JsonResponse({"error": "Panier non trouvé"}, status=404)
-    
+        return Response({"error": "Panier non trouvé"}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        print(f"Erreur lors de la création de la commande : {e}")
-        return JsonResponse({"error": str(e)}, status=500)
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # --------------- Assossier commande a un user ------------
 @api_view(['POST'])

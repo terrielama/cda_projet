@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AddButton from "./AddButton.jsx";
 import LikeButton from './LikeButton.jsx';
 
+// Instance axios avec baseURL
 const api = axios.create({
   baseURL: "http://127.0.0.1:8001/",
 });
 
+// Correspondance catégories URL → backend
 const categoryMap = {
   planche: "Boards",
   trucks: "Trucks",
@@ -19,20 +21,19 @@ const categoryMap = {
   ceintures: "Ceintures",
 };
 
+// Génération d'un code alphanumérique aléatoire (pour cart_code)
 function generateRandomAlphanumeric(length = 10) {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return result;
+  return Array.from({ length }, () =>
+    characters.charAt(Math.floor(Math.random() * characters.length))
+  ).join('');
 }
 
+// Lecture / écriture des favoris dans localStorage
 const getFavoritesFromStorage = () => {
   const stored = localStorage.getItem('favorites');
   return stored ? JSON.parse(stored) : {};
 };
-
 const saveFavoritesToStorage = (favorites) => {
   localStorage.setItem('favorites', JSON.stringify(favorites));
 };
@@ -40,7 +41,7 @@ const saveFavoritesToStorage = (favorites) => {
 const ProductList = () => {
   const { category } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
+
   const [query, setQuery] = useState('');
   const [products, setProducts] = useState([]);
   const [message, setMessage] = useState('');
@@ -48,100 +49,111 @@ const ProductList = () => {
   const [favorites, setFavorites] = useState(getFavoritesFromStorage());
   const [likeMessage, setLikeMessage] = useState('');
 
+  // 🛒 Cart code unique en localStorage
   const [cartCode] = useState(() => {
     let code = localStorage.getItem("cart_code");
     if (!code) {
       code = generateRandomAlphanumeric();
       localStorage.setItem("cart_code", code);
+      console.log("🔐 Nouveau cart_code généré :", code);
+    } else {
+      console.log("✅ cart_code existant :", code);
     }
     return code;
   });
 
+  // 🔁 Récupère les quantités pour la liste des produits, appelé uniquement quand produits changent
+  const fetchCartQuantities = async (productsList) => {
+    const updated = {};
+    await Promise.all(
+      productsList.map(async (product) => {
+        try {
+          const response = await api.get(`product_in_cart?cart_code=${cartCode}&product_id=${product.id}`);
+          updated[product.id] = response.data.quantity || 0;
+        } catch (error) {
+          console.warn(`Erreur récupération quantité produit ${product.id} :`, error);
+          updated[product.id] = 0; // fallback
+        }
+      })
+    );
+    setInCart(updated);
+  };
+
+  // 🧲 Récupération produits à l’affichage au chargement / changement catégorie ou recherche
   useEffect(() => {
     if (!category) return;
 
     const backendCategory = categoryMap[category.toLowerCase()];
     if (!backendCategory) {
+      console.warn("Catégorie inconnue :", category);
       setProducts([]);
       return;
     }
 
-    console.log("Chargement produits pour catégorie :", backendCategory);
-    console.log("Recherche active :", query);
-
-    api.get(`products/${backendCategory}/`, {
-      params: { search: query }
-    })
+    api.get(`products/${backendCategory}/`, { params: { search: query } })
       .then(res => {
         setProducts(res.data);
-        console.log("Produits récupérés :", res.data);
-
-        res.data.forEach(product => {
-          api.get(`product_in_cart?cart_code=${cartCode}&product_id=${product.id}`)
-            .then(response => {
-              if (response.data.product_in_cart) {
-                setInCart(prev => ({ ...prev, [product.id]: true }));
-              }
-            })
-            .catch(() => {});
-        });
+        fetchCartQuantities(res.data);  // Mise à jour quantités panier
       })
-      .catch((err) => {
-        console.error("Erreur lors de la récupération des produits :", err);
+      .catch(err => {
+        console.error("Erreur récupération produits :", err);
         setProducts([]);
       });
-  }, [category, cartCode, query]);
+  }, [category, query, cartCode]);
 
+  // ➕ Ajout produit au panier + MAJ locale et gestion stock
+  const add_item = async (product_id) => {
+    const currentQty = inCart[product_id] || 0;
+    const product = products.find(p => p.id === product_id);
+    if (!product) return;
 
-  const add_item = (product_id) => {
-    api.post("add_item", {
-      cart_code: cartCode,
-      item_id: product_id,
-      quantity: 1,
-      size: "8.25",
-    })
-      .then(() => {
-        setMessage("Produit ajouté au panier !");
-        setInCart(prev => ({ ...prev, [product_id]: true }));
-      })
-      .catch(() => {
-        setMessage("Erreur lors de l'ajout au panier.");
+    if (currentQty >= Number(product.stock)) {
+      setMessage(`Stock épuisé pour ${product.name}`);
+      return;
+    }
+
+    try {
+      await api.post("add_item", {
+        cart_code: cartCode,
+        item_id: product_id,
+        quantity: 1,
+        size: "8.25",
       });
+
+      // MAJ immédiate locale pour que UI reflète l'état stock
+      setInCart(prev => ({
+        ...prev,
+        [product_id]: (prev[product_id] || 0) + 1,
+      }));
+
+      setMessage("Produit ajouté au panier !");
+    } catch (error) {
+      setMessage("Produit indisponible ou stock épuisé.");
+    }
   };
 
   const handleProductClick = (productId) => {
     navigate(`/produit/${productId}`);
   };
 
+  // Gestion favoris localStorage
   const toggleFavorite = (productId) => {
     const updatedFavorites = {
       ...favorites,
-      [productId]: !favorites[productId]
+      [productId]: !favorites[productId],
     };
     setFavorites(updatedFavorites);
     saveFavoritesToStorage(updatedFavorites);
 
-    if (updatedFavorites[productId]) {
-      console.log(`Produit ${productId} liké 👍`);
-      setLikeMessage(`Vous avez aimé le produit ${productId} !`);
-    } else {
-      console.log(`Produit ${productId} unliké 👎`);
-      setLikeMessage(`Vous avez retiré le like du produit ${productId}.`);
-    }
+    setLikeMessage(updatedFavorites[productId]
+      ? `Vous avez aimé le produit ${productId} !`
+      : `Vous avez retiré le like du produit ${productId}.`);
 
-    setTimeout(() => {
-      setLikeMessage('');
-    }, 2000);
+    setTimeout(() => setLikeMessage(''), 2000);
   };
-
-  const handleSuggestionClick = (productId) => {
-    navigate(`/produit/${productId}`);
-  };
-
 
   return (
     <div className="container-product">
-
       {message && <div className="alert success">{message}</div>}
       {likeMessage && <div className="alert info">{likeMessage}</div>}
 
@@ -149,8 +161,11 @@ const ProductList = () => {
         {products.length === 0 && <p className="no-product">Aucun produit trouvé pour cette catégorie.</p>}
 
         {products.map(product => {
-          const priceNumber = Number(product.price);
-          const priceFormatted = isNaN(priceNumber) ? "N/A" : priceNumber.toFixed(2);
+          const price = Number(product.price);
+          const formattedPrice = isNaN(price) ? "N/A" : price.toFixed(2);
+
+          const quantityInCart = inCart[product.id] || 0;
+          const isOutOfStock = quantityInCart >= Number(product.stock);
 
           return (
             <div key={product.id} className="card-wrapper">
@@ -160,16 +175,19 @@ const ProductList = () => {
                   alt={product.name}
                   className="card-img-top"
                   onClick={() => handleProductClick(product.id)}
+                  style={{ cursor: 'pointer' }}
                 />
                 <div className="card-body">
                   <h5 className="card-title">{product.name}</h5>
-                  <p className="card-price">{priceFormatted}€</p>
+                  <p className="card-price">{formattedPrice}€</p>
 
                   <AddButton
                     onClick={() => add_item(product.id)}
-                    disabled={inCart[product.id]}
+                    disabled={isOutOfStock}
+                    title={isOutOfStock ? "Rupture de stock" : undefined}
+                    outOfStock={isOutOfStock}
                   >
-                    {inCart[product.id] ? 'Déjà dans le panier' : 'Ajouter au panier'}
+                    {isOutOfStock ? 'Article épuisé' : 'Ajouter au panier'}
                   </AddButton>
 
                   <LikeButton

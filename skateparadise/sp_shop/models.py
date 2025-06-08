@@ -74,7 +74,14 @@ class Product(models.Model):
 
         super().save(*args, **kwargs)
 
-
+    def decrement_stock(self, quantity):
+        if self.stock >= quantity:
+            self.stock -= quantity
+            if self.stock == 0:
+                self.available = False
+            self.save()
+        else:
+            raise ValueError("Stock insuffisant pour ce produit.")
 
 
 

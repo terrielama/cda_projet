@@ -12,6 +12,7 @@ import OrderConfirmation from "./components/order/OrderConfirmation.jsx";
 // import { CartProvider } from "./components/context/CartContext.jsx";
 import ProductDetail from './components/product/ProductDetail.jsx';
 import FavoritesPage from "./components/product/FavoritesPage.jsx";
+import Loader from "./components/Loader.jsx";
 
 const App = () => {
   return (
@@ -21,6 +22,7 @@ const App = () => {
             <Route element={<MainLayout />}>
               <Route path="/" element={<Home />} />
               <Route path="/panier" element={<Cart />} />
+              <Route path="/loader" element={<Loader />} />
               <Route path="produits/:category" element={<ProductList />} />
               <Route path="/commande/:orderId" element={<Order />} />
               <Route path="/connexion" element={<SignInForm />} />

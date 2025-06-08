@@ -1,46 +1,128 @@
 import React from 'react';
+import styled from 'styled-components';
 
 const Loader = () => {
   return (
-    <div style={styles.container}>
-      <div style={styles.spinner}></div>
-      <p style={styles.text}>Chargement...</p>
-
-      {/* Animation spin intégrée ici */}
-      <style>
-        {`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}
-      </style>
-    </div>
+    <StyledWrapper>
+      <div className="loader">
+        <div className="bar1" />
+        <div className="bar2" />
+        <div className="bar3" />
+        <div className="bar4" />
+        <div className="bar5" />
+        <div className="bar6" />
+        <div className="bar7" />
+        <div className="bar8" />
+        <div className="bar9" />
+        <div className="bar10" />
+        <div className="bar11" />
+        <div className="bar12" />
+      </div>
+    </StyledWrapper>
   );
-};
+}
 
-const styles = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100vh',
-    backgroundColor: '#f8f8f8',
-  },
-  spinner: {
-    width: '50px',
-    height: '50px',
-    border: '5px solid lightgray',
-    borderTop: '5px solid rgb(1, 112, 187)', // CORRIGÉ : espace ajouté !
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-  },
-  text: {
-    marginTop: '20px',
-    fontSize: '18px',
-    color: '#555',
+const StyledWrapper = styled.div`
+  position: fixed;        /* prend toute la page */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgb(244, 244, 244); 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;          /* au-dessus de tout */
+
+  .loader {
+    position: relative;
+    width: 54px;
+    height: 54px;
+    border-radius: 10px;
   }
-};
+
+  .loader div {
+    width: 8%;
+    height: 24%;
+    background: rgb(0, 0, 0);
+    position: absolute;
+    left: 50%;
+    top: 30%;
+    opacity: 0;
+    border-radius: 50px;
+    box-shadow: 0 0 3px rgb(0, 0, 0);
+    animation: fade458 1s linear infinite;
+  }
+
+  @keyframes fade458 {
+    from {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0.25;
+    }
+  }
+
+  .loader .bar1 {
+    transform: rotate(0deg) translate(0, -130%);
+    animation-delay: 0s;
+  }
+
+  .loader .bar2 {
+    transform: rotate(30deg) translate(0, -130%);
+    animation-delay: -1.1s;
+  }
+
+  .loader .bar3 {
+    transform: rotate(60deg) translate(0, -130%);
+    animation-delay: -1s;
+  }
+
+  .loader .bar4 {
+    transform: rotate(90deg) translate(0, -130%);
+    animation-delay: -0.9s;
+  }
+
+  .loader .bar5 {
+    transform: rotate(120deg) translate(0, -130%);
+    animation-delay: -0.8s;
+  }
+
+  .loader .bar6 {
+    transform: rotate(150deg) translate(0, -130%);
+    animation-delay: -0.7s;
+  }
+
+  .loader .bar7 {
+    transform: rotate(180deg) translate(0, -130%);
+    animation-delay: -0.6s;
+  }
+
+  .loader .bar8 {
+    transform: rotate(210deg) translate(0, -130%);
+    animation-delay: -0.5s;
+  }
+
+  .loader .bar9 {
+    transform: rotate(240deg) translate(0, -130%);
+    animation-delay: -0.4s;
+  }
+
+  .loader .bar10 {
+    transform: rotate(270deg) translate(0, -130%);
+    animation-delay: -0.3s;
+  }
+
+  .loader .bar11 {
+    transform: rotate(300deg) translate(0, -130%);
+    animation-delay: -0.2s;
+  }
+
+  .loader .bar12 {
+    transform: rotate(330deg) translate(0, -130%);
+    animation-delay: -0.1s;
+  }
+`;
 
 export default Loader;
