@@ -4,6 +4,7 @@ import axios from 'axios';
 import AddButton2 from "./AddButton2.jsx";
 import PreviousButton from "./PreviousButton.jsx";
 import NextButton from "./NextButton.jsx";
+import LikeButton from "./LikeButton.jsx";
 
 // Instance Axios configurée pour communiquer avec le backend
 const api = axios.create({
@@ -129,47 +130,6 @@ const ProductDetail = () => {
       });
   }, [id]);
 
-  // Optionnel : Effet : Chargement des produits suggérés selon catégorie au changement de catégorie
-  // Tu peux commenter ou supprimer cet effet si tu ne veux que les suggestions par produit
-  /*
-  useEffect(() => {
-    if (!category) {
-      console.warn("Catégorie absente dans l'URL");
-      setProducts([]);
-      setVisibleSuggestions([]);
-      return;
-    }
-
-    const backendCategory = categoryMap[category.toLowerCase()];
-    console.log("Catégorie front :", category, "=> catégorie backend :", backendCategory);
-
-    if (!backendCategory) {
-      console.warn("Catégorie backend non trouvée pour :", category);
-      setProducts([]);
-      setVisibleSuggestions([]);
-      return;
-    }
-
-    api.get(`products/${backendCategory}/`)
-      .then(res => {
-        console.log("Produits suggérés reçus :", res.data);
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          setProducts(res.data);
-          setVisibleSuggestions(res.data.slice(0, 4)); // on montre 4 premiers
-          console.log("Suggestions visibles mises à jour");
-        } else {
-          console.warn("Aucun produit suggéré trouvé");
-          setProducts([]);
-          setVisibleSuggestions([]);
-        }
-      })
-      .catch(err => {
-        console.error("Erreur chargement produits suggérés :", err);
-        setProducts([]);
-        setVisibleSuggestions([]);
-      });
-  }, [category]);
-  */
 
   // Fonction pour ajouter le produit au panier via l'API
   const addToCart = () => {
@@ -247,89 +207,130 @@ const ProductDetail = () => {
 
   console.log("Suggestions visibles actuellement :", visibleSuggestions);
 
+
   return (
     <div className="product-detail-container">
       <div className="product-detail-content">
-        {/* Image */}
-        <img
-          src={`http://127.0.0.1:8001${product.image}`}
-          alt={product.name}
-          className="product-image"
-        />
-        {/* Détails produit */}
-        <div className="product-info">
-          <h1>{product.name}</h1>
+        {/* Image du produit */}
+        <div className="product-image">
+          <img
+            src={`http://127.0.0.1:8001${product.image}`}
+            alt={product.name}
+            className="img-fluid"
+            onError={(e) => { e.target.src = "/default-image.jpg"; }}
+          />
+        </div>
+
+        {/* Informations produit */}
+        <div className="product-detail-info">
+          <h2 className="product-detail-title">{product.name}</h2>
           <p>Prix : {priceFormatted} €</p>
           <p>Catégorie : {product.category}</p>
 
-          {/* Sélecteur taille si disponible */}
-          {product.sizes && product.sizes.length > 0 && (
-            <select
-              value={size}
-              onChange={e => setSize(e.target.value)}
-            >
-              {product.sizes.map(sz => (
-                <option key={sz} value={sz}>{sz}</option>
-              ))}
-            </select>
-          )}
+          {/* Sélecteur de taille */}
+          <div className="product-detail-size-selector">
+            <div className="size-buttons">
+              <p>Taille :</p>
+              {Array.isArray(product.sizes) && product.sizes.length > 0 ? (
+                product.sizes.map((s, index) => (
+                  <button
+                    key={index}
+                    className={`size-button ${size === s ? 'selected' : ''}`}
+                    onClick={() => {
+                      setSize(s);
+                      console.log("Taille sélectionnée :", s);
+                    }}
+                  >
+                    {s}
+                  </button>
+                ))
+              ) : (
+                <p>Aucune taille disponible</p>
+              )}
+            </div>
+          </div>
 
-          {/* Quantité */}
-          <input
-            type="number"
-            min="1"
-            max="99"
-            value={quantity}
-            onChange={e => setQuantity(Number(e.target.value))}
-          />
+          {/* Sélecteur de quantité */}
+          <div className="product-detail-quantity-selector">
+            <p>Quantité :</p>
+            <div className="quantity-controls">
+              <button onClick={() => {
+                const newQty = Math.max(1, quantity - 1);
+                setQuantity(newQty);
+                console.log("Quantité diminuée à :", newQty);
+              }}>-</button>
+              <input
+                type="number"
+                value={quantity}
+                min="1"
+                max="99"
+                onChange={(e) => {
+                  const val = Math.max(1, Math.min(99, parseInt(e.target.value) || 1));
+                  setQuantity(val);
+                  console.log("Quantité saisie :", val);
+                }}
+              />
+              <button onClick={() => {
+                const newQty = Math.min(99, quantity + 1);
+                setQuantity(newQty);
+                console.log("Quantité augmentée à :", newQty);
+              }}>+</button>
 
-          {/* Bouton ajout panier */}
-          <AddButton2 onClick={addToCart} label="Ajouter au panier" />
+              {/* Bouton ajouter au panier */}
+              <AddButton2 className="add-to-cart-button" onClick={() => {
+                addToCart(product.id, size, quantity);
+                console.log(`Ajout au panier: produit ${product.id}, taille ${size}, quantité ${quantity}`);
+              }}>
+                {inCart[product.id] ? "Déjà dans le panier" : "Ajouter au panier"}
+              </AddButton2>
+            </div>
+          
+          <div className="Like-button">
+          {/* Bouton favoris */}
+          <LikeButton
+                    productId={product.id}
+                    isLiked={favorites[product.id] || false}
+                    toggleFavorite={toggleFavorite}
+                  />
+  </div>
+        </div>  
 
-          {/* Message d'info */}
-          {message && <p className="message">{message}</p>}
-
-          {/* Like (favoris) */}
-          <button
-            onClick={() => toggleFavorite(product.id)}
-            className={favorites[product.id] ? "liked" : ""}
-          >
-            {favorites[product.id] ? "❤️ Retirer des favoris" : "🤍 Ajouter aux favoris"}
+          {/* Bouton afficher/masquer détails produit */}
+          <button className="toggle-details-button" onClick={() => {
+            setShowDetails(!showDetails);
+            console.log("Toggle détails produit :", !showDetails);
+          }}>
+            {showDetails ? "Masquer les détails" : "Détails du produit"}
           </button>
-          {likeMessage && <p className="like-message">{likeMessage}</p>}
 
-          {/* Toggle détails */}
-          <button onClick={() => setShowDetails(!showDetails)}>
-            {showDetails ? "Masquer description" : "Afficher description"}
-          </button>
-          {showDetails && <p className="product-description">{product.description}</p>}
+          {/* Description détaillée du produit */}
+          {showDetails && <p className="product-detail-description">{product.description}</p>}
+
+          {/* Messages utilisateur */}
+          {message && <div className="success-message">{message}</div>}
+          {likeMessage && <div className="like-message">{likeMessage}</div>}
+
         </div>
       </div>
 
-      {/* Suggestions (carousel) */}
+      {/* Suggestions */}
       <div className="suggestions-section">
-        <h2>Produits suggérés</h2>
+        <h2>VOUS ALLEZ ADORER ÇA !</h2>
         <div className="suggestions-carousel">
           <PreviousButton onClick={handlePrev} />
-          {visibleSuggestions.map(s => (
-            <div
-              key={s.id}
-              className="suggestion-card"
-              onClick={() => handleSuggestionClick(s.id)}
-              style={{ cursor: 'pointer' }}
-            >
-              <img
-                src={`http://127.0.0.1:8001${s.image}`}
-                alt={s.name}
-                className="suggestion-image"
-              />
-              <p>{s.name}</p>
-              <p>{Number(s.price).toFixed(2)} €</p>
-            </div>
-          ))}
+          <div className="suggestions-list">
+            {visibleSuggestions.map(s => (
+              <div key={s.id} className="suggestion-card" onClick={() => handleSuggestionClick(s.id)} style={{ cursor: 'pointer' }}>
+                <img src={`http://127.0.0.1:8001${s.image}`} alt={s.name} className="suggestion-image" />
+                <p>{s.name}</p>
+                <p>{Number(s.price).toFixed(2)} €</p>
+              </div>
+            ))}
+          </div>
           <NextButton onClick={handleNext} />
         </div>
       </div>
+
     </div>
   );
 };

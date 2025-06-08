@@ -46,23 +46,33 @@ def products(request):
 
 
 @api_view(['GET'])
+def search_products(request):
+    search_query = request.GET.get('search', '').strip()
+    if search_query:
+        products = Product.objects.filter(name__icontains=search_query)
+    else:
+        products = Product.objects.none()
+    serializer = ProductSerializer(products, many=True, context={'request': request})
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
 def product_list_by_category(request, category):
     try:
-        search_query = request.GET.get('search', '')
-        
-        # Filtrer d'abord par catégorie
+        search_query = request.GET.get('search', '').strip()
+
+        # Filtrer par catégorie (champ CharField simple, insensible à la casse)
         products = Product.objects.filter(category__iexact=category)
-        
-        # Puis filtrer par nom si "search" est présent
+
+        # Filtrer par nom de produit avec recherche approximative (partielle, insensible à la casse)
         if search_query:
-            products = products.filter(Q(name__icontains=search_query))
+            products = products.filter(name__icontains=search_query)
 
         serializer = ProductSerializer(products, many=True, context={'request': request})
         return Response(serializer.data)
-        
+
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 
 # ----- Ajouter un produit au panier -----
@@ -543,18 +553,6 @@ def product_detail(request, pk):
     return Response(serializer.data)
 
 
-# ------------ Barre de recherche ---------------
-
-@api_view(['GET'])
-def search_products(request):
-    query = request.GET.get('search', '')
-    if query:
-        products = Product.objects.filter(name__icontains=query)
-    else:
-        products = Product.objects.all()
-    serializer = ProductSerializer(products, many=True, context={'request': request})
-    return Response(serializer.data)
-
 # ------------ Suggestion de produit  ---------------
 
 @api_view(['GET'])
@@ -564,12 +562,25 @@ def product_suggestions(request, id):
     except Product.DoesNotExist:
         return Response({"detail": "Produit non trouvé."}, status=status.HTTP_404_NOT_FOUND)
     
+    # 1. Cherche produits de la même catégorie (hors le produit courant)
     suggested_products = Product.objects.filter(
         category=product.category
     ).exclude(id=product.id)[:4]
 
+    if suggested_products.count() < 4:
+        # Complète avec produits aléatoires hors ceux déjà pris et hors produit actuel
+        excluded_ids = list(suggested_products.values_list('id', flat=True)) + [product.id]
+        remaining_products = Product.objects.exclude(id__in=excluded_ids)
+        remaining_count = remaining_products.count()
+        if remaining_count > 0:
+            random_needed = 4 - suggested_products.count()
+            random_indexes = random.sample(range(remaining_count), min(random_needed, remaining_count))
+            random_products = [remaining_products[i] for i in random_indexes]
+            suggested_products = list(suggested_products) + random_products
+
     serializer = ProductSerializer(suggested_products, many=True)
     return Response(serializer.data)
+
 
 @api_view(['GET'])
 def random_products(request):

@@ -5,9 +5,11 @@ urlpatterns = [
     # Produits
     path('products/<int:id>/suggestions/', views.product_suggestions, name='product_suggestions'),
     path('products/random/', views.random_products, name='random_products'),
+    path('products/search/', views.search_products, name='search_products'),
     path('products/<str:category>/', views.product_list_by_category, name='products-by-category'),
     path('products/', views.products, name='products'),
     path('product/<int:pk>/', views.product_detail, name='product_detail'),
+    
 
     # Panier
     path('add_item', views.add_item, name='add_item'),

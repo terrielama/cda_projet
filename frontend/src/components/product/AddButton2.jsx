@@ -65,8 +65,8 @@ const StyledWrapper = styled.div`
   padding-left: 15px;
   width: 50px;
   border-radius: 50%;
-  background-color: rgb(0, 160, 40);
-  box-shadow: 20px 20px 96px rgb(0, 255, 38), -20px -20px 96px rgba(0, 255, 38, 0.47);
+  background-color: rgb(0, 139, 35);
+  box-shadow: 20px 20px 96px rgba(0, 204, 31, 0.69), -20px -20px 96px rgba(0, 255, 38, 0.41);
 }
 
 .button:hover svg {
