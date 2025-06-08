@@ -63,6 +63,8 @@ def product_list_by_category(request, category):
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+
 # ----- Ajouter un produit au panier -----
 
 
@@ -554,14 +556,33 @@ def search_products(request):
     return Response(serializer.data)
 
 # ------------ Suggestion de produit  ---------------
+
 @api_view(['GET'])
-def suggested_products(request):
-    all_products = list(Product.objects.all())
-    # On prend au hasard 5 produits (ou moins si il y en a moins)
-    suggested = random.sample(all_products, min(len(all_products), 5))
-    serializer = ProductSerializer(suggested, many=True)
+def product_suggestions(request, id):
+    try:
+        product = Product.objects.get(id=id)
+    except Product.DoesNotExist:
+        return Response({"detail": "Produit non trouvé."}, status=status.HTTP_404_NOT_FOUND)
+    
+    suggested_products = Product.objects.filter(
+        category=product.category
+    ).exclude(id=product.id)[:4]
+
+    serializer = ProductSerializer(suggested_products, many=True)
     return Response(serializer.data)
 
+@api_view(['GET'])
+def random_products(request):
+    count = Product.objects.count()
+    if count == 0:
+        return Response([], status=status.HTTP_200_OK)
+
+    all_products = list(Product.objects.all())
+    random_indexes = random.sample(range(count), min(4, count))
+    random_products = [all_products[i] for i in random_indexes]
+
+    serializer = ProductSerializer(random_products, many=True)
+    return Response(serializer.data)
 
 
 

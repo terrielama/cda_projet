@@ -4,6 +4,7 @@ from django.conf import settings  # settings est utilisé pour référencer des 
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
 import uuid
+from django.shortcuts import get_object_or_404
 
 
 
@@ -22,8 +23,6 @@ class Size(models.Model):
 
 #----------- Définition du modèle Product --------
 
-from django.db import models
-from django.utils.text import slugify
 
 class Product(models.Model):
     CATEGORY = (
