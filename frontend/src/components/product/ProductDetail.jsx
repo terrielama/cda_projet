@@ -172,7 +172,7 @@ const ProductDetail = () => {
 
   const handleSuggestionClick = (productId) => {
     console.log("Suggestion cliquée, navigation vers produit id:", productId);
-    navigate(`/produit/${productId}/${category}`);
+    navigate(`/produit/${productId}`);
   };
 
   if (!product) return <div>Chargement du produit...</div>;
@@ -193,16 +193,18 @@ const ProductDetail = () => {
 
         <div className="product-detail-info">
           <h2>{product.name}</h2>
-          <p>Prix : {priceFormatted} €</p>
-          <p>Catégorie : {product.category}</p>
-
+          <p>Prix: {priceFormatted} €</p>
+          <p>Catégorie: {product.category}</p>
+          
+        {/* Selectionner la taille */}
           <div className="product-detail-size-selector">
-            <p>Taille :</p>
+          <p>Taille: </p>
             {Array.isArray(product.sizes) && product.sizes.length > 0 ? (
-              product.sizes.map((s, index) => {
+              product.sizes.map((s, index) => { 
                 const isAvailable = availableSizes.includes(s);
                 return (
-                  <button
+                  
+                  <button 
                     key={index}
                     className={`size-button ${size === s ? 'selected' : ''}`}
                     onClick={() => {
@@ -227,8 +229,9 @@ const ProductDetail = () => {
           </div>
 
           <div className="product-detail-quantity-selector">
-            <p>Quantité :</p>
+            
             <div className="quantity-controls">
+              <p>Quantité :</p>
               <button onClick={() => {
                 setQuantity(Math.max(1, quantity - 1));
                 console.log("Quantité diminuée:", Math.max(1, quantity - 1));
@@ -251,6 +254,7 @@ const ProductDetail = () => {
             </div>
           </div>
 
+            <div className="add_like_button">
           <AddButton2
             onClick={addToCart}
             disabled={outOfStock}
@@ -265,6 +269,7 @@ const ProductDetail = () => {
               isLiked={favorites[product.id] || false}
               toggleFavorite={toggleFavorite}
             />
+          </div>
           </div>
 
           {outOfStock && <div className="stock-message">Produit en rupture de stock</div>}
@@ -284,28 +289,21 @@ const ProductDetail = () => {
         </div>
       </div>
 
+        {/* Suggestion de produit */}
       <div className="suggestions-section">
         <h2>VOUS ALLEZ ADORER ÇA !</h2>
-        <div className="suggestions-navigation">
+        <div className="suggestions-carousel">
           <PreviousButton onClick={handlePrev} />
+          <div className="suggestions-list">
+            {visibleSuggestions.map(s => (
+              <div key={s.id} className="suggestion-card" onClick={() => handleSuggestionClick(s.id)} style={{ cursor: 'pointer' }}>
+                <img src={`http://127.0.0.1:8001${s.image}`} alt={s.name} className="suggestion-image" />
+                <p>{s.name}</p>
+                <p>{Number(s.price).toFixed(2)} €</p>
+              </div>
+            ))}
+          </div>
           <NextButton onClick={handleNext} />
-        </div>
-        <div className="suggestions-list">
-          {visibleSuggestions.map((prod) => (
-            <div
-              key={prod.id}
-              className="suggestion-card"
-              onClick={() => handleSuggestionClick(prod.id)}
-            >
-              <img
-                src={`http://127.0.0.1:8001${prod.image}`}
-                alt={prod.name}
-                onError={(e) => { e.target.src = "/default-image.jpg"; }}
-              />
-              <p>{prod.name}</p>
-              <p>{Number(prod.price).toFixed(2)} €</p>
-            </div>
-          ))}
         </div>
       </div>
     </div>

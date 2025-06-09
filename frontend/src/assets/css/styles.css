@@ -777,43 +777,54 @@ body {
 }
 
 .product-detail-price {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: bold;
-  color: #333;
+  color: #050505;
 }
 
 
 .product-detail-size-selector {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.size-buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
+    display: flex;
+    flex-direction: row;
+    gap: 13px;
+    max-width: 60px;
+    align-items: baseline;
 }
 
 .size-button {
-  padding: 5px 10px;
-  font-size: 1rem;
+  padding: 1px 6px 1px 3px;
+  width: 40px;  
+  height: 40px;   
   border: 1px solid #ccc;
-  border-radius: 5px;
-  background-color: #f9f9f9;
-  cursor: pointer;
-  transition: background-color 0.3s;
+  background-color: white;
+  text-align: center;
+  line-height: 40px; /* pour centrer verticalement le texte */
+  font-weight: bold;
+  border-radius: 4px;
+  transition: background-color 0.3s, border-color 0.3s;
+  user-select: none;
+  
 }
 
 .size-button.selected {
-  padding: 5px 10px;
-  background-color: #292929;
-  color: white;
+  background-color: #2c2c2c;
+  color: rgb(255, 255, 255);
+  border-color: 1px solid #000000;
 }
+
+.size-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: #000000a7;
+  background-color: #eaeaea;
+  color: rgb(0, 0, 0);
+}
+
 
 .size-button:hover {
   background-color: #292929;
   color: white;
+  
 }
 
 .product-detail-quantity-selector {
@@ -888,10 +899,13 @@ body {
   color: #555;
 }
 
+.add_like_button{
+  margin-top: 20px;
+}
 
 .Like-button{
-  margin-top: 15px;
-  margin-left: 100px;
+  margin-top: 20px;
+
 }
 
 
@@ -1570,7 +1584,7 @@ p {
   }
 
   .product-image img{
-    width: 450px;
+    width: 350px;
   }
 
   .product-info {
@@ -1578,14 +1592,14 @@ p {
   }
 
   .product-detail-content {
-    flex-direction: column;
-    align-items: center;
+    display: grid;
+    
   }
 
   .product-detail-info {
     width: 100%;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
   }
 
   .suggestions-carousel {
