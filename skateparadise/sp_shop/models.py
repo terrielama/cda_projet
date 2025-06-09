@@ -1,10 +1,11 @@
-from django.db import models
+from django.db import models, IntegrityError
 from django.utils.text import slugify
 from django.conf import settings  # settings est utilisé pour référencer des paramètres globaux du projet, comme le modèle utilisateur
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
 import uuid
 from django.shortcuts import get_object_or_404
+
 
 
 
@@ -21,7 +22,9 @@ class Category(models.Model):
 class Size(models.Model):
     name = models.CharField(max_length=10)
 
-#----------- Définition du modèle Product --------
+
+# ------ Définition du modèle de produit --------
+
 
 
 class Product(models.Model):
@@ -41,17 +44,16 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     image = models.ImageField(upload_to='products/', null=False, default='products/default-image.png')
     category = models.CharField(max_length=50, choices=CATEGORY, default="Boards")
-    stock = models.PositiveIntegerField(default=0)
     description = models.TextField(blank=True, null=True)
     available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    sizes = models.JSONField(null=True, blank=True)
-
-    def __str__(self):
-        return self.name
+    sizes = models.JSONField(default=list, blank=True)
+    stock = models.IntegerField(default=0)
 
     def save(self, *args, **kwargs):
-        # Gestion du slug unique
+        is_new = self.pk is None  # Création ou modification
+
+        # Création slug unique
         if not self.slug:
             base_slug = slugify(self.name)
             unique_slug = base_slug
@@ -61,28 +63,66 @@ class Product(models.Model):
                 counter += 1
             self.slug = unique_slug
 
-        # Gestion automatique des tailles selon catégorie
+        # Définir tailles en fonction de la catégorie
         cat = self.category.lower()
         if cat == 'boards':
-            self.sizes = [ "7.75", "8.0", "8.25"]
+            sizes_list = ["7.75", "8.0", "8.25"]
         elif cat == 'chaussures':
-            self.sizes = [ "39", "40", "41"]
+            sizes_list = ["39", "40", "41"]
         elif cat == 'sweats':
-            self.sizes = [ "S", "M", "L",]
+            sizes_list = ["S", "M", "L"]
         else:
-            self.sizes = []
+            sizes_list = []
 
+        self.sizes = sizes_list
+
+        # Mise à jour de la disponibilité avant sauvegarde
+        self.update_availability(update=False)
+
+        super().save(*args, **kwargs)  # Sauvegarde du produit avant création des tailles
+
+        # Création des tailles uniquement si nouveau produit
+        if is_new:
+            for size in sizes_list:
+                ProductSize.objects.get_or_create(product=self, size=size, defaults={'stock': self.stock})
+
+    @property
+    def total_stock(self):
+        return sum(size.stock for size in self.product_sizes.all())
+
+    def update_availability(self, update=True):
+        # Mise à jour de la disponibilité sans rappeler save() pour éviter récursion
+        if self.product_sizes.exists():
+            has_stock = self.product_sizes.filter(stock__gt=0, available=True).exists()
+            self.available = has_stock
+        else:
+            self.available = self.stock > 0
+
+        if update:
+            # Met à jour uniquement le champ available en base sans récursion
+            Product.objects.filter(pk=self.pk).update(available=self.available)
+
+
+
+
+# ------ Définition du modèle de la taille de produit lié au stock --------
+
+class ProductSize(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='product_sizes')
+    size = models.CharField(max_length=10)
+    stock = models.IntegerField(default=0)
+    available = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('product', 'size')
+
+    def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
+        self.product.update_availability()
 
-    def decrement_stock(self, quantity):
-        if self.stock >= quantity:
-            self.stock -= quantity
-            if self.stock == 0:
-                self.available = False
-            self.save()
-        else:
-            raise ValueError("Stock insuffisant pour ce produit.")
-
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        self.product.update_availability()
 
 
 

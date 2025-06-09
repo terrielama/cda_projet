@@ -1,15 +1,31 @@
 from django.contrib import admin
-from .models import Product, Cart, CartItem, Order, OrderItem
+from .models import Product, ProductSize, Cart, CartItem, Order, OrderItem
+
+
+class ProductSizeInline(admin.TabularInline):
+    model = ProductSize
+    extra = 1
+    fields = ('size', 'stock', 'available')
+    readonly_fields = ()
+    can_delete = True
 
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'price', 'category', 'stock', 'created_at')
+    list_display = ('name', 'price', 'category', 'stock_display', 'available', 'created_at')
     search_fields = ('name', 'category')
-    list_filter = ('category',)
+    list_filter = ('category', 'available')
     ordering = ('-created_at',)
+    inlines = [ProductSizeInline]
 
+    readonly_fields = ('stock_display',)
 
+    def stock_display(self, obj):
+        # Affiche le stock total calculé (somme des stocks taille)
+        return obj.total_stock
+    stock_display.short_description = 'Stock total'
+
+# Admins existants (Cart, CartItem, Order, OrderItem) à garder tels quels si besoin
 @admin.register(Cart)
 class CartAdmin(admin.ModelAdmin):
     list_display = ('cart_code', 'user_display', 'paid', 'created_at', 'modified_at')
@@ -24,11 +40,10 @@ class CartAdmin(admin.ModelAdmin):
 
 @admin.register(CartItem)
 class CartItemAdmin(admin.ModelAdmin):
-    list_display = ('product', 'cart', 'quantity')  
+    list_display = ('product', 'cart', 'quantity')
     search_fields = ('product__name', 'cart__cart_code')
-    list_filter = () 
     autocomplete_fields = ('product', 'cart')
-    ordering = () 
+
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
@@ -84,7 +99,6 @@ class OrderAdmin(admin.ModelAdmin):
 class OrderItemAdmin(admin.ModelAdmin):
     list_display = ('order_id', 'cart_code_display', 'product', 'quantity', 'price')
     search_fields = ('order__id', 'product__name', 'order__cart__cart_code')
-    list_filter = ()
     autocomplete_fields = ('order', 'product')
 
     def order_id(self, obj):
@@ -96,4 +110,3 @@ class OrderItemAdmin(admin.ModelAdmin):
         return obj.order.cart.cart_code if obj.order.cart else "Aucun panier"
     cart_code_display.short_description = 'Cart Code'
     cart_code_display.admin_order_field = 'order__cart__cart_code'
-

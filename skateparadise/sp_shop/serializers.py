@@ -62,11 +62,15 @@ class SizeSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     sizes = serializers.JSONField()
-    image = serializers.SerializerMethodField()  
+    image = serializers.SerializerMethodField()
+    available_sizes = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = ['id', 'name', 'price', 'image', 'sizes', 'category', 'stock', 'description', 'available']
+        fields = [
+            'id', 'name', 'price', 'image', 'sizes', 'available_sizes',
+            'category', 'stock', 'description', 'available'
+        ]
 
     def get_image(self, obj):
         request = self.context.get('request', None)
@@ -75,6 +79,12 @@ class ProductSerializer(serializers.ModelSerializer):
         elif obj.image:
             return obj.image.url
         return None
+
+    def get_available_sizes(self, obj):
+        # Accès via le related_name 'product_sizes'
+        return [
+            str(ps.size) for ps in obj.product_sizes.all() if ps.stock > 0
+        ]
 
     
 

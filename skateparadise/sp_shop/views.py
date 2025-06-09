@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Product, Cart, CartItem, Order, OrderItem, User, Favorite
+from .models import Product, Cart, CartItem, Order, OrderItem, User, Favorite, ProductSize
 from .serializers import ProductSerializer, CartItemSerializer, CartSerializer, SimpleCartSerializer, OrderSerializer, UserRegisterSerializer, OrderUpdateSerializer,  FavoriteSerializer
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -14,6 +14,8 @@ import traceback
 from django.db.models import Q
 import random
 from django.db.models import F
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 #----- View pour creer un user (Register) ------
@@ -77,7 +79,6 @@ def product_list_by_category(request, category):
 
 
 # ----- Ajouter un produit au panier -----
-
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def add_item(request):
@@ -102,6 +103,7 @@ def add_item(request):
     except Product.DoesNotExist:
         return Response({'error': 'Produit non trouvé.'}, status=404)
 
+    # Si produit a des tailles, size est obligatoire
     if product.sizes and not size:
         return Response({'error': 'Le champ size est requis pour ce produit.'}, status=400)
 
@@ -119,29 +121,47 @@ def add_item(request):
     existing_item = CartItem.objects.filter(cart=cart, product=product, size=size).first()
     current_qty_in_cart = existing_item.quantity if existing_item else 0
 
-    # Le total demandé dans le panier (ancien + nouveau)
-    new_total_qty = current_qty_in_cart + quantity_to_add
+    # --- GESTION STOCK PAR TAILLE ---
+    if size:
+        try:
+            product_size = ProductSize.objects.get(product=product, size=size)
+        except ProductSize.DoesNotExist:
+            return Response({'error': 'Taille non trouvée pour ce produit.'}, status=400)
 
-    # Vérification stock : il faut que le total demandé ne dépasse pas le stock disponible + la quantité déjà dans le panier
-    # Car la quantité déjà dans le panier "réserve" déjà le stock
-    available_stock_for_addition = product.stock + current_qty_in_cart
+        new_total_qty = current_qty_in_cart + quantity_to_add
 
-    if new_total_qty > available_stock_for_addition:
-        return Response({'error': f'Stock insuffisant : {product.stock} disponible, {new_total_qty} demandé.'}, status=400)
+        # Vérification stock disponible (le stock actuel doit être au moins quantity_to_add)
+        if quantity_to_add > product_size.stock:
+            return Response({'error': f'Stock insuffisant pour la taille {size} : {product_size.stock} disponible.'}, status=400)
 
-    # Met à jour la quantité dans le panier
-    if existing_item:
-        existing_item.quantity = new_total_qty
-        existing_item.save()
+        # Mise à jour du panier
+        if existing_item:
+            existing_item.quantity = new_total_qty
+            existing_item.save()
+        else:
+            CartItem.objects.create(cart=cart, product=product, size=size, quantity=quantity_to_add)
+
+        # Mise à jour du stock dans ProductSize
+        product_size.stock -= quantity_to_add
+        product_size.save()
+
     else:
-        CartItem.objects.create(cart=cart, product=product, size=size, quantity=quantity_to_add)
+        # Produit sans taille : on vérifie le stock global produit
+        new_total_qty = current_qty_in_cart + quantity_to_add
+        if quantity_to_add > product.stock:
+            return Response({'error': f'Stock insuffisant : {product.stock} disponible.'}, status=400)
 
-    # Mise à jour du stock produit : on diminue la différence entre nouveau total et ancien total dans le panier
-    quantity_difference = new_total_qty - current_qty_in_cart
-    product.stock -= quantity_difference
-    product.save()
+        if existing_item:
+            existing_item.quantity = new_total_qty
+            existing_item.save()
+        else:
+            CartItem.objects.create(cart=cart, product=product, size=None, quantity=quantity_to_add)
+
+        product.stock -= quantity_to_add
+        product.save()
 
     return Response({'message': 'Item ajouté au panier.'}, status=200)
+
 
 
 # ----- Vérifier si un produit est dans le panier -----
@@ -347,6 +367,7 @@ def create_order(request):
         return Response({"error": "Panier non trouvé"}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
 
 # --------------- Assossier commande a un user ------------
 @api_view(['POST'])
