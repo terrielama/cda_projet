@@ -6,7 +6,7 @@ import SMOButton from "./SMOButton";
 
 const Cart = () => {
   const [cart, setCart] = useState(null);
-  const [loading, setLoading] = useState(false); // Démarre à false ici
+  const [loading, setLoading] = useState(false); // Pour afficher le loader lors de la commande
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
@@ -19,12 +19,15 @@ const Cart = () => {
 
     if (!cart_code) {
       console.warn("Aucun cart_code trouvé dans le localStorage.");
+      setCart(null);
+      setError("Aucun panier trouvé. Ajoutez un produit.");
       return;
     }
 
     try {
       const startTime = Date.now();
 
+      // Appel API pour récupérer le panier
       const res = await api.get(`http://localhost:8001/get_cart?cart_code=${cart_code}`, {
         headers: { Authorization: token ? `Bearer ${token}` : "" },
       });
@@ -32,7 +35,7 @@ const Cart = () => {
       setCart(res.data);
       setError("");
 
-      // S'assurer que le loader s'affiche au moins 3 secondes si tu veux (optionnel)
+      // Optionnel : s'assurer que le loader s'affiche au moins 3 secondes
       const elapsed = Date.now() - startTime;
       if (elapsed < 3000) {
         await new Promise((resolve) => setTimeout(resolve, 3000 - elapsed));
@@ -50,7 +53,7 @@ const Cart = () => {
     fetchCart();
   }, []);
 
-  // Mise à jour de la quantité d’un item
+  // Mise à jour de la quantité d’un item dans le panier
   const updateQuantity = async (itemId, delta) => {
     console.log(`updateQuantity appelé sur item ${itemId} avec delta ${delta}`);
 
@@ -68,7 +71,7 @@ const Cart = () => {
 
     const newQuantity = item.quantity + delta;
     if (newQuantity < 1) {
-      console.log("Quantité trop faible, suppression ou ignore.");
+      console.log("Quantité trop faible, suppression ignorée ici. Utilisez Supprimer.");
       return;
     }
 
@@ -120,7 +123,7 @@ const Cart = () => {
     }
 
     try {
-      setLoading(true); // loader activé uniquement ici
+      setLoading(true); // Affiche le loader lors de la création de commande
       const response = await api.post("http://localhost:8001/create_order", {
         cart_code: localStorage.getItem("cart_code"),
       });
@@ -129,9 +132,9 @@ const Cart = () => {
       setCart(null);
       localStorage.removeItem("cart_code");
 
-      // Redirige vers la page commande après 1 seconde
+      // Redirection après 1 seconde pour laisser le loader visible
       setTimeout(() => {
-        setLoading(false); // loader caché avant la navigation
+        setLoading(false);
         navigate(`/commande/${response.data.order_id}`);
       }, 1000);
       setError("");
@@ -148,6 +151,7 @@ const Cart = () => {
     return <Loader />;
   }
 
+  // Calculs des prix
   const totalPrice = cart?.sum_total || 0;
   const shippingCost = totalPrice >= 70 ? 0 : 4;
   const finalPrice = totalPrice + shippingCost;
@@ -201,7 +205,7 @@ const Cart = () => {
           <p>Livraison : {shippingCost === 0 ? "Gratuite" : `${shippingCost} €`}</p>
           <p>Total à payer : {finalPrice.toFixed(2)} €</p>
 
-          {/* Le loader s'affichera seulement quand loading sera true, ici loading = false donc bouton activé */}
+          {/* Le bouton est désactivé pendant le chargement */}
           <SMOButton onClick={handleOrder} disabled={loading} />
 
           {error && <p className="error-message">{error}</p>}

@@ -1,64 +1,47 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom'; // Pour navigation client-side
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import AddButton2 from "./AddButton2.jsx";
 import PreviousButton from "./PreviousButton.jsx";
 import NextButton from "./NextButton.jsx";
 import LikeButton from "./LikeButton.jsx";
 
-// Instance Axios configurée pour communiquer avec le backend
 const api = axios.create({
   baseURL: "http://127.0.0.1:8001/",
 });
 
-// Mapping des catégories front -> backend
-const categoryMap = {
-  planche: "Boards",
-  trucks: "Trucks",
-  grips: "Grips",
-  roues: "Roues",
-  sweats: "Sweats",
-  chaussures: "Chaussures",
-  bonnets: "Bonnets",
-  ceintures: "Ceintures",
-};
-
-// Fonction pour générer un code alphanumérique aléatoire (ex: pour cart_code)
-function generateRandomAlphanumeric(length = 10) {
+const generateRandomAlphanumeric = (length = 10) => {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   return Array.from({ length }, () => characters[Math.floor(Math.random() * characters.length)]).join('');
-}
+};
 
-// Récupère les favoris depuis localStorage (objet avec productId : bool)
 const getFavoritesFromStorage = () => {
   const stored = localStorage.getItem('favorites');
   return stored ? JSON.parse(stored) : {};
 };
 
-// Sauvegarde les favoris dans localStorage
 const saveFavoritesToStorage = (favorites) => {
   localStorage.setItem('favorites', JSON.stringify(favorites));
 };
 
 const ProductDetail = () => {
-  // Récupération params url (id produit + catégorie)
   const { id, category } = useParams();
   const navigate = useNavigate();
 
-  // Etats React
   const [product, setProduct] = useState(null);
-  const [products, setProducts] = useState([]); // produits suggérés par catégorie (optionnel)
-  const [suggestions, setSuggestions] = useState([]); // suggestions spécifiques produit
-  const [visibleSuggestions, setVisibleSuggestions] = useState([]); // suggestions visibles (affichage)
-  const [inCart, setInCart] = useState({}); // tracking produits ajoutés panier
-  const [message, setMessage] = useState(''); // messages utilisateur (ex: ajout panier)
-  const [likeMessage, setLikeMessage] = useState(''); // messages pour like/unlike
-  const [favorites, setFavorites] = useState(getFavoritesFromStorage()); // favoris local
-  const [quantity, setQuantity] = useState(1); // quantité choisie
-  const [size, setSize] = useState(''); // taille sélectionnée
-  const [showDetails, setShowDetails] = useState(false); // toggle description produit
+  const [suggestions, setSuggestions] = useState([]);
+  const [visibleSuggestions, setVisibleSuggestions] = useState([]);
+  const [inCart, setInCart] = useState({});
+  const [message, setMessage] = useState('');
+  const [likeMessage, setLikeMessage] = useState('');
+  const [favorites, setFavorites] = useState(getFavoritesFromStorage());
+  const [quantity, setQuantity] = useState(1);
+  const [size, setSize] = useState('');
+  const [showDetails, setShowDetails] = useState(false);
+  const [added, setAdded] = useState(false);
+  const [error, setError] = useState('');
+  const [outOfStock, setOutOfStock] = useState(false);
 
-  // Création / récupération du cart_code dans localStorage au premier rendu
   const [cartCode] = useState(() => {
     let code = localStorage.getItem("cart_code");
     if (!code) {
@@ -71,28 +54,27 @@ const ProductDetail = () => {
     return code;
   });
 
-  // Effet : Chargement du produit au changement d'id
   useEffect(() => {
     if (!id) {
       console.warn("Aucun ID produit reçu dans l'URL");
       return;
     }
 
-    console.log("Chargement du produit avec ID :", id);
-
+    console.log(`Chargement du produit id=${id}`);
     api.get(`product/${id}/`)
       .then((res) => {
+        console.log("Produit chargé :", res.data);
         setProduct(res.data);
-        console.log("Produit chargé avec succès :", res.data);
-
-        // Si le produit a des tailles, on sélectionne la première par défaut
         if (Array.isArray(res.data.sizes) && res.data.sizes.length > 0) {
           setSize(res.data.sizes[0]);
-          console.log("Taille par défaut sélectionnée :", res.data.sizes[0]);
         } else {
           setSize('');
-          console.log("Produit sans tailles disponibles");
         }
+        setQuantity(1);
+        setMessage('');
+        setAdded(false);
+        setError('');
+        setOutOfStock(res.data.stock === 0);  // <-- ici on set outOfStock selon le stock
       })
       .catch((err) => {
         setProduct(null);
@@ -100,27 +82,24 @@ const ProductDetail = () => {
       });
   }, [id]);
 
-  // Effet : Chargement des suggestions basées sur le produit (par id)
   useEffect(() => {
     if (!id) {
       setSuggestions([]);
       setVisibleSuggestions([]);
-      console.log("ID produit absent, suggestions spécifiques réinitialisées");
       return;
     }
 
-    console.log("Chargement des suggestions spécifiques pour le produit ID :", id);
-
+    console.log(`Chargement des suggestions pour produit id=${id}`);
     api.get(`products/${id}/suggestions/`)
       .then(res => {
         if (Array.isArray(res.data) && res.data.length > 0) {
           setSuggestions(res.data);
-          setVisibleSuggestions(res.data.slice(0, 4)); // afficher les 4 premiers
-          console.log("Suggestions spécifiques produit chargées :", res.data);
+          setVisibleSuggestions(res.data.slice(0, 4));
+          console.log("Suggestions chargées :", res.data);
         } else {
           setSuggestions([]);
           setVisibleSuggestions([]);
-          console.log("Aucune suggestion spécifique pour ce produit");
+          console.log("Pas de suggestions trouvées");
         }
       })
       .catch(err => {
@@ -130,83 +109,92 @@ const ProductDetail = () => {
       });
   }, [id]);
 
-
-  // Fonction pour ajouter le produit au panier via l'API
   const addToCart = () => {
+    setError('');
+    setMessage('');
+    setOutOfStock(false);
+  
     if (!product) {
-      console.warn("Tentative ajout panier sans produit chargé");
+      setError("Aucun produit sélectionné.");
       return;
     }
-
-    console.log("Tentative ajout panier :", {
-      cart_code: cartCode,
-      item_id: product.id,
-      quantity,
-      size,
-    });
-
-    // Vérification taille sélectionnée si le produit a des tailles
+  
     if (Array.isArray(product.sizes) && product.sizes.length > 0 && !size) {
-      setMessage("Veuillez sélectionner une taille.");
-      console.warn("Ajout panier annulé : taille non sélectionnée");
+      setError("Veuillez sélectionner une taille.");
       return;
     }
-
-    api.post("add_item", {
+  
+    if (quantity > product.stock) {
+      setOutOfStock(true);
+      setError(`Stock insuffisant : ${product.stock} disponible.`);
+      return;
+    }
+  
+    const payload = {
       cart_code: cartCode,
-      item_id: product.id,
-      quantity,
-      size,
+      item_id: Number(product.id),
+      quantity: Number(quantity),
+      size: size || "default",
+    };
+  
+    console.log("Payload envoyé à add_item:", payload);
+  
+    api.post("add_item", payload)
+    .then(() => {
+      setMessage("Produit ajouté au panier !");
+      setAdded(true);
+      setInCart(prev => ({ ...prev, [product.id]: true }));
+  
+      return api.get(`product/${product.id}/`);
     })
-      .then(() => {
-        setMessage("Produit ajouté au panier !");
-        setInCart(prev => ({ ...prev, [product.id]: true }));
-        console.log("Produit ajouté au panier avec succès");
-      })
-      .catch(err => {
-        setMessage("Erreur lors de l'ajout au panier.");
-        console.error("Erreur ajout panier :", err);
-      });
+    .then((res) => {
+      console.log("Produit rechargé après ajout au panier :", res.data);
+      setProduct(res.data);
+  
+      if (res.data.stock === 0) {
+        setOutOfStock(true);
+        setError("Stock épuisé !");
+      }
+    })
+    .catch(err => {
+      setError("Erreur lors de l'ajout au panier ou rechargement du produit.");
+      console.error(err);
+    });
   };
+  
 
-  // Toggle favoris : ajoute ou enlève un produit des favoris
   const toggleFavorite = (productId) => {
     const updated = { ...favorites, [productId]: !favorites[productId] };
     setFavorites(updated);
     saveFavoritesToStorage(updated);
     setLikeMessage(updated[productId] ? "Produit liké !" : "Produit retiré des favoris.");
-    console.log("Favoris mis à jour :", updated);
-
-    // Efface le message like après 2 secondes
-    setTimeout(() => setLikeMessage(''), 2000);
+    setTimeout(() => setLikeMessage(''), 1000);
+    console.log(`Favori changé pour produit ${productId} : ${updated[productId]}`);
   };
 
-  // Affiche la suggestion suivante dans la liste visible (rotation circulaire)
   const handleNext = () => {
-    setVisibleSuggestions(prev => [...prev.slice(1), prev[0]]);
-    console.log("Suggestion suivante affichée");
+    setVisibleSuggestions(prev => {
+      if (prev.length === 0) return [];
+      return [...prev.slice(1), prev[0]];
+    });
   };
 
-  // Affiche la suggestion précédente dans la liste visible (rotation circulaire inverse)
   const handlePrev = () => {
-    setVisibleSuggestions(prev => [prev[prev.length - 1], ...prev.slice(0, -1)]);
-    console.log("Suggestion précédente affichée");
+    setVisibleSuggestions(prev => {
+      if (prev.length === 0) return [];
+      return [prev[prev.length - 1], ...prev.slice(0, -1)];
+    });
   };
 
-  // Quand l'utilisateur clique sur une suggestion, on navigue vers son détail
   const handleSuggestionClick = (productId) => {
-    console.log("Navigation vers produit suggéré ID :", productId);
-    navigate(`/produit/${productId}`);
+    navigate(`/produit/${productId}/${category}`);
   };
 
-  // Affichage loading si produit non chargé
   if (!product) return <div>Chargement du produit...</div>;
 
-  // Formattage du prix (exemple, 2 décimales)
   const priceFormatted = Number(product.price).toFixed(2);
 
-  console.log("Suggestions visibles actuellement :", visibleSuggestions);
-
+  console.log(`Render ProductDetail - stock: ${product.stock}, outOfStock: ${outOfStock}, added: ${added}`);
 
   return (
     <div className="product-detail-container">
@@ -276,25 +264,31 @@ const ProductDetail = () => {
                 console.log("Quantité augmentée à :", newQty);
               }}>+</button>
 
-              {/* Bouton ajouter au panier */}
-              <AddButton2 className="add-to-cart-button" onClick={() => {
-                addToCart(product.id, size, quantity);
-                console.log(`Ajout au panier: produit ${product.id}, taille ${size}, quantité ${quantity}`);
-              }}>
-                {inCart[product.id] ? "Déjà dans le panier" : "Ajouter au panier"}
-              </AddButton2>
+          {/* Bouton qui change si outOfStock */}
+          <AddButton2
+            onClick={addToCart}
+            disabled={outOfStock}
+            outOfStock={outOfStock}
+          >
+            {outOfStock ? "Article épuisé" : "Ajouter au panier"}
+          </AddButton2>
+
+        
+
             </div>
           
-          <div className="Like-button">
-          {/* Bouton favoris */}
-          <LikeButton
-                    productId={product.id}
-                    isLiked={favorites[product.id] || false}
-                    toggleFavorite={toggleFavorite}
-                  />
-  </div>
-        </div>  
-
+            <div className="Like-button">
+              {/* Bouton favoris */}
+              <LikeButton
+                productId={product.id}
+                isLiked={favorites[product.id] || false}
+                toggleFavorite={toggleFavorite}
+              />
+            </div>
+          </div>  
+  {outOfStock && (
+        <div className="stock-message">Produit en rupture de stock</div>
+      )}
           {/* Bouton afficher/masquer détails produit */}
           <button className="toggle-details-button" onClick={() => {
             setShowDetails(!showDetails);

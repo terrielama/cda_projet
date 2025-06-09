@@ -64,11 +64,11 @@ class Product(models.Model):
         # Gestion automatique des tailles selon catégorie
         cat = self.category.lower()
         if cat == 'boards':
-            self.sizes = ["7.5", "7.75", "8.0", "8.25", "8.5"]
+            self.sizes = [ "7.75", "8.0", "8.25"]
         elif cat == 'chaussures':
-            self.sizes = ["38", "39", "40", "41", "42", "43", "44"]
+            self.sizes = [ "39", "40", "41"]
         elif cat == 'sweats':
-            self.sizes = ["XS", "S", "M", "L", "XL"]
+            self.sizes = [ "S", "M", "L",]
         else:
             self.sizes = []
 

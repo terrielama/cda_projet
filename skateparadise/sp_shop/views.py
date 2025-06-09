@@ -78,7 +78,6 @@ def product_list_by_category(request, category):
 
 # ----- Ajouter un produit au panier -----
 
-
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def add_item(request):
@@ -86,18 +85,27 @@ def add_item(request):
     size = request.data.get('size')
     cart_code = request.data.get('cart_code')
 
+    print("Données reçues:", request.data)  
+    
     if not item_id:
         return Response({'error': "L'ID du produit est requis."}, status=400)
-    if not size:
-        return Response({'error': 'Le champ size est requis.'}, status=400)
-
+    
     try:
-        quantity = int(request.data.get('quantity', 1))
-        if quantity <= 0:
+        quantity_to_add = int(request.data.get('quantity', 1))
+        if quantity_to_add <= 0:
             raise ValueError
     except (TypeError, ValueError):
         return Response({'error': 'Quantité invalide.'}, status=400)
 
+    try:
+        product = Product.objects.get(id=item_id)
+    except Product.DoesNotExist:
+        return Response({'error': 'Produit non trouvé.'}, status=404)
+
+    if product.sizes and not size:
+        return Response({'error': 'Le champ size est requis pour ce produit.'}, status=400)
+
+    # Récupération du panier
     if request.user.is_authenticated:
         cart, _ = Cart.objects.get_or_create(user=request.user, paid=False)
     else:
@@ -107,23 +115,31 @@ def add_item(request):
         if not cart:
             cart = Cart.objects.create(cart_code=cart_code, user=None, paid=False)
 
-    try:
-        product = Product.objects.get(id=item_id)
-    except Product.DoesNotExist:
-        return Response({'error': 'Produit non trouvé.'}, status=404)
-
+    # Cherche s'il y a déjà cet item dans le panier
     existing_item = CartItem.objects.filter(cart=cart, product=product, size=size).first()
-    already_in_cart_qty = existing_item.quantity if existing_item else 0
-    total_requested = already_in_cart_qty + quantity
+    current_qty_in_cart = existing_item.quantity if existing_item else 0
 
-    if total_requested > product.stock:
-        return Response({'error': f'Stock insuffisant : {product.stock} disponible, {total_requested} demandé.'}, status=400)
+    # Le total demandé dans le panier (ancien + nouveau)
+    new_total_qty = current_qty_in_cart + quantity_to_add
 
+    # Vérification stock : il faut que le total demandé ne dépasse pas le stock disponible + la quantité déjà dans le panier
+    # Car la quantité déjà dans le panier "réserve" déjà le stock
+    available_stock_for_addition = product.stock + current_qty_in_cart
+
+    if new_total_qty > available_stock_for_addition:
+        return Response({'error': f'Stock insuffisant : {product.stock} disponible, {new_total_qty} demandé.'}, status=400)
+
+    # Met à jour la quantité dans le panier
     if existing_item:
-        existing_item.quantity = total_requested
+        existing_item.quantity = new_total_qty
         existing_item.save()
     else:
-        CartItem.objects.create(cart=cart, product=product, size=size, quantity=quantity)
+        CartItem.objects.create(cart=cart, product=product, size=size, quantity=quantity_to_add)
+
+    # Mise à jour du stock produit : on diminue la différence entre nouveau total et ancien total dans le panier
+    quantity_difference = new_total_qty - current_qty_in_cart
+    product.stock -= quantity_difference
+    product.save()
 
     return Response({'message': 'Item ajouté au panier.'}, status=200)
 
@@ -134,6 +150,7 @@ def add_item(request):
 def product_in_cart(request):
     cart_code = request.query_params.get("cart_code")
     product_id = request.query_params.get("product_id")
+    size = request.query_params.get("size")  # Ajout du filtre taille
 
     if not product_id:
         return Response({"error": "Le product_id est requis."}, status=400)
@@ -151,7 +168,12 @@ def product_in_cart(request):
         if not cart:
             return Response({'quantity': 0})
 
-        cart_item = CartItem.objects.filter(cart=cart, product=product).first()
+        # Filtrer sur taille si taille donnée
+        if size:
+            cart_item = CartItem.objects.filter(cart=cart, product=product, size=size).first()
+        else:
+            cart_item = CartItem.objects.filter(cart=cart, product=product).first()
+
         if cart_item:
             return Response({'quantity': cart_item.quantity})
         else:
@@ -159,6 +181,7 @@ def product_in_cart(request):
 
     except Product.DoesNotExist:
         return Response({'quantity': 0})
+
 
 
 
