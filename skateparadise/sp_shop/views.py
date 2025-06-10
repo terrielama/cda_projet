@@ -290,6 +290,94 @@ def get_cart(request):
     serializer = CartSerializer(cart)
     return Response(serializer.data)
 
+# ---------  Diminuer la quantité d’un article (Stock)  ---------------
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def decrease_item(request):
+    item_id = request.data.get('item_id')
+    if not item_id:
+        return Response({'error': 'ID requis'}, status=400)
+
+    try:
+        item = CartItem.objects.get(id=item_id)
+    except CartItem.DoesNotExist:
+        return Response({'error': 'Article introuvable'}, status=404)
+
+    # Réajuster le stock du produit
+    if item.size:
+        try:
+            product_size = ProductSize.objects.get(product=item.product, size=item.size)
+            product_size.stock += 1
+            product_size.save()
+        except ProductSize.DoesNotExist:
+            return Response({'error': 'Taille non trouvée.'}, status=400)
+    else:
+        item.product.stock += 1
+        item.product.save()
+
+    # Réduire la quantité ou supprimer l’article du panier
+    if item.quantity > 1:
+        item.quantity -= 1
+        item.save()
+    else:
+        item.delete()
+
+    # Mise à jour de la disponibilité du produit
+    item.product.update_availability()
+
+    return Response({
+        'message': 'Quantité diminuée',
+        'produit': item.product.name,
+        'taille': item.size if item.size else None,
+        'quantité_restante': item.quantity if item.id else 0
+    }, status=200)
+
+
+# --------- Augmenter la quantité d’un article (Stock)  ---------------
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def increase_item(request):
+    item_id = request.data.get('item_id')
+    if not item_id:
+        return Response({'error': 'ID requis'}, status=400)
+
+    try:
+        item = CartItem.objects.get(id=item_id)
+    except CartItem.DoesNotExist:
+        return Response({'error': 'Article introuvable'}, status=404)
+
+    # Vérification du stock disponible
+    if item.size:
+        try:
+            product_size = ProductSize.objects.get(product=item.product, size=item.size)
+            if product_size.stock < 1:
+                return Response({'error': 'Stock insuffisant pour cette taille.'}, status=400)
+            product_size.stock -= 1
+            product_size.save()
+        except ProductSize.DoesNotExist:
+            return Response({'error': 'Taille non trouvée.'}, status=400)
+    else:
+        if item.product.stock < 1:
+            return Response({'error': 'Stock insuffisant pour ce produit.'}, status=400)
+        item.product.stock -= 1
+        item.product.save()
+
+    # Augmenter la quantité
+    item.quantity += 1
+    item.save()
+
+    # Mise à jour de la disponibilité
+    item.product.update_availability()
+
+    return Response({
+        'message': 'Quantité augmentée',
+        'produit': item.product.name,
+        'taille': item.size if item.size else None,
+        'quantité_totale': item.quantity
+    }, status=200)
+
 
 # -----------View du profile d'un user --------
 

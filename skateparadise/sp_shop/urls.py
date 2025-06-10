@@ -19,6 +19,9 @@ urlpatterns = [
     path('update_quantity', views.update_quantity, name='update_quantity'),
     path('remove_item', views.remove_item, name='remove_item'),
     path('associate_cart_to_user/', views.associate_cart_to_user, name='associate_cart_to_user'),
+     path('decrease_item', views.decrease_item, name='decrease_item'),
+    path('increase_item', views.increase_item, name='increase_item'),
+
 
     # Commandes
     path('create_order', views.create_order, name='create_order'),

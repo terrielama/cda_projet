@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from "react";
-import api from "../../api"; // Assure-toi que api est bien configuré (ex: axios)
+import api from "../../api";
 import { useNavigate } from "react-router-dom";
-import Loader from "../Loader"; // Ton loader personnalisé
+import Loader from "../Loader";
 import SMOButton from "./SMOButton";
 
 const Cart = () => {
   const [cart, setCart] = useState(null);
-  const [loading, setLoading] = useState(false); // Pour afficher le loader lors de la commande
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // Fonction pour récupérer le panier depuis le backend
   const fetchCart = async () => {
     const cart_code = localStorage.getItem("cart_code");
     const token = localStorage.getItem("token");
@@ -18,7 +17,6 @@ const Cart = () => {
     console.log("fetchCart appelé, cart_code:", cart_code);
 
     if (!cart_code) {
-      console.warn("Aucun cart_code trouvé dans le localStorage.");
       setCart(null);
       setError("Aucun panier trouvé. Ajoutez un produit.");
       return;
@@ -26,8 +24,6 @@ const Cart = () => {
 
     try {
       const startTime = Date.now();
-
-      // Appel API pour récupérer le panier
       const res = await api.get(`http://localhost:8001/get_cart?cart_code=${cart_code}`, {
         headers: { Authorization: token ? `Bearer ${token}` : "" },
       });
@@ -35,45 +31,32 @@ const Cart = () => {
       setCart(res.data);
       setError("");
 
-      // Optionnel : s'assurer que le loader s'affiche au moins 3 secondes
       const elapsed = Date.now() - startTime;
       if (elapsed < 3000) {
         await new Promise((resolve) => setTimeout(resolve, 3000 - elapsed));
       }
     } catch (err) {
       console.error("Erreur récupération panier :", err);
-      setError("Erreur de chargement du panier. Veuillez réessayer.");
+      setError("Erreur de chargement du panier.");
       setCart(null);
     }
   };
 
-  // Chargement du panier au premier rendu du composant
   useEffect(() => {
     console.log("useEffect: chargement du panier");
     fetchCart();
   }, []);
 
-  // Mise à jour de la quantité d’un item dans le panier
   const updateQuantity = async (itemId, delta) => {
     console.log(`updateQuantity appelé sur item ${itemId} avec delta ${delta}`);
-
     const cart_code = localStorage.getItem("cart_code");
-    if (!cart_code || !cart) {
-      console.warn("Pas de cart_code ou panier vide.");
-      return;
-    }
+    if (!cart_code || !cart) return;
 
     const item = cart.items.find((i) => i.id === itemId);
-    if (!item) {
-      console.warn("Item non trouvé dans le panier.");
-      return;
-    }
+    if (!item) return;
 
     const newQuantity = item.quantity + delta;
-    if (newQuantity < 1) {
-      console.log("Quantité trop faible, suppression ignorée ici. Utilisez Supprimer.");
-      return;
-    }
+    if (newQuantity < 1) return;
 
     try {
       await api.patch(
@@ -82,76 +65,82 @@ const Cart = () => {
       );
       console.log("Quantité mise à jour avec succès");
       fetchCart();
-      setError("");
     } catch (error) {
       console.error("Erreur mise à jour quantité :", error);
       setError("Erreur de mise à jour de la quantité.");
     }
   };
 
-  // Supprimer un produit du panier
-  const removeProduct = async (itemId) => {
-    console.log("Suppression du produit id:", itemId);
-    const cart_code = localStorage.getItem("cart_code");
-    if (!cart_code) {
-      console.warn("Pas de cart_code pour suppression");
-      return;
-    }
-
+  const increaseItemQuantity = async (itemId) => {
+    console.log("Augmenter quantité pour item:", itemId);
     try {
-      await api.post(
-        `http://localhost:8001/remove_item?cart_code=${cart_code}`,
-        { item_id: itemId }
-      );
-      console.log("Produit supprimé avec succès");
+      await api.post("http://localhost:8001/increase_item", { item_id: itemId });
       fetchCart();
-      setError("");
-    } catch (error) {
-      console.error("Erreur suppression produit :", error);
-      setError("Erreur lors de la suppression du produit.");
+    } catch (err) {
+      console.error("Erreur lors de l'augmentation de la quantité:", err);
+      setError("Stock insuffisant ou erreur serveur.");
     }
   };
 
-  // Créer une commande depuis le panier
+  const decreaseItemQuantity = async (itemId) => {
+    console.log("Diminuer quantité pour item:", itemId);
+    try {
+      await api.post("http://localhost:8001/decrease_item", { item_id: itemId });
+      fetchCart();
+    } catch (err) {
+      console.error("Erreur lors de la diminution de la quantité:", err);
+      setError("Erreur serveur.");
+    }
+  };
+
+  const removeProduct = async (itemId) => {
+    const cart_code = localStorage.getItem("cart_code");
+    if (!cart_code) return;
+
+    try {
+      await api.post(`http://localhost:8001/remove_item?cart_code=${cart_code}`, {
+        item_id: itemId,
+      });
+      console.log("Produit supprimé avec succès");
+      fetchCart();
+    } catch (error) {
+      console.error("Erreur suppression produit :", error);
+      setError("Erreur lors de la suppression.");
+    }
+  };
+
   const handleOrder = async () => {
     console.log("handleOrder appelé");
 
     if (!cart?.items.length) {
       setError("Votre panier est vide.");
-      console.warn("Commande annulée: panier vide");
       return;
     }
 
     try {
-      setLoading(true); // Affiche le loader lors de la création de commande
+      setLoading(true);
       const response = await api.post("http://localhost:8001/create_order", {
         cart_code: localStorage.getItem("cart_code"),
       });
       console.log("Commande créée:", response.data);
-      // Reset panier et localStorage
       setCart(null);
       localStorage.removeItem("cart_code");
 
-      // Redirection après 1 seconde pour laisser le loader visible
       setTimeout(() => {
         setLoading(false);
         navigate(`/commande/${response.data.order_id}`);
       }, 1000);
-      setError("");
     } catch (error) {
       console.error("Erreur serveur commande :", error.response?.data || error.message);
-      setError("Erreur lors de la commande, veuillez réessayer.");
+      setError("Erreur lors de la commande.");
       setLoading(false);
     }
   };
 
-  // Affichage du loader uniquement lors de la commande
   if (loading) {
-    console.log("Affichage du Loader");
     return <Loader />;
   }
 
-  // Calculs des prix
   const totalPrice = cart?.sum_total || 0;
   const shippingCost = totalPrice >= 70 ? 0 : 4;
   const finalPrice = totalPrice + shippingCost;
@@ -177,6 +166,7 @@ const Cart = () => {
 
             <div className="product-info">
               <h2>{item.product.name}</h2>
+              {item.size && <p>Taille sélectionnée : <strong>{item.size}</strong></p>}
               <p>
                 Prix unitaire : {item.product.price} €<br />
                 Quantité : {item.quantity}
@@ -184,9 +174,9 @@ const Cart = () => {
             </div>
 
             <div className="cart-quantity-controls">
-              <button onClick={() => updateQuantity(item.id, -1)}>-</button>
+              <button onClick={() => decreaseItemQuantity(item.id)}>-</button>
               <span>{item.quantity}</span>
-              <button onClick={() => updateQuantity(item.id, 1)}>+</button>
+              <button onClick={() => increaseItemQuantity(item.id)}>+</button>
             </div>
 
             <button className="remove-button" onClick={() => removeProduct(item.id)}>
@@ -205,7 +195,6 @@ const Cart = () => {
           <p>Livraison : {shippingCost === 0 ? "Gratuite" : `${shippingCost} €`}</p>
           <p>Total à payer : {finalPrice.toFixed(2)} €</p>
 
-          {/* Le bouton est désactivé pendant le chargement */}
           <SMOButton onClick={handleOrder} disabled={loading} />
 
           {error && <p className="error-message">{error}</p>}
