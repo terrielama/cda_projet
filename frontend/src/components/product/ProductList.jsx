@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import AddButton from "./AddButton.jsx";
 import LikeButton from './LikeButton.jsx';
 
 // Instance axios avec baseURL
@@ -101,36 +100,7 @@ const ProductList = () => {
       });
   }, [category, query, cartCode]);
 
-  // ➕ Ajout produit au panier + MAJ locale et gestion stock
-  const add_item = async (product_id) => {
-    const currentQty = inCart[product_id] || 0;
-    const product = products.find(p => p.id === product_id);
-    if (!product) return;
 
-    if (currentQty >= Number(product.stock)) {
-      setMessage(`Stock épuisé pour ${product.name}`);
-      return;
-    }
-
-    try {
-      await api.post("add_item", {
-        cart_code: cartCode,
-        item_id: product_id,
-        quantity: 1,
-        size: "8.25",
-      });
-
-      // MAJ immédiate locale pour que UI reflète l'état stock
-      setInCart(prev => ({
-        ...prev,
-        [product_id]: (prev[product_id] || 0) + 1,
-      }));
-
-      setMessage("Produit ajouté au panier !");
-    } catch (error) {
-      setMessage("Produit indisponible ou stock épuisé.");
-    }
-  };
 
   const handleProductClick = (productId) => {
     navigate(`/produit/${productId}`);
@@ -180,15 +150,6 @@ const ProductList = () => {
                 <div className="card-body">
                   <h5 className="card-title">{product.name}</h5>
                   <p className="card-price">{formattedPrice}€</p>
-
-                  <AddButton
-                    onClick={() => add_item(product.id)}
-                    disabled={isOutOfStock}
-                    title={isOutOfStock ? "Rupture de stock" : undefined}
-                    outOfStock={isOutOfStock}
-                  >
-                    {isOutOfStock ? 'Article épuisé' : 'Ajouter au panier'}
-                  </AddButton>
 
                   <LikeButton
                     productId={product.id}
