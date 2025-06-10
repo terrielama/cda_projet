@@ -149,15 +149,15 @@ const Cart = () => {
     <div className="cart-container">
       <h1 className="center-text">Mon Panier</h1>
 
-      {cart?.items.length ? (
+      {cart?.items?.length > 0 ? (
         cart.items.map((item) => (
           <div key={item.id} className="cart-item">
             <img
               src={
-                item.product.image?.startsWith("http")
-                  ? item.product.image
-                  : item.product.image
-                  ? `http://localhost:8001${item.product.image}`
+                item.image?.startsWith("http")
+                  ? item.image
+                  : item.image
+                  ? `http://localhost:8001${item.image}`
                   : "/default-image.png"
               }
               alt={item.product.name}
@@ -166,7 +166,11 @@ const Cart = () => {
 
             <div className="product-info">
               <h2>{item.product.name}</h2>
-              {item.size && <p>Taille sélectionnée : <strong>{item.size}</strong></p>}
+              {item.size && (
+                <p className="text-sm text-gray-700">
+                  Taille sélectionnée : <strong>{item.size}</strong>
+                </p>
+              )}
               <p>
                 Prix unitaire : {item.product.price} €<br />
                 Quantité : {item.quantity}
@@ -179,7 +183,10 @@ const Cart = () => {
               <button onClick={() => increaseItemQuantity(item.id)}>+</button>
             </div>
 
-            <button className="remove-button" onClick={() => removeProduct(item.id)}>
+            <button
+              className="remove-button"
+              onClick={() => removeProduct(item.id)}
+            >
               Supprimer
             </button>
           </div>
@@ -192,7 +199,10 @@ const Cart = () => {
         <div className="cart-summary">
           <h2>Total</h2>
           <p>Sous-total : {totalPrice.toFixed(2)} €</p>
-          <p>Livraison : {shippingCost === 0 ? "Gratuite" : `${shippingCost} €`}</p>
+          <p>
+            Livraison :{" "}
+            {shippingCost === 0 ? "Gratuite" : `${shippingCost.toFixed(2)} €`}
+          </p>
           <p>Total à payer : {finalPrice.toFixed(2)} €</p>
 
           <SMOButton onClick={handleOrder} disabled={loading} />
