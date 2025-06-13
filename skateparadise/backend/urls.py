@@ -18,10 +18,19 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import JsonResponse
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+
+# Vue personnalisée pour les erreurs 404
+def custom_404_view(request, exception):
+    return JsonResponse({'error': 'Not Found'}, status=404)
+
+# Vue personnalisée pour les erreurs 500
+def custom_500_view(request):
+    return JsonResponse({'error': 'Erreur serveur interne'}, status=500)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -29,5 +38,10 @@ urlpatterns = [
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
-# Servir les fichiers médias lors du développement
+
+# Fichiers médias en mode développement
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Handlers personnalisés
+handler404 = custom_404_view
+handler500 = custom_500_view
