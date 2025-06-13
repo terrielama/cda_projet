@@ -16,6 +16,7 @@ import random
 from django.db.models import F
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.db import transaction
 
 
 #----- View pour creer un user (Register) ------
@@ -435,27 +436,55 @@ def create_order(request):
 
     try:
         cart = Cart.objects.get(cart_code=cart_code)
-        order = Order.objects.create(cart=cart, user=request.user if request.user.is_authenticated else None)
 
-        for item in cart.cart_items.all():
-            product = item.product
-            if product.stock >= item.quantity:
-                # Décrémenter le stock de manière atomique
+        with transaction.atomic():
+            order = Order.objects.create(
+                cart=cart,
+                user=request.user if request.user.is_authenticated else None
+            )
+
+            for item in cart.cart_items.select_related('product').all():
+                product = item.product
+
+                # Recharge produit pour être sûr des données fraîches
+                product.refresh_from_db()
+
+                if product.stock < item.quantity:
+                    # Lever une erreur manuelle qui va déclencher le rollback
+                    raise ValueError(f"Stock insuffisant pour {product.name} (disponible : {product.stock})")
+
+                # Mise à jour atomique du stock
                 product.stock = F('stock') - item.quantity
                 product.save()
-                OrderItem.objects.create(order=order, product=product, quantity=item.quantity, price=product.price)
-            else:
-                # Si le stock est insuffisant, marquer le produit comme non disponible
-                product.available = False
-                product.save()
+                product.refresh_from_db()
 
-        return Response({"message": "Commande créée avec succès", "order_id": order.id}, status=status.HTTP_201_CREATED)
+                # Créer l'OrderItem
+                OrderItem.objects.create(
+                    order=order,
+                    product=product,
+                    quantity=item.quantity,
+                    price=product.price,
+                    size=item.size
+                )
+
+                # Si stock à 0, marquer indisponible
+                if product.stock == 0:
+                    product.available = False
+                    product.save()
+
+            return Response({
+                "message": "Commande créée avec succès",
+                "order_id": order.id
+            }, status=status.HTTP_201_CREATED)
 
     except Cart.DoesNotExist:
         return Response({"error": "Panier non trouvé"}, status=status.HTTP_404_NOT_FOUND)
+    except ValueError as ve:
+        # Erreur personnalisée levée si stock insuffisant
+        return Response({"error": str(ve)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
 
 # --------------- Assossier commande a un user ------------
 @api_view(['POST'])
@@ -528,6 +557,7 @@ def order_details(request, order_id):
                 "price": float(item.product.price) if hasattr(item.product, 'price') else 0,
                 "total_price": float(item.product.price * item.quantity) if hasattr(item.product, 'price') else 0,
                 "product_image": item.product.image.url if item.product.image else None,
+                "size": item.size  # ✅ Ajout du champ size
             })
     else:
         # fallback : récupérer les OrderItems liés à la commande
@@ -540,6 +570,7 @@ def order_details(request, order_id):
                 "price": float(item.price),
                 "total_price": float(item.price * item.quantity),
                 "product_image": item.product.image.url if item.product.image else None,
+                "size": item.size  # ✅ Ajout du champ size
             })
 
     print(f"Order {order.id} a {len(order_items)} items retournés.")
@@ -550,6 +581,7 @@ def order_details(request, order_id):
         },
         status=status.HTTP_200_OK
     )
+
 
 
 

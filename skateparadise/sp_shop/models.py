@@ -170,14 +170,28 @@ class Cart(models.Model):
 
 #----------- Définition du modèle CartItem ( Les produits qui sont dans le panier ) ----
 
+
 class CartItem(models.Model):
-    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='cart_items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.IntegerField(default=1)
-    size = models.CharField(max_length=10, null=True, blank=True)
+    cart = models.ForeignKey(
+        'Cart',
+        on_delete=models.CASCADE,
+        related_name='cart_items'
+    )
+    product = models.ForeignKey(
+        'Product',
+        on_delete=models.CASCADE
+    )
+    quantity = models.PositiveIntegerField(default=1)
+    size = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True,
+        help_text="Taille sélectionnée pour ce produit (ex: S, M, L, 42, etc.)"
+    )
 
     def __str__(self):
-        return f"{self.quantity} x {self.product.name} (taille {self.size}) dans le panier {self.cart.id}"
+        size_display = self.size if self.size else "non spécifiée"
+        return f"{self.quantity} x {self.product.name} (taille {size_display}) dans le panier {self.cart.id}"
 
 # ----------- Définition du modèle Order --------------------
 def generate_tracking_code():
@@ -242,9 +256,11 @@ class OrderItem(models.Model):
     product = models.ForeignKey('Product', on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)  # prix unitaire
+    size = models.CharField(max_length=10, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.product.name} - {self.quantity} items"
+        size_text = f" (taille {self.size})" if self.size else ""
+        return f"{self.product.name} - {self.quantity} item(s){size_text}"
 
     @property
     def total_price(self):
