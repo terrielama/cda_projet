@@ -242,8 +242,8 @@ const AuthModal = ({ toggleModal }) => {
           </button>
 
           {/* Affichage erreur */}
-          {error && <p className="error-msg">{error}</p>}
-        </form>
+          <p className="error-msg">{String(error)}</p>
+          </form>
 
         {/* Switch entre connexion et inscription */}
         <p className="switch-mode">

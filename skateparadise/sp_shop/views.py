@@ -17,7 +17,11 @@ from django.db.models import F
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db import transaction
+import bleach
 
+# -- Sécurité : Nettoyer les champs texte ------
+def clean_input(text):
+    return bleach.clean(text, tags=[], attributes={}, strip=True)
 
 #----- View pour creer un user (Register) ------
 

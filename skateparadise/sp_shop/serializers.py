@@ -4,6 +4,7 @@ from main.models import CustomUser
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 User = get_user_model()  # Récupère dynamiquement le modèle utilisateurCustomUser
+import bleach
 
 # Serializer les models permet de convertir les objets Product en JSON (et vice versa) pour les API.
 # ------------------------------------------------------------------
@@ -11,6 +12,10 @@ User = get_user_model()  # Récupère dynamiquement le modèle utilisateurCustom
 
 
 # ------- Serializer pour le modèle Register-----------
+
+# Valide les mots de passe et empêche les doublons (username/email)
+# Utilise bleach pour nettoyer toutes les entrées texte utilisateur (aucun HTML ou JS possible)
+# Crée un utilisateur sécurisé dans la base
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
@@ -32,10 +37,20 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
         return data
 
+    def sanitize_text(self, text):
+        # Supprime toute balise HTML potentiellement dangereuse
+        return bleach.clean(text, tags=[], attributes={}, styles=[], strip=True)
+
     def create(self, validated_data):
         validated_data.pop('confirm_password')
         password = validated_data.pop('password')
-        
+
+        # Nettoyage des champs sensibles
+        validated_data['username'] = self.sanitize_text(validated_data.get('username', ''))
+        validated_data['first_name'] = self.sanitize_text(validated_data.get('first_name', ''))
+        validated_data['last_name'] = self.sanitize_text(validated_data.get('last_name', ''))
+        validated_data['email'] = self.sanitize_text(validated_data.get('email', ''))
+
         user = User(**validated_data)
         user.set_password(password)
         user.save()

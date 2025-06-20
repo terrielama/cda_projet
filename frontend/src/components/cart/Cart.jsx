@@ -8,13 +8,12 @@ const Cart = () => {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [stockErrors, setStockErrors] = useState({});
   const navigate = useNavigate();
 
   const fetchCart = async () => {
     const cart_code = localStorage.getItem("cart_code");
     const token = localStorage.getItem("token");
-
-    console.log("fetchCart appelé, cart_code:", cart_code);
 
     if (!cart_code) {
       setCart(null);
@@ -24,12 +23,15 @@ const Cart = () => {
 
     try {
       const startTime = Date.now();
-      const res = await api.get(`http://localhost:8001/get_cart?cart_code=${cart_code}`, {
-        headers: { Authorization: token ? `Bearer ${token}` : "" },
-      });
-      console.log("Panier récupéré:", res.data);
+      const res = await api.get(
+        `http://localhost:8001/get_cart?cart_code=${cart_code}`,
+        {
+          headers: { Authorization: token ? `Bearer ${token}` : "" },
+        }
+      );
       setCart(res.data);
       setError("");
+      setStockErrors({});
 
       const elapsed = Date.now() - startTime;
       if (elapsed < 3000) {
@@ -43,47 +45,23 @@ const Cart = () => {
   };
 
   useEffect(() => {
-    console.log("useEffect: chargement du panier");
     fetchCart();
   }, []);
 
-  const updateQuantity = async (itemId, delta) => {
-    console.log(`updateQuantity appelé sur item ${itemId} avec delta ${delta}`);
-    const cart_code = localStorage.getItem("cart_code");
-    if (!cart_code || !cart) return;
-
-    const item = cart.items.find((i) => i.id === itemId);
-    if (!item) return;
-
-    const newQuantity = item.quantity + delta;
-    if (newQuantity < 1) return;
-
-    try {
-      await api.patch(
-        `http://localhost:8001/update_quantity?cart_code=${cart_code}`,
-        { item_id: itemId, quantity: newQuantity }
-      );
-      console.log("Quantité mise à jour avec succès");
-      fetchCart();
-    } catch (error) {
-      console.error("Erreur mise à jour quantité :", error);
-      setError("Erreur de mise à jour de la quantité.");
-    }
-  };
-
   const increaseItemQuantity = async (itemId) => {
-    console.log("Augmenter quantité pour item:", itemId);
     try {
       await api.post("http://localhost:8001/increase_item", { item_id: itemId });
       fetchCart();
     } catch (err) {
       console.error("Erreur lors de l'augmentation de la quantité:", err);
-      setError("Stock insuffisant ou erreur serveur.");
+      setStockErrors((prev) => ({
+        ...prev,
+        [itemId]: "Stock insuffisant pour ce produit.",
+      }));
     }
   };
 
   const decreaseItemQuantity = async (itemId) => {
-    console.log("Diminuer quantité pour item:", itemId);
     try {
       await api.post("http://localhost:8001/decrease_item", { item_id: itemId });
       fetchCart();
@@ -101,7 +79,6 @@ const Cart = () => {
       await api.post(`http://localhost:8001/remove_item?cart_code=${cart_code}`, {
         item_id: itemId,
       });
-      console.log("Produit supprimé avec succès");
       fetchCart();
     } catch (error) {
       console.error("Erreur suppression produit :", error);
@@ -110,8 +87,6 @@ const Cart = () => {
   };
 
   const handleOrder = async () => {
-    console.log("handleOrder appelé");
-
     if (!cart?.items.length) {
       setError("Votre panier est vide.");
       return;
@@ -122,7 +97,6 @@ const Cart = () => {
       const response = await api.post("http://localhost:8001/create_order", {
         cart_code: localStorage.getItem("cart_code"),
       });
-      console.log("Commande créée:", response.data);
       setCart(null);
       localStorage.removeItem("cart_code");
 
@@ -175,6 +149,9 @@ const Cart = () => {
                 Prix unitaire : {item.product.price} €<br />
                 Quantité : {item.quantity}
               </p>
+              {stockErrors[item.id] && (
+                <p className="error-message">{stockErrors[item.id]}</p>
+              )}
             </div>
 
             <div className="cart-quantity-controls">
