@@ -13,9 +13,12 @@ import bleach
 
 # ------- Serializer pour le modèle Register-----------
 
-# Valide les mots de passe et empêche les doublons (username/email)
-# Utilise bleach pour nettoyer toutes les entrées texte utilisateur (aucun HTML ou JS possible)
-# Crée un utilisateur sécurisé dans la base
+# La fonction sanitize_text utilise bleach.clean() sans autoriser aucune balise ou attribut HTML.  Cela empêche toute injection XSS.
+# Dans create() : néttoyage de tous les champs texte utilisateur.
+# La validation assure qDans create(), nettoyage de tous les champs texte utilisateur.
+# ue password et confirm_password correspondent.
+# set_password() hash le mot de passe proprement avant sauvegarde.
+# Le champ confirm_password est write-only, il ne sera pas retourné dans les réponses API.
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
@@ -55,8 +58,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
-
-    
 
 # -----  Serializer pour le modèle catégorie --------
 
