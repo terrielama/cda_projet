@@ -148,14 +148,14 @@ const AuthModal = ({ toggleModal }) => {
       // Gestion des erreurs backend
       console.error("Erreur lors de la requête :", err.response?.data || err.message);
       const backendErrors = err.response?.data;
-      if (backendErrors) {
-        const allErrors = Object.values(backendErrors)
-          .flat()
-          .join(" ");
+      if (backendErrors && backendErrors.detail === "No active account found with the given credentials") {
+        setError("Aucun compte actif trouvé avec les identifiants donnés.");
+      } else if (backendErrors) {
+        const allErrors = Object.values(backendErrors).flat().join(" ");
         setError(allErrors || "Erreur. Veuillez vérifier les champs.");
       } else {
         setError("Erreur. Veuillez vérifier les champs.");
-      }
+      }      
     } finally {
       setLoading(false);
       console.log("Fin du traitement du formulaire.");
@@ -242,7 +242,7 @@ const AuthModal = ({ toggleModal }) => {
           </button>
 
           {/* Affichage erreur */}
-          <p className="error-msg">{String(error)}</p>
+          {error && <div className="alert-error">{error}</div>}
           </form>
 
         {/* Switch entre connexion et inscription */}

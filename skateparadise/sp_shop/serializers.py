@@ -39,7 +39,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     def sanitize_text(self, text):
         # Supprime toute balise HTML potentiellement dangereuse
-        return bleach.clean(text, tags=[], attributes={}, styles=[], strip=True)
+        return bleach.clean(text, tags=[], attributes={}, strip=True)
 
     def create(self, validated_data):
         validated_data.pop('confirm_password')

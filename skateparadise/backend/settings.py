@@ -117,7 +117,7 @@ SIMPLE_JWT = {
 AUTH_USER_MODEL = "main.CustomUser"
 
 # Internationalisation
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'fr'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True

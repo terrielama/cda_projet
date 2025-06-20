@@ -14,9 +14,9 @@ import traceback
 from django.db.models import Q
 import random
 from django.db.models import F
-from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db import transaction
+from django.utils.translation import gettext as _
 import bleach
 
 # -- Sécurité : Nettoyer les champs texte ------
@@ -27,7 +27,14 @@ def clean_input(text):
 
 @api_view(["POST"])
 def register(request):
-    serializer = UserRegisterSerializer(data=request.data)
+    data = request.data.copy()
+    # Nettoyer les champs texte importants (exemple : username, email)
+    if 'username' in data:
+        data['username'] = clean_input(data['username'])
+    if 'email' in data:
+        data['email'] = clean_input(data['email'])
+
+    serializer = UserRegisterSerializer(data=data)
     if serializer.is_valid():
         try:
             user = serializer.save()
@@ -36,14 +43,10 @@ def register(request):
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
             }, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            print("Erreur lors de la création de l'utilisateur :")
-            print(traceback.format_exc())  # Affiche la stack trace complète
+        except Exception:
             return Response({"error": "Erreur serveur lors de la création de l'utilisateur."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
-        print("Serializer non valide :", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 
 # ----- View des produits --------------
 @api_view(["GET"])
