@@ -24,7 +24,7 @@ const Cart = () => {
     try {
       const startTime = Date.now();
       const res = await api.get(
-        `http://localhost:8001/get_cart?cart_code=${cart_code}`,
+        `get_cart?cart_code=${cart_code}`,
         {
           headers: { Authorization: token ? `Bearer ${token}` : "" },
         }
@@ -50,7 +50,7 @@ const Cart = () => {
 
   const increaseItemQuantity = async (itemId) => {
     try {
-      await api.post("http://localhost:8001/increase_item", { item_id: itemId });
+      await api.post("increase_item", { item_id: itemId });
       fetchCart();
     } catch (err) {
       console.error("Erreur lors de l'augmentation de la quantité:", err);
@@ -63,7 +63,7 @@ const Cart = () => {
 
   const decreaseItemQuantity = async (itemId) => {
     try {
-      await api.post("http://localhost:8001/decrease_item", { item_id: itemId });
+      await api.post("decrease_item", { item_id: itemId });
       fetchCart();
     } catch (err) {
       console.error("Erreur lors de la diminution de la quantité:", err);
@@ -76,7 +76,7 @@ const Cart = () => {
     if (!cart_code) return;
 
     try {
-      await api.post(`http://localhost:8001/remove_item?cart_code=${cart_code}`, {
+      await api.post(`remove_item?cart_code=${cart_code}`, {
         item_id: itemId,
       });
       fetchCart();
@@ -94,7 +94,7 @@ const Cart = () => {
 
     try {
       setLoading(true);
-      const response = await api.post("http://localhost:8001/create_order", {
+      const response = await api.post("create_order", {
         cart_code: localStorage.getItem("cart_code"),
       });
       setCart(null);
