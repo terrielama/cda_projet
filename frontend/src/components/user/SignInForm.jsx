@@ -93,7 +93,7 @@ const AuthModal = ({ toggleModal }) => {
         // Inscription : convertir en snake_case et exclure confirmPassword
         const { confirmPassword, ...rest } = formData;
         const dataToSend = keysToSnakeCase(rest);
-        dataToSend.confirm_password = confirmPassword; // Ajouter à la main
+        dataToSend.confirm_password = confirmPassword; 
 
         console.log("Inscription avec (snake_case):", dataToSend);
 

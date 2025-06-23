@@ -1,0 +1,14 @@
+# Environnements
+.env
+*.pyc
+__pycache__/
+db.sqlite3
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+
+# Django migrations
+**/migrations/

@@ -44,19 +44,21 @@ PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
 ]
 
+DEBUG = config('DEBUG', default=True, cast=bool)
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-]
-
-CORS_ALLOW_ALL_ORIGINS = True
-
+# FRONTEND_URL est chargé depuis le .env
+FRONTEND_URL = config('FRONTEND_URL', default="http://localhost:5173")
 
 # CORS
-FRONTEND_URL = config('FRONTEND_URL')
-CORS_ALLOWED_ORIGINS = [FRONTEND_URL]
-CORS_ALLOW_ALL_ORIGINS = DEBUG
-CORS_ORIGIN_WHITELIST = [FRONTEND_URL]
+CORS_ALLOWED_ORIGINS = [FRONTEND_URL] if not DEBUG else [
+    FRONTEND_URL,
+    "http://localhost:5173",  # autorisé en dev
+]
+
+CORS_ALLOW_ALL_ORIGINS = DEBUG  # Autorise toutes les origines uniquement si DEBUG=True
+CORS_ALLOW_CREDENTIALS = True   # Nécessaire si on utilise des cookies ou headers d'autorisation
+
+
 
 # URLs & WSGI
 ROOT_URLCONF = 'backend.urls'
@@ -108,9 +110,17 @@ REST_FRAMEWORK = {
     ]
 }
 
+# Configuration des durées de validité des tokens
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30)
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),   # Le token d’accès expire après 30 minutes
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),      # Le refresh token est valide pendant 7 jours
+    'ROTATE_REFRESH_TOKENS': False,                   # Ne pas changer le refresh token à chaque usage
+    'ALGORITHM': 'HS256',                             # Algorithme de chiffrement utilisé
+    'AUTH_HEADER_TYPES': ('Bearer',),                 # Type d’en-tête attendu : Bearer <token>
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
+
+
 
 AUTH_USER_MODEL = "main.CustomUser"
 
