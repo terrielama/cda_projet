@@ -20,23 +20,23 @@ const Order = () => {
 
   useEffect(() => {
     if (!orderId) {
-      console.warn('⚠️ orderId manquant dans les params URL');
+      console.warn('orderId manquant dans les params URL');
       setLoading(false);
       setError('Identifiant de commande manquant');
       return;
     }
 
     const fetchOrder = async () => {
-      console.log(`⏳ Récupération de la commande ID = ${orderId}`);
+      console.log(`Récupération de la commande ID = ${orderId}`);
       try {
-        const res = await fetch(`http://localhost:8001/order/${orderId}`, {
+        const res = await fetch(`order/${orderId}`, {
           headers: { 'Content-Type': 'application/json' },
         });
 
         if (!res.ok) throw new Error(`Erreur API ${res.status}`);
 
         const data = await res.json();
-        console.log('📦 Données reçues de la commande:', data);
+        console.log('Données reçues de la commande:', data);
 
         // Affiche chaque produit avec son prix
         if (Array.isArray(data.items)) {
