@@ -6,27 +6,32 @@
 }
 
 html, body {
-  height: 100%;
   margin: 0;
   padding: 0;
   font-family: Arial, sans-serif;
+  height: 100%;
   
 }
 
 body {
+  margin: 0;
   display: flex;
   flex-direction: column;
-  min-height: 100vh; 
   background-color: #F2F2F2;
   color: #212529;
 }
 
-
-#fixMeDetectBox *:not(.CodeMeCanvas *),
-#superDeveloper111,
-[id=jinnoInstalled] {
-  display: none;
+.main {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
+
+main {
+  flex: 1;
+  background-color: #f2f2f2;
+}
+
 
 
 /* ------ Navbar ---------- */
@@ -106,6 +111,7 @@ body {
 
 .brands-container {
   display: flex;
+  margin: 70px auto;
   gap: 10px;
   padding: 50px;
   align-items: stretch; /* alignement vertical homogène */
@@ -154,7 +160,7 @@ body {
 .side-item {
   position: relative;
   flex: 1;
-  height: 50%; /* Chaque image prend la moitié de la hauteur totale */
+  height: 50%; 
 }
 
 .side-item img {
@@ -164,9 +170,8 @@ body {
 }
 
 .side-text {
-    position: absolute;
-    bottom: 150px;
-    left: 250px;
+    position: relative;
+ 
     color: white;
     font-weight: bold;
     font-size: 32px;
@@ -1138,79 +1143,75 @@ body {
 
 /* ------ Tracking : Suivi de la commande  --------- */
 
+/* Conteneur centré verticalement ET horizontalement */
 .order-tracking-container {
-  max-width: 900px;
-  margin:85px auto;
+  max-width: 550px;
+  width: 90%; /* pour que ce soit responsive */
   padding: 20px;
-  font-family: 'Arial', sans-serif;
-  background-color: #fff;
-}
-
-h1, h2 {
+  margin: 130px auto;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  font-family: Arial, sans-serif;
   color: #333;
-  margin-bottom: 25px;
+  box-sizing: border-box;
 }
 
-p {
-  margin: 4px 0;
-}
-
-.order-user-info,
-.order-details,
-.order-products,
-.order-steps {
+.client-info{
   margin-bottom: 20px;
-  border: 1px solid #ddd;
-  padding: 15px;
+  background: #f9f9f9;
+  padding: 15px 20px;
   border-radius: 8px;
-  background-color: #f9f9f9;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
 
-.product-item {
-  display: flex;
-  gap: 15px;
+.order-tracking-container h1 {
+  font-size: 2rem;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.tracking-order-details h2 {
+  margin-top: 20px;
+  font-size: 24px;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #31313176;
+  padding-bottom: 5px;
+}
+
+.tracking-order-details h3 {
+  font-size: 20px;
+  margin-top: 20px;
   margin-bottom: 10px;
 }
 
-.product-item img {
-  width: 80px;
-  height: auto;
-  object-fit: cover;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+.tracking-order-details p {
+  font-family: 20px;
 }
 
-.order-steps ul {
-  list-style-type: disc;
-  padding-left: 20px;
+.product-list {
+  list-style: disc inside;
+  padding-left: 0;
+  margin: 0;
 }
 
-.order-tracking-back-link {
-  display: inline-block;
-  margin-top: 20px;
-  color: #4d00c1;
-  text-decoration: none;
-  font-weight: bold;
+.product-item {
+  margin-bottom: 20px;
+  font-family: 20px;
 }
 
-.order-tracking-back-link:hover {
-  text-decoration: underline;
+.info-placeholder {
+  color: gray;
+  font-style: italic;
 }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 5px solid #eee;
-  border-top: 5px solid #0062ca;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 20px auto;
+.tracking-payment-method h2{
+  font-size: 24px;
 }
 
-.error {
-  color: red;
-  font-weight: bold;
-}
+
+
+
 
 /* -------- Page Favoris ---------------- */
 
@@ -1270,7 +1271,7 @@ p {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  width: 280px;
+  max-width: 290px;
   transition: box-shadow 0.3s ease;
 
 }
@@ -1576,6 +1577,9 @@ p {
   .col-md-4 {
     flex: 0 0 50%; /* 2 cartes par ligne sur tablette */
   }
+  .prf{
+    margin-top: 200px;
+  }
 }   
 
 @media (max-width: 900px) {
@@ -1593,6 +1597,9 @@ p {
     width: 300px;
     margin: 0 auto;
   }
+
+  
+
 }
 
 
@@ -1768,7 +1775,10 @@ p {
   .prf-order-title {
     font-size: 14px;
   }
+
+ 
 }
+
 
 @media (max-width: 480px) {
   
@@ -1818,9 +1828,7 @@ p {
     font-size: 13px;
   }
 
-  .order-tracking-container {
-    padding: 15px;
-  }
+  
 
   .order-tracking-container h1 {
     font-size: 1.5rem;
@@ -1854,5 +1862,26 @@ p {
     min-width: 300px;
     margin: auto;
     margin-bottom: 15px;
+  }
+
+  .order-tracking-container {
+    margin-top: 200px;
+    padding: 15px;
+    width: 90%;
+    max-width: 95%;
+  }
+
+  .order-tracking-container h1 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+
+  .order-tracking-container h2 {
+    font-size: 1.25rem;
+  }
+
+
+  .product-item {
+    font-size: 0.9rem;
   }
 }

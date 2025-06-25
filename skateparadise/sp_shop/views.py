@@ -49,9 +49,10 @@ def register(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # ----- View des produits --------------
+
 @api_view(["GET"])
 def products(request):
-    products = Product.objects.select_related('category').all()  # Important !
+    products = Product.objects.select_related('category').all()  
     serializer = ProductSerializer(products, many=True, context={'request': request})
     return Response(serializer.data)
 
@@ -87,6 +88,7 @@ def product_list_by_category(request, category):
 
 
 # ----- Ajouter un produit au panier -----
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def add_item(request):

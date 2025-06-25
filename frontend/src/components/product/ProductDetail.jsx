@@ -57,10 +57,9 @@ const ProductDetail = () => {
   // Récupération du produit
   useEffect(() => {
     if (!id) return;
-
-    console.log("Fetching product with id:", id);
+    console.log("Récupération du produit avec id:", id);
     api.get(`product/${id}/`).then((res) => {
-      console.log("Product data received:", res.data);
+      console.log("Données de produit reçues:", res.data);
       setProduct(res.data);
       const availableSizes = res.data.available_sizes || [];
 
@@ -123,7 +122,7 @@ const ProductDetail = () => {
       size: size,
     };
 
-    console.log("Adding to cart with payload:", payload);
+    console.log("Ajout au panier avec charge utile:", payload);
 
     api.post("add_item", payload).then(() => {
       console.log("Produit ajouté au panier avec succès");

@@ -48,20 +48,20 @@ const ProductList = () => {
   const [favorites, setFavorites] = useState(getFavoritesFromStorage());
   const [likeMessage, setLikeMessage] = useState('');
 
-  // 🛒 Cart code unique en localStorage
+  //  Cart code unique en localStorage
   const [cartCode] = useState(() => {
     let code = localStorage.getItem("cart_code");
     if (!code) {
       code = generateRandomAlphanumeric();
       localStorage.setItem("cart_code", code);
-      console.log("🔐 Nouveau cart_code généré :", code);
+      console.log(" Nouveau cart_code généré :", code);
     } else {
-      console.log("✅ cart_code existant :", code);
+      console.log(" cart_code existant :", code);
     }
     return code;
   });
 
-  // 🔁 Récupère les quantités pour la liste des produits, appelé uniquement quand produits changent
+  //  Récupère les quantités pour la liste des produits, appelé uniquement quand produits changent
   const fetchCartQuantities = async (productsList) => {
     const updated = {};
     await Promise.all(
@@ -78,7 +78,8 @@ const ProductList = () => {
     setInCart(updated);
   };
 
-  // 🧲 Récupération produits à l’affichage au chargement / changement catégorie ou recherche
+  // Récupération produits à l’affichage au chargement / changement catégorie ou recherche
+  
   useEffect(() => {
     if (!category) return;
 
@@ -106,7 +107,7 @@ const ProductList = () => {
     navigate(`/produit/${productId}`);
   };
 
-  // Gestion favoris localStorage
+
   const toggleFavorite = (productId) => {
     const updatedFavorites = {
       ...favorites,
