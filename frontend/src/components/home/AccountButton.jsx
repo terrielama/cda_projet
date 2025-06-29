@@ -44,7 +44,7 @@ const AccountButton = () => {
   }
 
   .button-message {
-    margin-left: 5px;
+    margin-left: 7px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -53,8 +53,8 @@ const AccountButton = () => {
     background-color: var(--bg-color);
     border-radius: 68px;
     cursor: pointer;
-    padding: 2px 0px 2px 0px;
-    width: 120px;
+    padding: 6px 10px 6px 6px;
+    width: fit-content;
     height: 40px;
     border: 0;
     overflow: hidden;
@@ -64,21 +64,21 @@ const AccountButton = () => {
 
   .button-message:hover {
     height: 40px;
-    padding: 5px 6px 5px 6px;
+    padding: 8px 15px 6px 8px;
     background-color: var(--bg-hover-color);
     transition: var(--btn-transition);
   }
 
   .button-message:active {
-    transform: scale(0.90);
+    transform: scale(0.99);
   }
 
   .content-avatar {
-    width: 23px;
-    height: 20px;
+    width: 25px;
+    height: 25px;
+    margin: 0;
     transition: var(--btn-transition);
     position: relative;
-    margin-left:10px;
   }
 
 
@@ -98,8 +98,8 @@ const AccountButton = () => {
 
   .status-user {
     position: absolute;
-    width: 5px;
-    height: 5px;
+    width: 6px;
+    height: 6px;
     right: 1px;
     bottom: 1px;
     border-radius: 50%;
@@ -129,7 +129,8 @@ const AccountButton = () => {
 
 
   .lable-message {
-    font-size: 13px;
+    font-size: 14px;
+    padding-right: 7px;
     display: flex;
     align-items: center;
     opacity: 1;
@@ -141,7 +142,7 @@ const AccountButton = () => {
     height: auto;
     letter-spacing: normal;
     opacity: 1;
-    font-size: 12px;
+    font-size: 15px;
     transform: translateY(0);
     transition: var(--btn-transition);
   }
@@ -157,38 +158,13 @@ const AccountButton = () => {
   .button-message:hover .lable-message {
     height: 0;
     transform: scaleY(0);
-    padding-right: 5px;
+    padding-right: 0px;
     transition: var(--btn-transition);
   }
 
   .lable-message, .username {
     font-weight: 600;
   }
-
-  @media (max-width: 480px) {
-   .button-message{
-     width: 95px;
-
-  }
-
- .lable-message{
- font-size:11px;
- }
-
-  .user-img,
-  .content-avatar
-     {
-      width:20px;
-     height:20px;
-     margin-right:-2px;
-     }
-
- .button-message:hover .lable-message {
-    margin-right: -5px;
-    }
-     
-  }
-  
 
 
 

@@ -159,8 +159,8 @@ const SearchInput = styled.input`
   background-color: transparent;
   transition: all 0.3s ease;
 
-  @media (max-width: 470px) {
-    width: ${({ isOpen }) => (isOpen ? '90px' : '0')};
+  @media (max-width: 600px) {
+    width: ${({ isOpen }) => (isOpen ? '140px' : '0')};
     font-size: 0.95rem;
   }
 `;

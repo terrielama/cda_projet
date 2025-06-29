@@ -8,31 +8,36 @@ import SignInForm from "./components/user/SignInForm.jsx";
 import { AuthProvider } from './components/context/AuthContext.jsx';
 import UserProfile from "./components/user/UserProfile.jsx";
 import OrderTracking from "./components/order/OrderTracking.jsx";
+import OrderConfirmation from "./components/order/OrderConfirmation.jsx";
+// import { CartProvider } from "./components/context/CartContext.jsx";
 import ProductDetail from './components/product/ProductDetail.jsx';
 import FavoritesPage from "./components/product/FavoritesPage.jsx";
-import NotFound from './components/NotFound.jsx';
 
+import NotFound from './components/NotFound';
 
 const App = () => {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route element={<MainLayout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/panier" element={<Cart />} />
-            <Route path="/produits/:category" element={<ProductList />} />
-            <Route path="/commande/:orderId" element={<Order />} />
-            <Route path="/connexion" element={<SignInForm />} />
-            <Route path="/profile" element={<UserProfile />} />
-            <Route path="/orderTracking/:orderId" element={<OrderTracking />} />
-            <Route path="/produit/:id" element={<ProductDetail />} />
-            <Route path="/favoris" element={<FavoritesPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+        <BrowserRouter>
+          <Routes>
+            <Route element={<MainLayout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/panier" element={<Cart />} />
+              <Route path="produits/:category" element={<ProductList />} />
+              <Route path="/commande/:orderId" element={<Order />} />
+              <Route path="/connexion" element={<SignInForm />} />
+              <Route path="/profile" element={<UserProfile />} />
+              <Route path="/orderTracking/:orderId" element={<OrderTracking />} />              
+              <Route path="/orderConfirmation/:orderId" element={<OrderConfirmation />} />
+              <Route path="/produit/:id" element={<ProductDetail />} />
+              <Route path="/favoris" element={<FavoritesPage />} /> 
+              {/* Route 404 */}
+              <Route path="*" element={<NotFound />} />
+              </Route>
+          </Routes>
+        </BrowserRouter>
     </AuthProvider>
+    
   );
 };
 

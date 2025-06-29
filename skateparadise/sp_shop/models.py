@@ -19,7 +19,7 @@ class Category(models.Model):
     
 # ----- Taille de produit ------------
 
-class Size(models.Model):
+class Sizes(models.Model):
     name = models.CharField(max_length=10)
 
 
@@ -45,6 +45,7 @@ class Product(models.Model):
     image = models.ImageField(upload_to='products/', null=False, default='products/default-image.png')
     category = models.CharField(max_length=50, choices=CATEGORY, default="Boards")
     description = models.TextField(blank=True, null=True)
+    marque = models.TextField(blank=True, null=True)
     available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     sizes = models.JSONField(default=list, blank=True)
@@ -53,7 +54,7 @@ class Product(models.Model):
     def save(self, *args, **kwargs):
         is_new = self.pk is None  # Création ou modification
 
-        # Création slug unique
+        # Création slug unique (uniquement si vide)
         if not self.slug:
             base_slug = slugify(self.name)
             unique_slug = base_slug
@@ -63,35 +64,46 @@ class Product(models.Model):
                 counter += 1
             self.slug = unique_slug
 
-        # Définir tailles en fonction de la catégorie
-        cat = self.category.lower()
-        if cat == 'boards':
-            sizes_list = ["7.75", "8.0", "8.25"]
-        elif cat == 'chaussures':
-            sizes_list = ["39", "40", "41"]
-        elif cat == 'sweats':
-            sizes_list = ["S", "M", "L"]
+        # Définir tailles selon catégorie uniquement à la création
+        if is_new:
+            cat = (self.category or "").lower()
+            if cat == 'boards':
+                sizes_list = ["7.75", "8.0", "8.25"]
+            elif cat == 'chaussures':
+                sizes_list = ["39", "40", "41"]
+            elif cat == 'sweats':
+                sizes_list = ["S", "M", "L"]
+            else:
+                sizes_list = []
+            self.sizes = sizes_list
         else:
-            sizes_list = []
+            sizes_list = self.sizes  # Pour utiliser plus bas dans le code
 
-        self.sizes = sizes_list
+        # Sauvegarde pour générer la PK avant d’accéder aux relations
+        super().save(*args, **kwargs)
 
-        # Mise à jour de la disponibilité avant sauvegarde
+        # Mise à jour de la disponibilité (après sauvegarde)
         self.update_availability(update=False)
 
-        super().save(*args, **kwargs)  # Sauvegarde du produit avant création des tailles
-
-        # Création des tailles uniquement si nouveau produit
+        # Création des tailles liées si produit nouveau
         if is_new:
-            for size in sizes_list:
-                ProductSize.objects.get_or_create(product=self, size=size, defaults={'stock': self.stock})
+            for sizes in sizes_list:
+                ProductSize.objects.get_or_create(product=self, sizes=sizes, defaults={'stock': self.stock})
+
+        # Mise à jour finale de la disponibilité en base
+        self.update_availability(update=True)
+
 
     @property
     def total_stock(self):
         return sum(size.stock for size in self.product_sizes.all())
 
+
     def update_availability(self, update=True):
-        # Mise à jour de la disponibilité sans rappeler save() pour éviter récursion
+        # Si pas encore de pk, ne rien faire (évite erreur)
+        if not self.pk:
+            return
+
         if self.product_sizes.exists():
             has_stock = self.product_sizes.filter(stock__gt=0, available=True).exists()
             self.available = has_stock
@@ -99,10 +111,8 @@ class Product(models.Model):
             self.available = self.stock > 0
 
         if update:
-            # Met à jour uniquement le champ available en base sans récursion
+            # Mise à jour du champ available en base, sans save() pour éviter récursion
             Product.objects.filter(pk=self.pk).update(available=self.available)
-
-
 
 
 # ------ Définition du modèle de la taille de produit lié au stock --------
@@ -118,11 +128,15 @@ class ProductSize(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        self.product.update_availability()
+        # Mise à jour de la disponibilité du produit après modification
+        self.product.update_availability(update=True)
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
-        self.product.update_availability()
+        # Mise à jour de la disponibilité du produit après suppression
+        self.product.update_availability(update=True)
+
+
 
 
 

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, Cart, CartItem, Order, OrderItem, User, Category, Favorite, Size
+from .models import Product, Cart, CartItem, Order, OrderItem, User, Category, Favorite, Sizes
 from main.models import CustomUser  
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
@@ -68,9 +68,9 @@ class CategorySerializer(serializers.ModelSerializer):
 
 # ------ Serializer pour le modèle taille -----
 
-class SizeSerializer(serializers.ModelSerializer):
+class SizesSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Size
+        model = Sizes
         fields = ['name']
 
 
@@ -85,7 +85,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'name', 'price', 'image', 'sizes', 'available_sizes',
-            'category', 'stock', 'description', 'available'
+            'category', 'stock', 'description', 'available',
         ]
 
     def get_image(self, obj):

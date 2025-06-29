@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import LoaderTracking from './LoaderTracking';
 
 const Order = () => {
   const { orderId } = useParams();
@@ -11,7 +10,6 @@ const Order = () => {
   const [error, setError] = useState(null);
   const [selectedPayment, setSelectedPayment] = useState('');
   const [userName, setUserName] = useState({ first_name: null, last_name: null });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -22,26 +20,42 @@ const Order = () => {
 
   useEffect(() => {
     if (!orderId) {
+      console.warn('orderId manquant dans les params URL');
       setLoading(false);
       setError('Identifiant de commande manquant');
       return;
     }
 
     const fetchOrder = async () => {
+      console.log(`Récupération de la commande ID = ${orderId}`);
       try {
-        const res = await fetch(`http://localhost:8001/order/${orderId}`, {
+        const res = await fetch(`order/${orderId}`, {
           headers: { 'Content-Type': 'application/json' },
         });
 
         if (!res.ok) throw new Error(`Erreur API ${res.status}`);
 
         const data = await res.json();
+        console.log('Données reçues de la commande:', data);
+
+        // Affiche chaque produit avec son prix
+        if (Array.isArray(data.items)) {
+          data.items.forEach((item, i) => {
+            console.log(`🛒 Produit #${i + 1} - ${item.product_name}`);
+            console.log(`   → Prix unitaire: ${item.price}€`);
+            console.log(`   → Quantité: ${item.quantity}`);
+            console.log(`   → Total: ${item.total_price}€`);
+          });
+        }
+
         if (!Array.isArray(data.items)) {
+          console.warn(`"items" n'est pas un tableau, conversion...`);
           data.items = data.items ? Object.values(data.items) : [];
         }
 
         setOrderDetails(data);
       } catch (err) {
+        console.error('❌ Erreur récupération commande:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -53,7 +67,10 @@ const Order = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
-    if (!token) return;
+    if (!token) {
+      console.log('⚠️ Pas de token, utilisateur non connecté.');
+      return;
+    }
 
     fetch('http://localhost:8001/get_username', {
       headers: { Authorization: `Bearer ${token}` },
@@ -63,9 +80,11 @@ const Order = () => {
         return res.json();
       })
       .then(data => {
+        console.log('👤 Utilisateur connecté:', data);
         setUserName({ first_name: data.first_name, last_name: data.last_name });
       })
-      .catch(() => {
+      .catch(err => {
+        console.warn('⚠️ Impossible de récupérer utilisateur:', err);
         setUserName({ first_name: null, last_name: null });
       });
   }, []);
@@ -76,9 +95,13 @@ const Order = () => {
     const associateUserToOrder = async () => {
       try {
         const token = localStorage.getItem('access_token');
-        if (!token) return;
+        if (!token) {
+          console.warn('⚠️ Pas de token pour associer commande.');
+          return;
+        }
 
-        await fetch('http://localhost:8001/associate_user_to_order/', {
+        console.log(`🔗 Association utilisateur à commande ${orderId}`);
+        const res = await fetch('http://localhost:8001/associate_user_to_order/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -86,8 +109,11 @@ const Order = () => {
           },
           body: JSON.stringify({ orderId }),
         });
+
+        if (!res.ok) throw new Error(`Erreur API ${res.status}`);
+        console.log('✅ Utilisateur associé à la commande');
       } catch (err) {
-        console.error('Erreur association utilisateur/commande:', err);
+        console.error('❌ Erreur association utilisateur/commande:', err);
       }
     };
 
@@ -114,9 +140,11 @@ const Order = () => {
 
   const handleSubmit = async e => {
     e.preventDefault();
+
     if (!validateForm()) return;
 
-    setIsSubmitting(true);
+    console.log('📤 Données formulaire à envoyer:', formData);
+    console.log('💳 Mode de paiement sélectionné:', selectedPayment);
 
     try {
       const token = localStorage.getItem('access_token');
@@ -137,28 +165,25 @@ const Order = () => {
 
       if (!res.ok) {
         const errText = await res.text();
+        console.error(`Erreur API ${res.status}: ${errText}`);
         throw new Error(`Erreur API ${res.status}: ${errText}`);
       }
 
       const result = await res.json();
-      console.log('Mise à jour commande réussie:', result);
+      console.log('✅ Mise à jour commande réussie:', result);
 
-      // Afficher le loader avant de naviguer
-      setTimeout(() => {
-        navigate(`/orderTracking/${orderId}`, {
-          state: { clientInfo: formData, paymentMethod: selectedPayment, orderDetails },
-        });
-      }, 2000);
+      navigate(`/orderTracking/${orderId}`, {
+        state: { clientInfo: formData, paymentMethod: selectedPayment, orderDetails },
+      });
     } catch (err) {
-      console.error('Erreur lors de la mise à jour commande:', err);
+      console.error('❌ Erreur lors de la mise à jour commande:', err);
       alert('Erreur lors de l’enregistrement des informations. Veuillez réessayer.');
-      setIsSubmitting(false);
     }
   };
 
   if (loading) return <div>Chargement...</div>;
-  if (isSubmitting) return <LoaderTracking />;
   if (error) return <div style={{ color: 'red' }}>Erreur : {error}</div>;
+
   if (!orderDetails || !orderDetails.items || orderDetails.items.length === 0)
     return <div>Détails de la commande non disponibles.</div>;
 
@@ -184,7 +209,11 @@ const Order = () => {
 
         <div className="order-items">
           {items.map((item, index) => (
-            <div key={item.id || index} className="order-item" style={{ display: 'flex', marginBottom: '10px' }}>
+            <div
+              key={item.id || index}
+              className="order-item"
+              style={{ display: 'flex', marginBottom: '10px', alignItems: 'center' }}
+            >
               <img
                 src={`http://localhost:8001${item.product_image || '/default-image.jpg'}`}
                 alt={item.product_name || 'Produit'}
@@ -210,34 +239,77 @@ const Order = () => {
         </div>
       </div>
 
+      {/* Formulaire infos client */}
       <form onSubmit={handleSubmit} style={{ marginBottom: 30 }}>
         <h2>Informations client</h2>
 
-        <label>Prénom :<br />
-          <input type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} required />
-        </label>
+        <div style={{ marginBottom: 10 }}>
+          <label>
+            Prénom : <br />
+            <input
+              type="text"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleInputChange}
+              required
+            />
+          </label>
+        </div>
 
-        <br /><label>Nom :<br />
-          <input type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} required />
-        </label>
+        <div style={{ marginBottom: 10 }}>
+          <label>
+            Nom : <br />
+            <input
+              type="text"
+              name="lastName"
+              value={formData.lastName}
+              onChange={handleInputChange}
+              required
+            />
+          </label>
+        </div>
 
-        <br /><label>Adresse :<br />
-          <input type="text" name="address" value={formData.address} onChange={handleInputChange} required />
-        </label>
+        <div style={{ marginBottom: 10 }}>
+          <label>
+            Adresse : <br />
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleInputChange}
+              required
+            />
+          </label>
+        </div>
 
-        <br /><label>Téléphone :<br />
-          <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} required />
-        </label>
+        <div style={{ marginBottom: 10 }}>
+          <label>
+            Téléphone : <br />
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleInputChange}
+              required
+            />
+          </label>
+        </div>
 
-        <br /><label>Mode de paiement :<br />
-          <select value={selectedPayment} onChange={e => setSelectedPayment(e.target.value)} required>
-            <option value="">-- Choisissez un mode --</option>
-            <option value="CB">Carte bancaire</option>
-            <option value="PP">PayPal</option>
-          </select>
-        </label>
+        <div style={{ marginBottom: 20 }}>
+          <label>
+            Mode de paiement : <br />
+            <select
+              value={selectedPayment}
+              onChange={e => setSelectedPayment(e.target.value)}
+              required
+            >
+              <option value="">-- Choisissez un mode --</option>
+              <option value="CB">Carte bancaire</option>
+              <option value="PP">PayPal</option>
+            </select>
+          </label>
+        </div>
 
-        <br /><br />
         <button type="submit" style={{ padding: '10px 20px' }}>
           Confirmer la commande
         </button>

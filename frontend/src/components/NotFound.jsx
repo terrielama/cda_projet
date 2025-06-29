@@ -77,6 +77,8 @@ const NotFound = () => {
         display: flex;
         align-items: center;
         justify-content: center;
+        width: 70em;
+        height: 40em;
         margin:auto;
       }
     
@@ -85,7 +87,7 @@ const NotFound = () => {
         flex-direction: column;
         align-items: center;
         justify-content: center;
-
+        margin-top: 5em;
       }
     
       .antenna {
@@ -591,14 +593,12 @@ const NotFound = () => {
       }
     
       .text_404 {
-
         position: absolute;
-        top:225px;
         display: flex;
         flex-direction: row;
-        column-gap: 7em;
-      
-        margin-bottom: 5em;
+        column-gap: 6em;
+        z-index: -5;
+        margin-bottom: 2em;
         align-items: center;
         justify-content: center;
         opacity: 0.5;
@@ -617,13 +617,11 @@ const NotFound = () => {
       @media only screen and (max-width: 495px) {
         .text_404 {
           column-gap: 6em;
-           top:295px;
         }
       }
-      @media only screen and (max-width: 390px) {
+      @media only screen and (max-width: 395px) {
         .text_404 {
-          column-gap: 6em;
-             top:665px;
+          column-gap: 4em;
         }
         .text_4041 {
           transform: scaleY(25) scaleX(8);
@@ -636,23 +634,13 @@ const NotFound = () => {
         }
       }
     
-        @media only screen and (max-width: 375px) {
-        .text_404 {
-          column-gap: 6em;
-             top:550px;
-        }
-        .text_4041 {
-          transform: scaleY(25) scaleX(8);
-        }
-        .text_4042 {
-          transform: scaleY(25) scaleX(8);
-        }
-        .text_4043 {
-          transform: scaleY(25) scaleX(8);
+      @media (max-width: 420px){
+        .main_wrapper {
+          position: relative;
+          right:90%;
+          
         }
       }
-    
-
     
       @media only screen and (max-width: 1024px) {
         .screenM {
@@ -673,13 +661,13 @@ const NotFound = () => {
 
       const BackButton = styled.button`
       background-color:rgb(0, 0, 0);
+      position: relative;
+      left:43%;
       margin:auto;
-      margin-left:10px;
       color: white;
       font-weight: 700;
       font-size: 1.25em;
-      padding: 10px 10px;
-
+      padding: 0.75em 2em;
       border: none;
       border-radius: 6px;
       cursor: pointer;

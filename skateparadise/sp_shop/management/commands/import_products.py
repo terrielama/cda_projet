@@ -31,6 +31,7 @@ class Command(BaseCommand):
                     'stock': item['stock'],
                     'available': item.get('available', True),
                     'size': item.get('size', ''),
+                    # marque=item.get('marque', '')
                 }
             )
 
