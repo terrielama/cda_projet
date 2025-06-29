@@ -8,7 +8,6 @@ import SignInForm from "./components/user/SignInForm.jsx";
 import { AuthProvider } from './components/context/AuthContext.jsx';
 import UserProfile from "./components/user/UserProfile.jsx";
 import OrderTracking from "./components/order/OrderTracking.jsx";
-import OrderConfirmation from "./components/order/OrderConfirmation.jsx";
 // import { CartProvider } from "./components/context/CartContext.jsx";
 import ProductDetail from './components/product/ProductDetail.jsx';
 import FavoritesPage from "./components/product/FavoritesPage.jsx";
@@ -28,7 +27,6 @@ const App = () => {
               <Route path="/connexion" element={<SignInForm />} />
               <Route path="/profile" element={<UserProfile />} />
               <Route path="/orderTracking/:orderId" element={<OrderTracking />} />              
-              <Route path="/orderConfirmation/:orderId" element={<OrderConfirmation />} />
               <Route path="/produit/:id" element={<ProductDetail />} />
               <Route path="/favoris" element={<FavoritesPage />} /> 
               {/* Route 404 */}

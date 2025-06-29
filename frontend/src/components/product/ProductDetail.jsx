@@ -38,6 +38,7 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [size, setSize] = useState('');
   const [showDetails, setShowDetails] = useState(false);
+  const [showBrand, setShowBrand] = useState(false); // Ajout de showBrand, manquant dans ton code
   const [added, setAdded] = useState(false);
   const [error, setError] = useState('');
   const [outOfStock, setOutOfStock] = useState(false);
@@ -156,6 +157,7 @@ const ProductDetail = () => {
 
   const handleNext = () => {
     setVisibleSuggestions(prev => {
+      if (prev.length === 0) return prev;
       const next = [...prev.slice(1), prev[0]];
       console.log("Suggestions après Next:", next);
       return next;
@@ -164,6 +166,7 @@ const ProductDetail = () => {
 
   const handlePrev = () => {
     setVisibleSuggestions(prev => {
+      if (prev.length === 0) return prev;
       const prevArr = [prev[prev.length - 1], ...prev.slice(0, -1)];
       console.log("Suggestions après Prev:", prevArr);
       return prevArr;
@@ -195,16 +198,15 @@ const ProductDetail = () => {
           <h2>{product.name}</h2>
           <p>Prix: {priceFormatted} €</p>
           <p>Catégorie: {product.category}</p>
-          
-        {/* Selectionner la taille */}
+
+          {/* Sélectionner la taille */}
           <div className="product-detail-size-selector">
-          <p>Taille: </p>
+            <p>Taille: </p>
             {Array.isArray(product.sizes) && product.sizes.length > 0 ? (
-              product.sizes.map((s, index) => { 
+              product.sizes.map((s, index) => {
                 const isAvailable = availableSizes.includes(s);
                 return (
-                  
-                  <button 
+                  <button
                     key={index}
                     className={`size-button ${size === s ? 'selected' : ''}`}
                     onClick={() => {
@@ -229,12 +231,12 @@ const ProductDetail = () => {
           </div>
 
           <div className="product-detail-quantity-selector">
-            
             <div className="quantity-controls">
               <p>Quantité :</p>
               <button onClick={() => {
-                setQuantity(Math.max(1, quantity - 1));
-                console.log("Quantité diminuée:", Math.max(1, quantity - 1));
+                const newQty = Math.max(1, quantity - 1);
+                setQuantity(newQty);
+                console.log("Quantité diminuée:", newQty);
               }}>-</button>
               <input
                 type="number"
@@ -248,40 +250,68 @@ const ProductDetail = () => {
                 }}
               />
               <button onClick={() => {
-                setQuantity(Math.min(99, quantity + 1));
-                console.log("Quantité augmentée:", Math.min(99, quantity + 1));
+                const newQty = Math.min(99, quantity + 1);
+                setQuantity(newQty);
+                console.log("Quantité augmentée:", newQty);
               }}>+</button>
             </div>
           </div>
 
-            <div className="add_like_button">
-          <AddButton2
-            onClick={addToCart}
-            disabled={outOfStock}
-            outOfStock={outOfStock}
-          >
-            {outOfStock ? "Article épuisé" : "Ajouter au panier"}
-          </AddButton2>
+          <div className="add_like_button">
+            <AddButton2
+              onClick={addToCart}
+              disabled={outOfStock}
+              outOfStock={outOfStock}
+            >
+              {outOfStock ? "Article épuisé" : "Ajouter au panier"}
+            </AddButton2>
 
-          <div className="Like-button">
-            <LikeButton
-              productId={product.id}
-              isLiked={favorites[product.id] || false}
-              toggleFavorite={toggleFavorite}
-            />
-          </div>
+            <div className="Like-button">
+              <LikeButton
+                productId={product.id}
+                isLiked={favorites[product.id] || false}
+                toggleFavorite={toggleFavorite}
+              />
+            </div>
           </div>
 
           {outOfStock && <div className="stock-message">Produit en rupture de stock</div>}
 
-          <button className="toggle-details-button" onClick={() => {
-            setShowDetails(!showDetails);
-            console.log("Détails du produit affichés:", !showDetails);
-          }}>
-            {showDetails ? "Masquer les détails" : "Détails du produit"}
-          </button>
+          <div className="toggle-buttons">
+            <button
+              className="toggle-details-button"
+              onClick={() => {
+                setShowDetails(!showDetails);
+                console.log("Détails du produit affichés:", !showDetails);
+              }}
+            >
+              {showDetails ? "Masquer les détails" : "Détails du produit"}
+            </button>
 
-          {showDetails && <p className="product-detail-description">{product.description}</p>}
+            <button
+  className="toggle-details-button"
+  onClick={() => {
+    setShowBrand(!showBrand);
+    console.log("Marque affichée:", !showBrand);
+  }}
+>
+  {showBrand ? "Masquer la marque" : "Marque"}
+</button>
+</div>
+
+{showDetails && (
+  <p className="product-detail-description" style={{ whiteSpace: 'pre-line' }}>
+    {product.description
+      .split('\n')
+      .map(line => (line.trim() ? `- ${line.trim()}` : ''))
+      .join('\n')}
+  </p>
+)}
+
+{showBrand && (
+  <p className="product-detail-description">Marque : {product.marque}</p>
+)}
+
 
           {message && <div className="success-message">{message}</div>}
           {likeMessage && <div className="like-message">{likeMessage}</div>}
@@ -289,14 +319,19 @@ const ProductDetail = () => {
         </div>
       </div>
 
-        {/* Suggestion de produit */}
+      {/* Suggestion de produit */}
       <div className="suggestions-section">
         <h2>VOUS ALLEZ ADORER ÇA !</h2>
         <div className="suggestions-carousel">
           <PreviousButton onClick={handlePrev} />
           <div className="suggestions-list">
             {visibleSuggestions.map(s => (
-              <div key={s.id} className="suggestion-card" onClick={() => handleSuggestionClick(s.id)} style={{ cursor: 'pointer' }}>
+              <div
+                key={s.id}
+                className="suggestion-card"
+                onClick={() => handleSuggestionClick(s.id)}
+                style={{ cursor: 'pointer' }}
+              >
                 <img src={`http://127.0.0.1:8001${s.image}`} alt={s.name} className="suggestion-image" />
                 <p>{s.name}</p>
                 <p>{Number(s.price).toFixed(2)} €</p>
