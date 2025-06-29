@@ -51,6 +51,7 @@ const Cart = () => {
   const increaseItemQuantity = async (itemId) => {
     try {
       await api.post("increase_item", { item_id: itemId });
+      console.log(`Quantité du produit augmentée`);
       fetchCart();
     } catch (err) {
       console.error("Erreur lors de l'augmentation de la quantité:", err);
@@ -64,6 +65,7 @@ const Cart = () => {
   const decreaseItemQuantity = async (itemId) => {
     try {
       await api.post("decrease_item", { item_id: itemId });
+      console.log(`Quantité du produit diminuée `);
       fetchCart();
     } catch (err) {
       console.error("Erreur lors de la diminution de la quantité:", err);
@@ -79,6 +81,7 @@ const Cart = () => {
       await api.post(`remove_item?cart_code=${cart_code}`, {
         item_id: itemId,
       });
+      console.log(`Produit supprimé avec succès `);
       fetchCart();
     } catch (error) {
       console.error("Erreur suppression produit :", error);
