@@ -38,7 +38,7 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [size, setSize] = useState('');
   const [showDetails, setShowDetails] = useState(false);
-  const [showBrand, setShowBrand] = useState(false); // Ajout de showBrand, manquant dans ton code
+  const [showBrand, setShowBrand] = useState(false); 
   const [added, setAdded] = useState(false);
   const [error, setError] = useState('');
   const [outOfStock, setOutOfStock] = useState(false);
@@ -289,27 +289,27 @@ const ProductDetail = () => {
             </button>
 
             <button
-  className="toggle-details-button"
-  onClick={() => {
-    setShowBrand(!showBrand);
-    console.log("Marque affichée:", !showBrand);
-  }}
->
-  {showBrand ? "Masquer la marque" : "Marque"}
-</button>
-</div>
+                className="toggle-details-button"
+                onClick={() => {
+                  setShowBrand(!showBrand);
+                  console.log("Marque affichée:", !showBrand);
+                }}
+              >
+                {showBrand ? "Masquer" : "Marque du produit"}
+              </button>
+              </div>
 
-{showDetails && (
-  <p className="product-detail-description" style={{ whiteSpace: 'pre-line' }}>
-    {product.description
-      .split('\n')
-      .map(line => (line.trim() ? `- ${line.trim()}` : ''))
-      .join('\n')}
-  </p>
-)}
+              {showDetails && (
+                <p className="product-detail-description" style={{ whiteSpace: 'pre-line' }}>
+                  {product.description
+                    .split('\n')
+                    .map(line => (line.trim() ? `- ${line.trim()}` : ''))
+                    .join('\n')}
+                </p>
+              )}
 
 {showBrand && (
-  <p className="product-detail-description">Marque : {product.marque}</p>
+  <p className="product-detail-description">A propos de la marque : {product.marque}</p>
 )}
 
 

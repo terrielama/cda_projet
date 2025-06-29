@@ -28,7 +28,6 @@ body {
   min-height: 100vh;
 }
 
-/* Le contenu principal prend tout l’espace disponible */
 main {
   flex: 1;
   padding: 1rem;
@@ -904,6 +903,7 @@ main {
 
 .toggle-details-button {
   margin-top: 20px;
+  margin-right: 10px;
   width: 160px;
   height: 35px;
   font-size: 1rem;
@@ -1359,12 +1359,7 @@ p {
   font-size: 0.9rem;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .card-fav {
-    width: 100%;
-  }
-}
+
 
 
 

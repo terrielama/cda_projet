@@ -47,7 +47,6 @@ const StyledWrapper = styled.div`
     background-color: rgb(2, 134, 35);
     border-radius: 5px;
     margin: 20px auto;
-    margin-left: 30px;
     opacity: 1;
     transition: opacity 0.3s;
   }
