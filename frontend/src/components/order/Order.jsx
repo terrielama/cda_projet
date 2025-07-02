@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../../api';
+import SMOButton from '../cart/SMOButton';
 
 const Order = () => {
   const { orderId } = useParams();
@@ -20,7 +21,7 @@ const Order = () => {
     phone: '',
   });
 
-  // Récupération des détails de la commande
+  // Récupération des détails de la commande et association utilisateur
   useEffect(() => {
     if (!orderId) {
       setLoading(false);
@@ -32,14 +33,13 @@ const Order = () => {
       try {
         const { data } = await api.get(`/order/${orderId}`);
 
-        // S’assurer que items est un tableau
+        // Assurer que data.items est bien un tableau
         if (!Array.isArray(data.items)) {
           data.items = data.items ? Object.values(data.items) : [];
         }
 
         setOrderDetails(data);
 
-        // Pré-remplir le formulaire si données client présentes
         setFormData({
           firstName: data.first_name || '',
           lastName: data.last_name || '',
@@ -48,6 +48,24 @@ const Order = () => {
         });
 
         setSelectedPayment(data.payment_method || '');
+
+        // Associer utilisateur connecté à la commande seulement si orderId est défini
+        const token = localStorage.getItem('access_token');
+        if (token && data.id) {
+          try {
+            await api.post(
+              '/associate_user_to_order/',
+              { orderId: data.id },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            console.log('Utilisateur associé à la commande avec succès.');
+          } catch (associateErr) {
+            console.warn(
+              'Erreur association utilisateur-commande :',
+              associateErr.response?.data || associateErr.message
+            );
+          }
+        }
       } catch (err) {
         setError(err.response?.data?.detail || err.message || 'Erreur inconnue');
       } finally {
@@ -58,7 +76,7 @@ const Order = () => {
     fetchOrder();
   }, [orderId]);
 
-  // Récupération des infos utilisateur connecté
+  // Récupération infos utilisateur connecté
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     if (!token) {
@@ -80,13 +98,12 @@ const Order = () => {
     fetchUser();
   }, []);
 
-  // Gestion des changements dans le formulaire
+  // Gestion formulaire
   const handleInputChange = e => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Validation avant soumission
   const validateForm = () => {
     const { firstName, lastName, address, phone } = formData;
     if (!firstName || !lastName || !address || !phone) {
@@ -100,10 +117,9 @@ const Order = () => {
     return true;
   };
 
-  // Soumission du formulaire
+  // Soumission formulaire et redirection vers orderTracking
   const handleSubmit = async e => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
     try {
@@ -142,10 +158,9 @@ const Order = () => {
 
   const { items = [], id: orderIdFromData, user } = orderDetails;
   const isGuest = !userName.first_name && (!user || !user.first_name);
-  const totalAmount = items.reduce(
-    (sum, item) => sum + parseFloat(item.total_price || 0),
-    0
-  ).toFixed(2);
+  const totalAmount = items
+    .reduce((sum, item) => sum + parseFloat(item.total_price || 0), 0)
+    .toFixed(2);
 
   return (
     <div className="order-page" style={{ padding: 20 }}>
@@ -267,10 +282,10 @@ const Order = () => {
           </label>
         </div>
 
-        <button type="submit">Confirmer la commande</button>
+        <SMOButton type="submit">Confirmer la commande</SMOButton>
       </form>
 
-      <Link to="/">Retour à l'accueil</Link>
+      <Link to="/products">Retour à la liste des produits</Link>
     </div>
   );
 };

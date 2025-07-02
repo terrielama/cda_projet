@@ -11,10 +11,25 @@ const Cart = () => {
   const [stockErrors, setStockErrors] = useState({});
   const navigate = useNavigate();
 
-  const fetchCart = async () => {
-    const cart_code = localStorage.getItem("cart_code");
-    const token = localStorage.getItem("token");
+  const cart_code = localStorage.getItem("cart_code");
+  const token = localStorage.getItem("access_token");
 
+  const associateCartToUser = async () => {
+    if (!cart_code || !token) return;
+
+    try {
+      await api.post(
+        "associate_cart_to_user/",
+        { cart_code },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      console.log("✅ Panier associé à l'utilisateur connecté.");
+    } catch (err) {
+      console.warn("❌ Impossible d'associer le panier :", err);
+    }
+  };
+
+  const fetchCart = async () => {
     if (!cart_code) {
       setCart(null);
       setError("Aucun panier trouvé. Ajoutez un produit.");
@@ -23,12 +38,11 @@ const Cart = () => {
 
     try {
       const startTime = Date.now();
-      const res = await api.get(
-        `get_cart?cart_code=${cart_code}`,
-        {
-          headers: { Authorization: token ? `Bearer ${token}` : "" },
-        }
-      );
+
+      const res = await api.get(`get_cart?cart_code=${cart_code}`, {
+        headers: { Authorization: token ? `Bearer ${token}` : "" },
+      });
+
       setCart(res.data);
       setError("");
       setStockErrors({});
@@ -37,24 +51,29 @@ const Cart = () => {
       if (elapsed < 3000) {
         await new Promise((resolve) => setTimeout(resolve, 3000 - elapsed));
       }
+
+      console.log("✅ Panier récupéré :", res.data);
     } catch (err) {
-      console.error("Erreur récupération panier :", err);
+      console.error(" Erreur récupération panier :", err);
       setError("Erreur de chargement du panier.");
       setCart(null);
     }
   };
 
   useEffect(() => {
+    if (token && cart_code) {
+      associateCartToUser(); // Associe le panier dès le chargement si connecté
+    }
     fetchCart();
   }, []);
 
   const increaseItemQuantity = async (itemId) => {
     try {
       await api.post("increase_item", { item_id: itemId });
-      console.log(`Quantité du produit augmentée`);
+      console.log(` Quantité augmentée pour item ${itemId}`);
       fetchCart();
     } catch (err) {
-      console.error("Erreur lors de l'augmentation de la quantité:", err);
+      console.error(" Erreur lors de l'augmentation :", err);
       setStockErrors((prev) => ({
         ...prev,
         [itemId]: "Stock insuffisant pour ce produit.",
@@ -65,26 +84,25 @@ const Cart = () => {
   const decreaseItemQuantity = async (itemId) => {
     try {
       await api.post("decrease_item", { item_id: itemId });
-      console.log(`Quantité du produit diminuée `);
+      console.log(` Quantité diminuée pour item ${itemId}`);
       fetchCart();
     } catch (err) {
-      console.error("Erreur lors de la diminution de la quantité:", err);
+      console.error(" Erreur lors de la diminution :", err);
       setError("Erreur serveur.");
     }
   };
 
   const removeProduct = async (itemId) => {
-    const cart_code = localStorage.getItem("cart_code");
     if (!cart_code) return;
 
     try {
       await api.post(`remove_item?cart_code=${cart_code}`, {
         item_id: itemId,
       });
-      console.log(`Produit supprimé avec succès `);
+      console.log(` Produit supprimé : ${itemId}`);
       fetchCart();
     } catch (error) {
-      console.error("Erreur suppression produit :", error);
+      console.error(" Erreur suppression produit :", error);
       setError("Erreur lors de la suppression.");
     }
   };
@@ -97,9 +115,13 @@ const Cart = () => {
 
     try {
       setLoading(true);
+
       const response = await api.post("create_order", {
-        cart_code: localStorage.getItem("cart_code"),
+        cart_code: cart_code,
       });
+
+      console.log("🛒 Commande créée :", response.data);
+
       setCart(null);
       localStorage.removeItem("cart_code");
 
@@ -108,15 +130,13 @@ const Cart = () => {
         navigate(`/commande/${response.data.order_id}`);
       }, 1000);
     } catch (error) {
-      console.error("Erreur serveur commande :", error.response?.data || error.message);
+      console.error(" Erreur serveur commande :", error.response?.data || error.message);
       setError("Erreur lors de la commande.");
       setLoading(false);
     }
   };
 
-  if (loading) {
-    return <Loader />;
-  }
+  if (loading) return <Loader />;
 
   const totalPrice = cart?.sum_total || 0;
   const shippingCost = totalPrice >= 70 ? 0 : 4;

@@ -219,35 +219,17 @@ def product_in_cart(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def associate_cart_to_user(request):
+    cart_code = request.data.get('cart_code')
+    if not cart_code:
+        return Response({"error": "Cart code manquant"}, status=400)
+
     try:
-        cart_code = request.data.get('cart_code')
-        user = request.user
-
-        print("== ASSOCIATE USER ==")
-        print(f"Utilisateur connecté : {user} (ID: {user.id})")
-        print(f"Cart_code reçu : {cart_code}")
-
-        if not cart_code:
-            print("❌ Aucun cart_code fourni.")
-            return Response({"error": "Le cart_code est requis."}, status=status.HTTP_400_BAD_REQUEST)
-
-        cart = Cart.objects.filter(cart_code=cart_code, user__isnull=True).first()
-
-        if not cart:
-            print(f"❌ Aucun panier anonyme trouvé pour le cart_code {cart_code}")
-            return Response({"error": "Aucun panier anonyme trouvé avec ce cart_code."}, status=status.HTTP_404_NOT_FOUND)
-
-        print(f"✅ Panier trouvé : {cart}")
-        cart.user = user
+        cart = Cart.objects.get(cart_code=cart_code)
+        cart.user = request.user
         cart.save()
-        print(f"✅ Panier {cart.cart_code} associé à {user.username}")
-
-        return Response({"message": "Panier associé avec succès."}, status=status.HTTP_200_OK)
-
-    except Exception as e:
-        print("❌ Exception attrapée :")
-        traceback.print_exc()
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"message": "Panier associé à l'utilisateur"})
+    except Cart.DoesNotExist:
+        return Response({"error": "Panier non trouvé"}, status=404)
 
 # ----- Vue pour obtenir les statistiques du panier -----
 
@@ -504,6 +486,9 @@ def associate_user_to_order(request):
     print(f"User connecté : {user}")
     print(f"orderId reçu : {order_id}")
 
+    if not order_id:
+        return Response({"error": "orderId manquant dans la requête"}, status=status.HTTP_400_BAD_REQUEST)
+
     try:
         order = Order.objects.get(id=order_id)
         print(f"Commande trouvée : {order}")
@@ -514,7 +499,6 @@ def associate_user_to_order(request):
     except Order.DoesNotExist:
         print("Commande non trouvée")
         return Response({"error": "Commande introuvable"}, status=status.HTTP_404_NOT_FOUND)
-
 
 # ---- View Profile ------
 
