@@ -27,6 +27,9 @@ class Sizes(models.Model):
 
 
 
+from django.db import models
+from django.utils.text import slugify
+
 class Product(models.Model):
     CATEGORY = (
         ("Boards", "BOARDS"),
@@ -52,9 +55,7 @@ class Product(models.Model):
     stock = models.IntegerField(default=0)
 
     def save(self, *args, **kwargs):
-        is_new = self.pk is None  # Création ou modification
-
-        # Création slug unique (uniquement si vide)
+        # Création slug unique si vide
         if not self.slug:
             base_slug = slugify(self.name)
             unique_slug = base_slug
@@ -64,43 +65,18 @@ class Product(models.Model):
                 counter += 1
             self.slug = unique_slug
 
-        # Définir tailles selon catégorie uniquement à la création
-        if is_new:
-            cat = (self.category or "").lower()
-            if cat == 'boards':
-                sizes_list = ["7.75", "8.0", "8.25"]
-            elif cat == 'chaussures':
-                sizes_list = ["39", "40", "41"]
-            elif cat == 'sweats':
-                sizes_list = ["S", "M", "L"]
-            else:
-                sizes_list = []
-            self.sizes = sizes_list
-        else:
-            sizes_list = self.sizes  # Pour utiliser plus bas dans le code
+        # **Supprime la génération automatique des tailles**
 
-        # Sauvegarde pour générer la PK avant d’accéder aux relations
         super().save(*args, **kwargs)
 
-        # Mise à jour de la disponibilité (après sauvegarde)
-        self.update_availability(update=False)
-
-        # Création des tailles liées si produit nouveau
-        if is_new:
-            for sizes in sizes_list:
-                ProductSize.objects.get_or_create(product=self, sizes=sizes, defaults={'stock': self.stock})
-
-        # Mise à jour finale de la disponibilité en base
+        # Mise à jour de la disponibilité après sauvegarde
         self.update_availability(update=True)
-
 
     @property
     def total_stock(self):
         return sum(size.stock for size in self.product_sizes.all())
 
-
     def update_availability(self, update=True):
-        # Si pas encore de pk, ne rien faire (évite erreur)
         if not self.pk:
             return
 
@@ -111,11 +87,8 @@ class Product(models.Model):
             self.available = self.stock > 0
 
         if update:
-            # Mise à jour du champ available en base, sans save() pour éviter récursion
             Product.objects.filter(pk=self.pk).update(available=self.available)
 
-
-# ------ Définition du modèle de la taille de produit lié au stock --------
 
 class ProductSize(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='product_sizes')
@@ -128,16 +101,11 @@ class ProductSize(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        # Mise à jour de la disponibilité du produit après modification
         self.product.update_availability(update=True)
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
-        # Mise à jour de la disponibilité du produit après suppression
         self.product.update_availability(update=True)
-
-
-
 
 
 #------- Définition du modèle Favori ---------

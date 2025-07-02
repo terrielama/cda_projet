@@ -1,12 +1,10 @@
 from django.contrib import admin
 from .models import Product, ProductSize, Cart, CartItem, Order, OrderItem
 
-
 class ProductSizeInline(admin.TabularInline):
     model = ProductSize
     extra = 1
     fields = ('size', 'stock', 'available')
-    readonly_fields = ()
     can_delete = True
 
 
@@ -21,7 +19,6 @@ class ProductAdmin(admin.ModelAdmin):
     readonly_fields = ('stock_display',)
 
     def stock_display(self, obj):
-        # Affiche le stock total calculé (somme des stocks taille)
         return obj.total_stock
     stock_display.short_description = 'Stock total'
 
