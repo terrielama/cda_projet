@@ -1499,13 +1499,14 @@ p {
   margin: 0.3rem 0;
 }
 
-.footer-column ul li a {
+.footer-column ul li a{
   text-decoration: none;  
   color: inherit;         
   cursor: pointer;     
 }
 
-.footer-column ul li a:hover {
+.footer-column ul li a:hover
+ {
   color: #7d7d7d; 
 }
 
