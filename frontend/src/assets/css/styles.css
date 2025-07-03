@@ -542,7 +542,7 @@ main {
 .product-info {
   flex: 1;
   display: flex;
-  flex-direction: column; /* empile h2 et p */
+  flex-direction: column; 
   justify-content: center;
   align-items: flex-start;
   gap: 8px;
@@ -1359,7 +1359,40 @@ p {
   font-size: 0.9rem;
 }
 
+/* ----- Page CGV ------- */
 
+.terms-container {
+  max-width: 900px;
+  margin: 100px auto;
+  border-radius: 10px;
+  border: 1px solid rgba(171, 171, 171, 0.309);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15); 
+  padding: 2rem;
+  background-color: rgba(229, 229, 229, 0.52); 
+  color: #000000;
+  line-height: 1.6;
+}
+
+.terms-container h1 {
+  font-size: 2rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #000000;
+}
+
+.terms-container h2 {
+  font-size: 1.4rem;
+  margin-top: 1.5rem;
+  color: #000000;
+}
+
+.terms-container p {
+  margin-top: 0.5rem;
+  font-size: 1rem;
+}
+
+
+/* --- Page contact ------ */
 
 
 
@@ -1428,7 +1461,15 @@ p {
   margin: 0.3rem 0;
 }
 
+.footer-column ul li a {
+  text-decoration: none;  
+  color: inherit;         
+  cursor: pointer;     
+}
 
+.footer-column ul li a:hover {
+  color: #7d7d7d; 
+}
 
 /* ____________ Responsive _________________ */
 
@@ -1736,6 +1777,22 @@ p {
   object-fit: contain;
   border-radius: 5px;
   }
+
+  .terms-container {
+    padding: 1.5rem;
+  }
+
+  .terms-container h1 {
+    font-size: 1.6rem;
+  }
+
+  .terms-container h2 {
+    font-size: 1.2rem;
+  }
+
+  .terms-container p {
+    font-size: 0.95rem;
+  }
 }
 
 @media (max-width: 767px) {
@@ -1846,7 +1903,7 @@ p {
   }
 .card-wrapper {
   margin: auto 40px;
-    flex: 1 1 100%; /* 1 carte par ligne sur petit écran */
+    flex: 1 1 100%; 
     max-width: 100%;
   }
 
@@ -1855,5 +1912,21 @@ p {
     min-width: 300px;
     margin: auto;
     margin-bottom: 15px;
+  }
+
+  .terms-container {
+    padding: 1rem;
+  }
+
+  .terms-container h1 {
+    font-size: 1.4rem;
+  }
+
+  .terms-container h2 {
+    font-size: 1.1rem;
+  }
+
+  .terms-container p {
+    font-size: 0.9rem;
   }
 }

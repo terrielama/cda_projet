@@ -11,7 +11,7 @@ import OrderTracking from "./components/order/OrderTracking.jsx";
 // import { CartProvider } from "./components/context/CartContext.jsx";
 import ProductDetail from './components/product/ProductDetail.jsx';
 import FavoritesPage from "./components/product/FavoritesPage.jsx";
-
+import TermsAndConditions from "./components/TermsAndConditions.jsx";
 import NotFound from './components/NotFound';
 
 const App = () => {
@@ -29,6 +29,7 @@ const App = () => {
               <Route path="/orderTracking/:orderId" element={<OrderTracking />} />              
               <Route path="/produit/:id" element={<ProductDetail />} />
               <Route path="/favoris" element={<FavoritesPage />} /> 
+              <Route path="/cgv" element={<TermsAndConditions />} />
               {/* Route 404 */}
               <Route path="*" element={<NotFound />} />
               </Route>
