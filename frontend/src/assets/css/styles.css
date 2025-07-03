@@ -70,7 +70,11 @@ main {
   font-size: 14px;
 }
 
+.dropdown-item {
+  margin: 0px;
+}
 .navbar-brand {
+  top: 10px;
   padding: 0; 
   position: absolute;
   
@@ -1037,197 +1041,203 @@ main {
 /* -------- Page commande ------------- */
 
 .order-page {
-  display: flex;
-  justify-content: center;
-  gap: 60px;
-  padding: 60px 180px 180px 180px;
-  margin-top: 185px;
-  background-color: #f8f8f8;
-  min-height: 100vh;
-}
-
-.order-summary {
-  width: 50%;
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 10px;
-  overflow-y: auto;
-  max-height: 80vh;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-}
-
-.order-page h1{
-  position: absolute;
-  top: 120px;
-  font-size: 32px;
-  justify-content: center;
-  text-align: center;
-}
-
-.order-summary {
-  padding: 30px;
-}
-
-.order-items {
-  display: flex;
-  justify-content: flex-end;
-  flex-direction: column;
-  margin-top: 30px;
-  padding: 20px ;
-  border: 1px solid #eee;
-  border-radius: 5px;
-}
-
-.order-item{
-  border-bottom: 1px solid #d4d4d4 ;
-}
-
-.order-items img {
-  width: 160px;
-  height: 160px;
-  object-fit: cover;
-}
-
-.order-text h4{
-  margin-top: 16px;
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.order-text p{
-  margin-bottom: 55px;
-  font-size: 16px;
-  font-weight: bold;
-  
-}
-
-.total{
-  margin-top: 20px;
-  font-size: 18px;
-  font-weight: bold;
-  text-align: right;
-}
-
-.order-total h3{
-  margin: auto;
-    margin-top: 200px;
-    padding: 10px;
-    text-align: center;
-  font-weight: bold;
-}
-
-.payment-method {
-
-  background-color: #ffffff;
-  padding: 40px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  text-align: center;
-  height: fit-content;
-}
-
-.payment-method h2{
-  font-size: 24px;
-  margin-bottom: 50px;
-  font-weight: bold;
-}
-
-.payment-method button {
-  width: 70%;
-  padding: 15px;
-  margin: 10px 0;
-  font-size: 16px;
-  border-radius:8px;
-  border: none;
-  cursor: pointer;
-}
-
-/* ------ Tracking : Suivi de la commande  --------- */
-
-.order-tracking-container {
   max-width: 900px;
-  margin:85px auto;
+  margin: 80px auto;
   padding: 20px;
-  font-family: 'Arial', sans-serif;
-  background-color: #fff;
-}
-
-h1, h2 {
+  font-family: Arial, sans-serif;
   color: #333;
-  margin-bottom: 25px;
 }
 
-p {
-  margin: 4px 0;
+.order-container {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 30px;
 }
 
-.order-user-info,
-.order-details,
-.order-products,
-.order-steps {
-  margin-bottom: 20px;
+
+.order-summary {
+  flex: 1;
   border: 1px solid #ddd;
   padding: 15px;
   border-radius: 8px;
-  background-color: #f9f9f9;
+  background-color: #fafafa;
 }
 
-.product-item {
+
+.order-form {
+  width: 350px;
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+
+.order-items {
   display: flex;
+  flex-direction: column;
   gap: 15px;
-  margin-bottom: 10px;
 }
 
-.product-item img {
-  width: 80px;
-  height: auto;
-  object-fit: cover;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.order-steps ul {
-  list-style-type: disc;
-  padding-left: 20px;
-}
-
-.order-tracking-back-link {
-  display: inline-block;
+.order-item {
   margin-top: 20px;
-  color: #4d00c1;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.order-item img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.order-text h4 {
+  margin: 0 0 6px 0;
+  font-size: 1.1rem;
+}
+
+.order-text p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+
+.order-total {
+  margin-top: 20px;
+  font-weight: bold;
+  font-size: 1.2rem;
+  text-align: right;
+}
+
+.order-form h2,
+.order-page h1 {
+  font-size: 24px;
+  margin-top: 0;
+  margin-bottom: 35px;
+  text-align: center;
+}
+
+.order-form label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.order-form input, .order-form select {
+  width: 100%;
+  padding: 8px 10px;
+  margin-top: 4px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.order-form button[type="submit"] {
+  background-color: #000000;
+  color: white;
+  border: none;
+  padding: 10px 5px;
+  font-size: 1.1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 15px;
+  width: 100%;
+}
+
+.order-form button[type="submit"]:hover {
+  background-color: #0a8a01;
+}
+
+.order-total h3{
+  font-size: 16px;
+}
+
+
+a:hover {
+  text-decoration: underline;
+}
+
+
+
+
+/* ------ Tracking : Suivi de la commande  --------- */
+
+.ordertracking-container {
+  max-width: 800px;
+  margin: auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+}
+
+.ordertracking-title {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #222;
+}
+
+.ordertracking-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.ordertracking-section h2 {
+  font-size: 1.4rem;
+  margin-bottom: 12px;
+  border-bottom: 2px solid #343434;
+  padding-bottom: 6px;
+  color: #000000;
+}
+
+.ordertracking-paragraph {
+  margin: 6px 0;
+  font-size: 1rem;
+}
+
+.ordertracking-product-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.ordertracking-product-item {
+  margin-bottom: 12px;
+  padding: 12px;
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.ordertracking-link-back {
+  display: inline-block;
+  margin-top: 30px;
+  color: #000000;
   text-decoration: none;
   font-weight: bold;
 }
 
-.order-tracking-back-link:hover {
-  text-decoration: underline;
-}
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 5px solid #eee;
-  border-top: 5px solid #0062ca;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 20px auto;
-}
-
-.error {
-  color: red;
-  font-weight: bold;
-}
 
 /* -------- Page Favoris ---------------- */
 
-/* Container principal */
+
 .container-fav {
   padding: 20px;
   max-width: 1200px;
   margin: 80px auto;
 }
 
-/* Titre favoris */
+
 .fav-title {
   font-size: 24px;
   font-weight: bold;
@@ -1235,14 +1245,14 @@ p {
   text-align: center;
 }
 
-/* Message aucun favori */
+
 .no-fav-message {
   text-align: center;
   font-style: italic;
   color: #777;
 }
 
-/* Row des cards */
+
 .row-card {
   display: flex;
   flex-wrap: wrap;
@@ -1250,25 +1260,25 @@ p {
   gap: 20px;
 }
 
-/* Animation des cards */
+
 .transition-card {
   transition: opacity 0.5s ease, transform 0.3s ease;
 }
 
-/* Disparition */
+
 .fade-out {
   opacity: 0;
   transform: translateX(-50px);
   pointer-events: none;
 }
 
-/* Apparition */
+
 .fade-in {
   opacity: 1;
   transform: translateX(0);
 }
 
-/* Carte produit */
+
 .card-fav {
   background-color: #fff;
   border-radius: 12px;
@@ -1306,14 +1316,14 @@ p {
   gap: 10px;
 }
 
-/* Nom du produit */
+
 .card-title {
   font-weight: 500;
   color: #000000;
   font-size: 16px;
 }
 
-/* Prix */
+
 .card-text {
   margin: auto;
   font-size: 1.25rem;
@@ -1321,7 +1331,7 @@ p {
   font-weight: bold;
 }
 
-/* Sélecteur de taille */
+
 .select-size {
   width: 65%;
   margin: auto;
@@ -1353,7 +1363,7 @@ p {
   margin-left: 40px;
 }
 
-/* Texte taille indisponible */
+
 .text-muted {
   color: #999;
   font-size: 0.9rem;
@@ -1435,7 +1445,7 @@ p {
 
 
 /* -------- Footer ---------- */
-/* Footer principal */
+
 .footer {
   display: flex;
   justify-content: space-between;
@@ -1447,7 +1457,7 @@ p {
   margin-top: 20px;
 }
 
-/* Colonnes */
+
 .footer-column {
   flex: 1 1 200px;
   margin: 1rem;
@@ -1476,7 +1486,7 @@ p {
   color: #ddd;
 }
 
-/* Footer bottom */
+
 .footer-bottom {
   border-top: 1px solid #bebebe;
   background-color: #222;
@@ -1571,18 +1581,19 @@ p {
 
   .navbar {
     padding-left: 0px;
-    padding-top: 140px;
+    padding-top: 90px;
     
   }
 
   .navbar-expand-lg .navbar-nav {
     padding-left: 0px;
+    margin-top: 8px;
   }
 
   .navbar-brand {
     
     position: absolute;
-    top: -5px; 
+    top: 1px; 
   }
 
   .navbar-brand img {
@@ -1594,14 +1605,14 @@ p {
   .d-flex 
   {
     position: absolute;
-    right: 6px;
-    top: 90px;
+    right: 10px;
+    top: 45px;
   }
 
   .navbar-toggler{
     position: absolute;
-    left: 15px;
-    top: 100px;
+    left: 20px;
+    top: 55px;
     width: 45px;
     height: 35px;
   }
@@ -1655,18 +1666,23 @@ p {
   }
 
   .col-md-4 {
-    flex: 0 0 50%; /* 2 cartes par ligne sur tablette */
+    flex: 0 0 50%; 
   }
 
   .contact-form-container {
     margin-top: 200px;
     padding: 10px;
   }
+
+  .order-page {
+   
+    margin-top: 150px ;
+  }
 }   
 
 @media (max-width: 900px) {
   .card-wrapper {
-    flex: 1 1 calc(50% - 20px); /* 2 cartes par ligne sous 900px */
+    flex: 1 1 calc(50% - 20px);
     max-width: calc(50% - 20px);
   }
 
@@ -1852,6 +1868,32 @@ p {
   }
 }
 
+@media (max-width: 700px) {
+
+  .order-page{
+      margin-top: 150px;
+  }
+  .order-container {
+    flex-direction: column;
+  }
+  .order-form {
+    width: 100%;
+    margin-top: 20px;
+  }
+  .order-total {
+    text-align: left;
+  }
+  .order-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .order-item img {
+    width: 100%;
+    height: auto;
+    margin-bottom: 10px;
+  }
+}
+
 
 @media screen and (max-width: 600px) {
   .prf {
@@ -1869,6 +1911,26 @@ p {
 
   .prf-order-title {
     font-size: 14px;
+  }
+
+  .ordertracking-container {
+    padding: 10px;
+  }
+  .ordertracking-title {
+    font-size: 1.6rem;
+  }
+  .ordertracking-section {
+    padding: 15px;
+  }
+  .ordertracking-section h2 {
+    font-size: 1.2rem;
+  }
+  .ordertracking-paragraph {
+    font-size: 0.9rem;
+  }
+  .ordertracking-product-item {
+    padding: 10px;
+    font-size: 0.9rem;
   }
 }
 

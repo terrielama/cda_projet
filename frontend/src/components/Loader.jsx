@@ -23,7 +23,7 @@ const Loader = () => {
 }
 
 const StyledWrapper = styled.div`
-  position: fixed;        /* prend toute la page */
+  position: fixed;       
   top: 0;
   left: 0;
   width: 100vw;
@@ -32,7 +32,7 @@ const StyledWrapper = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;          /* au-dessus de tout */
+  z-index: 9999;        
 
   .loader {
     position: relative;

@@ -228,11 +228,10 @@ class OrderUpdateSerializer(serializers.Serializer):
     first_name = serializers.CharField(required=True, max_length=100)
     last_name = serializers.CharField(required=True, max_length=100)
     address = serializers.CharField(required=True, max_length=255)
+    city = serializers.CharField(required=False, allow_blank=True, max_length=100)   
+    country = serializers.CharField(required=False, allow_blank=True, max_length=100) 
     phone = serializers.CharField(required=True, max_length=20)
     payment_method = serializers.ChoiceField(choices=Order.PAYMENT_METHOD_CHOICES, required=True)
-
-
-
 
 # --- Serializer pour brancher formulaire de contact React au backend ------
 

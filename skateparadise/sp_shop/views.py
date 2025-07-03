@@ -638,11 +638,11 @@ def update_client_info(request, order_id):
     try:
         order = Order.objects.get(id=order_id)
     except Order.DoesNotExist:
-        return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "Commande introuvable"}, status=status.HTTP_404_NOT_FOUND)
 
     serializer = OrderUpdateSerializer(data=request.data)
     if not serializer.is_valid():
-        print(serializer.errors)  # Affiche les erreurs dans la console
+        print(serializer.errors)  
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     data = serializer.validated_data
@@ -655,7 +655,7 @@ def update_client_info(request, order_id):
 
     order.save()
 
-    return Response({"message": "Order updated successfully"})
+    return Response({"message": "Commande mise à jour avec succès"})
 
 # -------- Fav  ------------------
 

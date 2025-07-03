@@ -188,19 +188,20 @@ class Order(models.Model):
     )
 
     PAYMENT_METHOD_CHOICES = [
-    ('CB', 'Carte bancaire'),
-    ('PP', 'PayPal'),
+        ('CB', 'Carte bancaire'),
+        ('PP', 'PayPal'),
     ]
-
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='attente')
     cart = models.ForeignKey('Cart', related_name='orders', on_delete=models.CASCADE, null=True, blank=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     
-    # # Infos client
+    # Infos client
     first_name = models.CharField(max_length=100, null=True, blank=True)
     last_name = models.CharField(max_length=100, null=True, blank=True)
     address = models.CharField(max_length=255, null=True, blank=True)
+    city = models.CharField(max_length=100, null=True, blank=True)       
+    country = models.CharField(max_length=100, null=True, blank=True)   
     phone = models.CharField(max_length=20, null=True, blank=True)
 
     # Paiement et tracking
@@ -210,14 +211,13 @@ class Order(models.Model):
         default='' 
     )
     tracking_code = models.CharField(
-    max_length=100,
-    default=generate_tracking_code,
-    editable=False,
-    null=False,
-    blank=False,
-    unique=True,
+        max_length=100,
+        default=generate_tracking_code,
+        editable=False,
+        null=False,
+        blank=False,
+        unique=True,
     )
-
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -230,6 +230,7 @@ class Order(models.Model):
     def total_price(self):
         # Calcul du total à partir des items liés
         return sum(item.total_price for item in self.items.all())
+
 
 #----------- Définition du modèle OrderItem --------------------
 
