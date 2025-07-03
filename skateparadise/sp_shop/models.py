@@ -248,3 +248,19 @@ class OrderItem(models.Model):
     def total_price(self):
         # Prix total par item (quantité * prix unitaire)
         return self.price * self.quantity
+
+# ---- Contact Assistance ------------
+
+from django.conf import settings
+from django.db import models
+
+class ContactMessage(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    name = models.CharField(max_length=100, default='Utilisateur inconnu')               
+    email = models.EmailField(default='Utilisateur@inconnu.com')                      
+    subject = models.CharField(max_length=200, default='Pas de sujet')
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.subject} - {self.user if self.user else self.email}"

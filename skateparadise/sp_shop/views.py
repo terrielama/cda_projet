@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Product, Cart, CartItem, Order, OrderItem, User, Favorite, ProductSize
-from .serializers import ProductSerializer, CartItemSerializer, CartSerializer, SimpleCartSerializer, OrderSerializer, UserRegisterSerializer, OrderUpdateSerializer,  FavoriteSerializer
+from .serializers import ProductSerializer, CartItemSerializer, CartSerializer, SimpleCartSerializer, OrderSerializer, UserRegisterSerializer, OrderUpdateSerializer,  FavoriteSerializer, ContactMessageSerializer
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
@@ -743,13 +743,24 @@ def random_products(request):
     return Response(serializer.data)
 
 
+# -------- Contact Assistance ---------------
+User = get_user_model()
 
-
-
-
-
-
-
-
-
- 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def contact_message_view(request):
+    serializer = ContactMessageSerializer(data=request.data)
+    if serializer.is_valid():
+        email = serializer.validated_data.get('email')
+        user = None
+        if email:
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                pass
+        if user:
+            serializer.save(user=user)
+        else:
+            serializer.save()
+        return Response({'success': 'Message reçu !'}, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

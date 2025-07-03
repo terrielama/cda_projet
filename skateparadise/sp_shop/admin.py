@@ -1,5 +1,22 @@
 from django.contrib import admin
-from .models import Product, ProductSize, Cart, CartItem, Order, OrderItem
+from .models import Product, ProductSize, Cart, CartItem, Order, OrderItem, ContactMessage
+
+@admin.register(ContactMessage)
+class ContactMessageAdmin(admin.ModelAdmin):
+    list_display = ('subject', 'user_email', 'user_display', 'created_at')
+    search_fields = ('subject', 'message', 'user__email')
+    list_filter = ('created_at',)
+
+    def user_display(self, obj):
+        if obj.user:
+            return str(obj.user)
+        return "Invité"
+    user_display.short_description = 'Utilisateur'
+
+    def user_email(self, obj):
+        return obj.user.email if obj.user else 'Invité'
+    user_email.short_description = 'Email'
+
 
 class ProductSizeInline(admin.TabularInline):
     model = ProductSize

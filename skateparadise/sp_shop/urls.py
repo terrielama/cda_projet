@@ -41,4 +41,6 @@ urlpatterns = [
     path('favorites/', views.favorite_list_create_view, name='favorite-list-create'),
     path('favorites/<int:pk>/', views.favorite_delete_view, name='favorite-delete'),
 
+    # Assistance
+    path('contact/', views.contact_message_view, name='contact-message'),
 ]

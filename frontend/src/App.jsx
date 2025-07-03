@@ -13,6 +13,7 @@ import ProductDetail from './components/product/ProductDetail.jsx';
 import FavoritesPage from "./components/product/FavoritesPage.jsx";
 import TermsAndConditions from "./components/TermsAndConditions.jsx";
 import NotFound from './components/NotFound';
+import Contact from "./components/Contact.jsx";
 
 const App = () => {
   return (
@@ -30,6 +31,7 @@ const App = () => {
               <Route path="/produit/:id" element={<ProductDetail />} />
               <Route path="/favoris" element={<FavoritesPage />} /> 
               <Route path="/cgv" element={<TermsAndConditions />} />
+              <Route path="/contact" element={<Contact />} />
               {/* Route 404 */}
               <Route path="*" element={<NotFound />} />
               </Route>

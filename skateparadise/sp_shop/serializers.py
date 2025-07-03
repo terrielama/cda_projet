@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, Cart, CartItem, Order, OrderItem, User, Category, Favorite, Sizes
+from .models import Product, Cart, CartItem, Order, OrderItem, User, Category, Favorite, Sizes, ContactMessage
 from main.models import CustomUser  
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
@@ -230,3 +230,14 @@ class OrderUpdateSerializer(serializers.Serializer):
     address = serializers.CharField(required=True, max_length=255)
     phone = serializers.CharField(required=True, max_length=20)
     payment_method = serializers.ChoiceField(choices=Order.PAYMENT_METHOD_CHOICES, required=True)
+
+
+
+
+# --- Serializer pour brancher formulaire de contact React au backend ------
+
+class ContactMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactMessage
+        fields = ['id', 'name', 'email', 'subject', 'message', 'created_at']
+        read_only_fields = ['id', 'created_at']

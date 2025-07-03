@@ -1394,6 +1394,44 @@ p {
 
 /* --- Page contact ------ */
 
+.contact-form-container {
+  max-width: 600px;
+  margin:100px auto;
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #4e4e4e8f;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.contact-form-container input,
+.contact-form-container textarea {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.contact-form-container button {
+  padding: 10px 20px;
+  background-color: #222;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.contact-form-container .success {
+  color: green;
+  margin-top: 10px;
+}
+
+.contact-form-container .error {
+  color: red;
+  margin-top: 10px;
+}
+
+
 
 
 /* -------- Footer ---------- */
@@ -1617,6 +1655,11 @@ p {
 
   .col-md-4 {
     flex: 0 0 50%; /* 2 cartes par ligne sur tablette */
+  }
+
+  .contact-form-container {
+    margin-top: 200px;
+    padding: 10px;
   }
 }   
 
