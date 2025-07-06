@@ -25,11 +25,6 @@ class Sizes(models.Model):
 
 # ------ Définition du modèle de produit --------
 
-
-
-from django.db import models
-from django.utils.text import slugify
-
 class Product(models.Model):
     CATEGORY = (
         ("Boards", "BOARDS"),
@@ -54,6 +49,12 @@ class Product(models.Model):
     sizes = models.JSONField(default=list, blank=True)
     stock = models.IntegerField(default=0)
 
+    def __str__(self):
+        # Affiche le nom et la marque s'il y en a une, sinon juste le nom
+        if self.marque:
+            return f"{self.name} ({self.marque})"
+        return self.name
+
     def save(self, *args, **kwargs):
         # Création slug unique si vide
         if not self.slug:
@@ -64,8 +65,6 @@ class Product(models.Model):
                 unique_slug = f'{base_slug}-{counter}'
                 counter += 1
             self.slug = unique_slug
-
-        # **Supprime la génération automatique des tailles**
 
         super().save(*args, **kwargs)
 
@@ -135,10 +134,6 @@ class Cart(models.Model):
     
     items = models.ManyToManyField('CartItem', related_name='carts', blank=True)
 
-
-
-    # Indique si le panier a été payé. Par défaut, c'est False (non payé).
-    paid = models.BooleanField(default=False)
 
     # Date de création automatique du panier.
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)

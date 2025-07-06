@@ -117,13 +117,15 @@ def add_item(request):
 
     # Récupération du panier
     if request.user.is_authenticated:
-        cart, _ = Cart.objects.get_or_create(user=request.user, paid=False)
+        # Suppression de paid=False
+        cart, _ = Cart.objects.get_or_create(user=request.user)  
     else:
         if not cart_code:
             return Response({'error': 'cart_code requis pour les utilisateurs non connectés'}, status=400)
-        cart = Cart.objects.filter(cart_code=cart_code, paid=False).first()
+        # Suppression de paid=False
+        cart = Cart.objects.filter(cart_code=cart_code).first()
         if not cart:
-            cart = Cart.objects.create(cart_code=cart_code, user=None, paid=False)
+            cart = Cart.objects.create(cart_code=cart_code, user=None)
 
     # Cherche s'il y a déjà cet item dans le panier
     existing_item = CartItem.objects.filter(cart=cart, product=product, size=size).first()
@@ -171,9 +173,6 @@ def add_item(request):
     return Response({'message': 'Item ajouté au panier.'}, status=200)
 
 
-
-# ----- Vérifier si un produit est dans le panier -----
-
 @api_view(["GET"])
 def product_in_cart(request):
     cart_code = request.query_params.get("cart_code")
@@ -187,9 +186,11 @@ def product_in_cart(request):
         product = Product.objects.get(id=product_id)
 
         if request.user.is_authenticated:
-            cart = Cart.objects.filter(user=request.user, paid=False).first()
+            # Suppression de paid=False
+            cart = Cart.objects.filter(user=request.user).first()
         elif cart_code:
-            cart = Cart.objects.filter(cart_code=cart_code, user=None, paid=False).first()
+            # Suppression de paid=False
+            cart = Cart.objects.filter(cart_code=cart_code, user=None).first()
         else:
             return Response({'quantity': 0})
 
@@ -209,7 +210,6 @@ def product_in_cart(request):
 
     except Product.DoesNotExist:
         return Response({'quantity': 0})
-
 
 
 
@@ -258,6 +258,7 @@ def get_cart_stat(request):
 
 # ----- View pour récupérer tous les produits du panier -----
 
+
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def get_cart(request):
@@ -266,8 +267,8 @@ def get_cart(request):
     if not cart_code:
         return Response({"error": "Cart code manquant"}, status=400)
 
-    # Essayer de récupérer le panier avec le cart_code
-    cart = Cart.objects.filter(cart_code=cart_code, paid=False).first()
+
+    cart = Cart.objects.filter(cart_code=cart_code).first()
 
     if not cart:
         return Response({"error": "Panier vide ou inexistant"}, status=404)
@@ -434,12 +435,9 @@ def create_order(request):
 
             for item in cart.cart_items.select_related('product').all():
                 product = item.product
-
-                # Recharge produit pour être sûr des données fraîches
                 product.refresh_from_db()
 
                 if product.stock < item.quantity:
-                    # Lever une erreur manuelle qui va déclencher le rollback
                     raise ValueError(f"Stock insuffisant pour {product.name} (disponible : {product.stock})")
 
                 # Mise à jour atomique du stock
@@ -447,7 +445,6 @@ def create_order(request):
                 product.save()
                 product.refresh_from_db()
 
-                # Créer l'OrderItem
                 OrderItem.objects.create(
                     order=order,
                     product=product,
@@ -456,7 +453,6 @@ def create_order(request):
                     size=item.size
                 )
 
-                # Si stock à 0, marquer indisponible
                 if product.stock == 0:
                     product.available = False
                     product.save()
@@ -469,10 +465,9 @@ def create_order(request):
     except Cart.DoesNotExist:
         return Response({"error": "Panier non trouvé"}, status=status.HTTP_404_NOT_FOUND)
     except ValueError as ve:
-        # Erreur personnalisée levée si stock insuffisant
         return Response({"error": str(ve)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error": "Erreur serveur: " + str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # --------------- Assossier commande a un user ------------
