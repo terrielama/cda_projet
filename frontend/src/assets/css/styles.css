@@ -112,17 +112,17 @@ main {
 }
 
 /*---------- Home --------- */
-
+/* --- Brands Container & Images --- */
 .brands-container {
   display: flex;
   gap: 10px;
   padding: 40px 20px;
-  align-items: stretch; /* alignement vertical homogène */
-  flex-direction: row;   /* Main image à gauche */
+  align-items: stretch;
+  flex-direction: row;
   justify-content: flex-start;
   max-width: 1200px;
   margin: 0 auto;
-  flex-wrap: wrap; /* Permet le passage en colonne sur petits écrans */
+  flex-wrap: wrap;
 }
 
 .main-image {
@@ -158,8 +158,8 @@ main {
 }
 
 .vans button:hover {
-  background-color: #0077cc;
-  border-color: #0077cc;
+  background-color: #000000ba;
+  border-color: #ffffff;
 }
 
 .side-images {
@@ -203,7 +203,7 @@ main {
   border-radius: 3px;
 }
 
-/* --------- Responsive --------- */
+
 
 @media (max-width: 900px) {
   .brands-container {
@@ -257,10 +257,18 @@ main {
 }
 
 
+
 .category-section {
   margin: 40px auto;
   max-width: 1200px;
   padding: 0 20px;
+}
+
+.category-section h2 {
+  font-size: 1.8rem;
+  text-align: center;
+  color: #000000;
+  margin-bottom: 15px;
 }
 
 .products-grid {
@@ -276,65 +284,128 @@ main {
   border-radius: 8px;
   box-shadow: 0 0 6px rgba(0,0,0,0.1);
   text-align: center;
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+  text-decoration: none;
 }
 
 .product-image {
   width: 100%;
-  height: 160px;
+  height: 200px;
   object-fit: contain;
   margin-bottom: 10px;
 }
 
 .product-name {
-  font-weight: 600;
   font-size: 1.1rem;
   margin-bottom: 5px;
+  flex-grow: 1;
 }
 
-.product-price {
-  font-weight: bold;
-  color: #333;
-}
 
-.btn-details, .btn-see-more {
-  display: inline-block;
-  margin-top: 10px;
-  padding: 6px 12px;
-  background-color: #0077cc;
-  color: white;
-  text-decoration: none;
-  border-radius: 4px;
-}
 
-.btn-see-more {
-  margin-top: 20px;
-  font-weight: 600;
-}
+/* Responsive produits */
 
-/* --------- Responsive --------- */
-
-/* Tablettes et petits écrans (768px et moins) */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .products-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
   }
 }
 
-/* Mobiles petits écrans (480px et moins) */
 @media (max-width: 480px) {
   .products-grid {
     grid-template-columns: 1fr;
-    gap: 10px;
+  }
+}
+
+/* --- Section Actualités --- */
+
+.news-section {
+  max-width: 1200px;
+  margin: 60px auto;
+  padding: 0 20px 40px;
+}
+
+.news-section h2 {
+  font-size: 2rem;
+  margin-bottom: 25px;
+  text-align: center;
+  color: #000000;
+}
+
+.news-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
+}
+
+.news-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease;
+  cursor: default;
+}
+
+.news-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+
+.news-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.news-content {
+  padding: 15px 20px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.news-content h3 {
+  font-size: 1.25rem;
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.news-content p {
+  flex-grow: 1;
+  font-size: 1rem;
+  color: #555;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Responsive actualités */
+
+@media (max-width: 900px) {
+  .news-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .news-cards {
+    grid-template-columns: 1fr;
   }
 
-  .category-section {
-    padding: 0 10px;
-    margin: 20px auto;
-  }
-
-  .product-image {
-    height: 140px;
+  .news-card img {
+    height: 160px;
   }
 }
 

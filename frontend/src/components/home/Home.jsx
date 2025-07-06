@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import axios from "axios";
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import axios from 'axios';
+
+import LikeButton from '../product/LikeButton';  // <-- import ici
 
 import "../../assets/css/styles.css";
 import vansImage from "../../assets/img/img_page_accueil/vans.jpg";
@@ -18,17 +20,46 @@ const categoryMap = {
 };
 
 const Home = () => {
-  // États pour chaque catégorie
   const [accessoires, setAccessoires] = useState([]);
   const [boards, setBoards] = useState([]);
   const [roues, setRoues] = useState([]);
 
+  const [favorites, setFavorites] = useState({});
+  const [likeMessage, setLikeMessage] = useState("");
+
   useEffect(() => {
-    // Fonction générique pour récupérer 4 produits par catégorie
+    const stored = localStorage.getItem("favorites");
+    if (stored) {
+      setFavorites(JSON.parse(stored));
+    }
+  }, []);
+
+  const saveFavoritesToStorage = (fav) => {
+    localStorage.setItem("favorites", JSON.stringify(fav));
+  };
+
+  const toggleFavorite = (productId) => {
+    const updatedFavorites = {
+      ...favorites,
+      [productId]: !favorites[productId],
+    };
+    setFavorites(updatedFavorites);
+    saveFavoritesToStorage(updatedFavorites);
+
+    setLikeMessage(
+      updatedFavorites[productId]
+        ? `Vous avez aimé le produit ${productId} !`
+        : `Vous avez retiré le like du produit ${productId}.`
+    );
+
+    setTimeout(() => setLikeMessage(""), 2000);
+  };
+
+  useEffect(() => {
     const fetchProducts = async (backendCategory, setter) => {
       try {
         const response = await api.get(`products/${backendCategory}/`);
-        setter(response.data.slice(0, 4)); // On garde 4 produits max
+        setter(response.data.slice(0, 4));
       } catch (error) {
         console.error(`Erreur chargement ${backendCategory}`, error);
         setter([]);
@@ -40,87 +71,44 @@ const Home = () => {
     fetchProducts(categoryMap.nouvellesroues, setRoues);
   }, []);
 
-  // Composant Card produit simple (card cliquable)
   const ProductCard = ({ product }) => (
-    <Link to={`/produits/${product.id}`} className="product-card-link">
-      <div className="product-card">
-        <img src={product.image} alt={product.name} className="product-image" />
-        <h4 className="product-name">{product.name}</h4>
-        <p className="product-price">{product.price} €</p>
-      </div>
+    <Link to={`/produit/${product.id}`} className="product-card">
+      <img src={product.image} alt={product.name} className="product-image" />
+      <h4 className="product-name">{product.name}</h4>
+      <LikeButton
+        productId={product.id}
+        isLiked={favorites[product.id] || false}
+        toggleFavorite={toggleFavorite}
+      />
     </Link>
   );
-
-  // Données statiques pour les actualités (JSX dans content)
-  const newsData = [
-    {
-      id: 1,
-      image:
-        "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80",
-      content: (
-        <>
-          <h3>Nouvelle collection printemps 2025</h3>
-          <p>
-            Découvrez notre nouvelle gamme de produits tendance pour le printemps
-            2025, avec des designs exclusifs et des matériaux durables.
-          </p>
-        </>
-      ),
-    },
-    {
-      id: 2,
-      image:
-        "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=400&q=80",
-      content: (
-        <>
-          <h3>Événement skatepark ce weekend</h3>
-          <p>
-            Rejoignez-nous au skatepark local pour un weekend de compétition,
-            ateliers et musique live. Entrée gratuite pour tous !
-          </p>
-        </>
-      ),
-    },
-    {
-      id: 3,
-      image:
-        "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=400&q=80",
-      content: (
-        <>
-          <h3>Interview exclusive avec un pro skateur</h3>
-          <p>
-            Découvrez l’interview exclusive de notre champion local qui partage ses
-            conseils et sa passion pour le skate.
-          </p>
-        </>
-      ),
-    },
-  ];
 
   return (
     <>
       <div className="brands-container">
         <div className="main-image">
           <img src={vansImage} alt="Vans" />
-          <Link to="/produits/chaussures">
-            <button className="vans">Voir Les Chaussures</button>
+          <Link to="/produit/chaussures" className="vans">
+            <button>Voir Les Chaussures</button>
           </Link>
         </div>
+
         <div className="side-images">
-          <div className="side-item">
+          <Link to="/produit/13" className="side-item">
             <img src={obeyImage} alt="Obey" />
             <div className="side-text">OBEY</div>
-          </div>
-          <div className="side-item">
+          </Link>
+          <Link to="/produit/16" className="side-item">
             <img src={polarImage} alt="Polar" />
             <div className="side-text">POLAR</div>
-          </div>
+          </Link>
         </div>
       </div>
 
-      {/* Section Accessoires */}
+      {likeMessage && <div className="like-message">{likeMessage}</div>}
+
       <section className="category-section">
-        <h2>Accessoires</h2>
+        <h2>NOUVEAUX ACCESSOIRES</h2>
         <div className="products-grid">
           {accessoires.length > 0 ? (
             accessoires.map((product) => (
@@ -132,9 +120,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Section Nouvelles Boards */}
       <section className="category-section">
-        <h2>Nouvelles Boards</h2>
+        <h2>NOUVELLES BOARDS DE SKATE</h2>
         <div className="products-grid">
           {boards.length > 0 ? (
             boards.map((product) => (
@@ -146,9 +133,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Section Nouvelles Roues */}
       <section className="category-section">
-        <h2>Nouvelles Roues</h2>
+        <h2>NOUVELLES ROUES DE SKATE</h2>
         <div className="products-grid">
           {roues.length > 0 ? (
             roues.map((product) => (
@@ -160,16 +146,30 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Section Actualités */}
-      <section className="category-section">
+      <section className="news-section">
         <h2>Actualités</h2>
-        <div className="products-grid">
-          {newsData.map(({ id, image, content }) => (
-            <div key={id} className="news-card">
-              <img src={image} alt={`actualité ${id}`} className="news-image" />
-              <div className="news-text">{content}</div>
+        <div className="news-cards">
+          <article className="news-card">
+            <img src="https://via.placeholder.com/400x250" alt="Actualité 1" />
+            <div className="news-content">
+              <h3>Actualité 1</h3>
+              <p>Découvrez les dernières nouveautés et tendances de la saison dans notre boutique.</p>
             </div>
-          ))}
+          </article>
+          <article className="news-card">
+            <img src="https://via.placeholder.com/400x250" alt="Actualité 2" />
+            <div className="news-content">
+              <h3>Actualité 2</h3>
+              <p>Profitez de nos offres spéciales exclusives sur une sélection de produits.</p>
+            </div>
+          </article>
+          <article className="news-card">
+            <img src="https://via.placeholder.com/400x250" alt="Actualité 3" />
+            <div className="news-content">
+              <h3>Actualité 3</h3>
+              <p>Participez à notre concours et gagnez des cadeaux incroyables chaque mois.</p>
+            </div>
+          </article>
         </div>
       </section>
     </>
