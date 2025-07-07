@@ -78,11 +78,12 @@ const Home = () => {
     <Link to={`/produit/${product.id}`} className="product-card">
       <img src={product.image} alt={product.name} className="product-image" />
       <h4 className="product-name">{product.name}</h4>
+      <div className="LikeHome">
       <LikeButton
         productId={product.id}
         isLiked={favorites[product.id] || false}
         toggleFavorite={toggleFavorite}
-      />
+      /></div>
     </Link>
   );
 
