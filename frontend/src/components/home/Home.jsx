@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-
-import LikeButton from '../product/LikeButton';  // <-- import ici
+import LikeButton from '../product/LikeButton';
 
 import "../../assets/css/styles.css";
 import vansImage from "../../assets/img/img_page_accueil/vans.jpg";
@@ -23,10 +23,10 @@ const categoryMap = {
 };
 
 const Home = () => {
+  const navigate = useNavigate();
   const [accessoires, setAccessoires] = useState([]);
   const [boards, setBoards] = useState([]);
   const [roues, setRoues] = useState([]);
-
   const [favorites, setFavorites] = useState({});
   const [likeMessage, setLikeMessage] = useState("");
 
@@ -74,18 +74,38 @@ const Home = () => {
     fetchProducts(categoryMap.nouvellesroues, setRoues);
   }, []);
 
-  const ProductCard = ({ product }) => (
-    <Link to={`/produit/${product.id}`} className="product-card">
-      <img src={product.image} alt={product.name} className="product-image" />
-      <h4 className="product-name">{product.name}</h4>
-      <div className="LikeHome">
-      <LikeButton
-        productId={product.id}
-        isLiked={favorites[product.id] || false}
-        toggleFavorite={toggleFavorite}
-      /></div>
-    </Link>
-  );
+  const ProductCard = ({ product }) => {
+    const handleClick = () => {
+      navigate(`/produit/${product.id}`);
+    };
+
+    const handleDoubleClick = () => {
+      toggleFavorite(product.id);
+    };
+
+    const handleLikeClick = (e) => {
+      e.stopPropagation();
+      toggleFavorite(product.id);
+    };
+
+    return (
+      <div
+        className="product-card"
+        onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
+      >
+        <img src={product.image} alt={product.name} className="product-image" />
+        <h4 className="product-name">{product.name}</h4>
+        <div className="LikeHome" onClick={handleLikeClick}>
+          <LikeButton
+            productId={product.id}
+            isLiked={favorites[product.id] || false}
+            toggleFavorite={toggleFavorite}
+          />
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -156,33 +176,53 @@ const Home = () => {
           <article className="news-card">
             <img src={news1} alt="Actualité 1" className="news1" />
             <div className="news-content">
-              <h3>Paul Ro en hommage à lui même
-              Paul Rodriguez </h3>
-              <p>Paul Rodriguez fête ses 20 ans de carrière en tant que skateur professionel. L’occasion pour lui de poser en vidéo la légende qu’il est tout simplement.
-              <hr></hr>
-              <a href="https://skate.fr/mag/paul-rodriguez/" className="learn-more-link">En savoir plus...</a></p>
-
+              <h3>Paul Ro en hommage à lui même Paul Rodriguez</h3>
+              <p>
+                Paul Rodriguez fête ses 20 ans de carrière en tant que skateur
+                professionnel.
+                <hr />
+                <a
+                  href="https://skate.fr/mag/paul-rodriguez/"
+                  className="learn-more-link"
+                >
+                  En savoir plus...
+                </a>
+              </p>
             </div>
           </article>
+
           <article className="news-card">
             <img src={news2} alt="Actualité 2" className="news2" />
             <div className="news-content">
               <h3>Aurélien Giraud - Le champion fait son entrée au Musée Grévin</h3>
               <p>
-              « Incroyable », ce fut le mot de la semaine pour Aurélien Giraud. Premier Français à remporter une édition de la Street League.
-              <hr></hr>
-              <a href="https://skate.fr/mag/aurelien-giraud-musee-grevin/" className="learn-more-link">En savoir plus...</a></p>
+                « Incroyable », ce fut le mot de la semaine pour Aurélien Giraud.
+                <hr />
+                <a
+                  href="https://skate.fr/mag/aurelien-giraud-musee-grevin/"
+                  className="learn-more-link"
+                >
+                  En savoir plus...
+                </a>
+              </p>
             </div>
           </article>
+
           <article className="news-card">
             <img src={news3} alt="Actualité 3" className="news3" />
             <div className="news-content">
-              <h3>Nassim Lacchab, Bronson avec nous
-              Dealers choice Q&A serie</h3>
-              <p>Nassim Lachaab from Morocco se livre avec enthousiasme au High-Speed Q&A par d’autres membres de la Team Bronson.
-              <hr></hr>
-              <a href="https://skate.fr/mag/nassim-lacchab-bronson-avec-nous/" className="learn-more-link">En savoir plus...</a></p>
-
+              <h3>Nassim Lacchab, Bronson avec nous - Dealers choice Q&A serie</h3>
+              <p>
+                Nassim Lachaab from Morocco se livre avec enthousiasme au
+                High-Speed Q&A.
+                <hr />
+                <a
+                  href="https://skate.fr/mag/nassim-lacchab-bronson-avec-nous/"
+                  className="learn-more-link"
+                >
+                  En savoir plus...
+                </a>
+              </p>
             </div>
           </article>
         </div>
