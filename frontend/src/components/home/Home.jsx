@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import LikeButton from '../product/LikeButton';
 
@@ -15,12 +14,6 @@ import news3 from "../../assets/img/img_galerie/actu/news3.jpeg";
 const api = axios.create({
   baseURL: "http://127.0.0.1:8001/",
 });
-
-const categoryMap = {
-  accessoires: "ceintures",
-  nouvellesboards: "Boards",
-  nouvellesroues: "Roues",
-};
 
 const Home = () => {
   const navigate = useNavigate();
@@ -59,19 +52,35 @@ const Home = () => {
   };
 
   useEffect(() => {
-    const fetchProducts = async (backendCategory, setter) => {
+    const fetchProducts = async () => {
       try {
-        const response = await api.get(`products/${backendCategory}/`);
-        setter(response.data.slice(0, 4));
+        const [ceinturesRes, bonnetsRes, boardsRes, rouesRes] = await Promise.all([
+          api.get("products/ceintures/"),
+          api.get("products/bonnets/"),
+          api.get("products/Boards/"),
+          api.get("products/Roues/"),
+        ]);
+
+        // Prendre 2 ceintures et 2 bonnets pour alterner
+        const ceintures = ceinturesRes.data.slice(0, 2);
+        const bonnets = bonnetsRes.data.slice(0, 2);
+
+        // Créer un tableau alterné [ceinture, bonnet, ceinture, bonnet]
+        const accessoiresAlternés = [];
+        for (let i = 0; i < 2; i++) {
+          if (ceintures[i]) accessoiresAlternés.push(ceintures[i]);
+          if (bonnets[i]) accessoiresAlternés.push(bonnets[i]);
+        }
+
+        setAccessoires(accessoiresAlternés);
+        setBoards(boardsRes.data.slice(0, 4));
+        setRoues(rouesRes.data.slice(0, 4));
       } catch (error) {
-        console.error(`Erreur chargement ${backendCategory}`, error);
-        setter([]);
+        console.error("Erreur lors du chargement des produits :", error);
       }
     };
 
-    fetchProducts(categoryMap.accessoires, setAccessoires);
-    fetchProducts(categoryMap.nouvellesboards, setBoards);
-    fetchProducts(categoryMap.nouvellesroues, setRoues);
+    fetchProducts();
   }, []);
 
   const ProductCard = ({ product }) => {

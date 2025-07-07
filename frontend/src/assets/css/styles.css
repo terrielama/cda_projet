@@ -225,17 +225,18 @@ main {
   color: #000000;
   margin-bottom: 15px;
 }
-
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); 
   gap: 20px;
   margin-top: 15px;
- 
+  justify-items: center;
 }
 
 .product-card {
   background: white;
+  width: 100%;
+  max-width: 250px; 
   padding: 15px;
   border-radius: 8px;
   box-shadow: 0 0 6px rgba(0,0,0,0.1);
@@ -270,7 +271,7 @@ main {
 
 .LikeHome{
   position: relative;
-  right: 50px;
+  right: 80px;
   top: 25px;
 }
 
@@ -1801,7 +1802,7 @@ a:hover {
 
   .navbar {
     padding-left: 0px;
-    padding-top: 90px;
+    padding-top: 130px;
     
   }
 
@@ -1813,7 +1814,7 @@ a:hover {
   .navbar-brand {
     
     position: absolute;
-    top: 1px; 
+    top: -10px; 
   }
 
   .navbar-brand img {
@@ -1826,13 +1827,13 @@ a:hover {
   {
     position: absolute;
     right: 10px;
-    top: 45px;
+    top: 85px;
   }
 
   .navbar-toggler{
     position: absolute;
     left: 20px;
-    top: 55px;
+    top: 90px;
     width: 45px;
     height: 35px;
   }
