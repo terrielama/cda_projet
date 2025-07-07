@@ -8,6 +8,9 @@ import "../../assets/css/styles.css";
 import vansImage from "../../assets/img/img_page_accueil/vans.jpg";
 import obeyImage from "../../assets/img/img_page_accueil/obey_pose.jpg";
 import polarImage from "../../assets/img/img_page_accueil/polar.jpg";
+import news1 from "../../assets/img/img_galerie/actu/news1.jpg";
+import news2 from "../../assets/img/img_galerie/actu/news2.jpg";
+import news3 from "../../assets/img/img_galerie/actu/news3.jpeg";
 
 const api = axios.create({
   baseURL: "http://127.0.0.1:8001/",
@@ -150,24 +153,35 @@ const Home = () => {
         <h2>Actualités</h2>
         <div className="news-cards">
           <article className="news-card">
-            <img src="https://via.placeholder.com/400x250" alt="Actualité 1" />
+            <img src={news1} alt="Actualité 1" className="news1" />
             <div className="news-content">
-              <h3>Actualité 1</h3>
-              <p>Découvrez les dernières nouveautés et tendances de la saison dans notre boutique.</p>
+              <h3>Paul Ro en hommage à lui même
+              Paul Rodriguez </h3>
+              <p>Paul Rodriguez fête ses 20 ans de carrière en tant que skateur professionel. L’occasion pour lui de poser en vidéo la légende qu’il est tout simplement.
+              <hr></hr>
+              <a href="https://skate.fr/mag/paul-rodriguez/" className="learn-more-link">En savoir plus...</a></p>
+
             </div>
           </article>
           <article className="news-card">
-            <img src="https://via.placeholder.com/400x250" alt="Actualité 2" />
+            <img src={news2} alt="Actualité 2" className="news2" />
             <div className="news-content">
-              <h3>Actualité 2</h3>
-              <p>Profitez de nos offres spéciales exclusives sur une sélection de produits.</p>
+              <h3>Aurélien Giraud - Le champion fait son entrée au Musée Grévin</h3>
+              <p>
+              « Incroyable », ce fut le mot de la semaine pour Aurélien Giraud. Premier Français à remporter une édition de la Street League.
+              <hr></hr>
+              <a href="https://skate.fr/mag/aurelien-giraud-musee-grevin/" className="learn-more-link">En savoir plus...</a></p>
             </div>
           </article>
           <article className="news-card">
-            <img src="https://via.placeholder.com/400x250" alt="Actualité 3" />
+            <img src={news3} alt="Actualité 3" className="news3" />
             <div className="news-content">
-              <h3>Actualité 3</h3>
-              <p>Participez à notre concours et gagnez des cadeaux incroyables chaque mois.</p>
+              <h3>Nassim Lacchab, Bronson avec nous
+              Dealers choice Q&A serie</h3>
+              <p>Nassim Lachaab from Morocco se livre avec enthousiasme au High-Speed Q&A par d’autres membres de la Team Bronson.
+              <hr></hr>
+              <a href="https://skate.fr/mag/nassim-lacchab-bronson-avec-nous/" className="learn-more-link">En savoir plus...</a></p>
+
             </div>
           </article>
         </div>

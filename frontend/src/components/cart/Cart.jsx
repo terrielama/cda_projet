@@ -23,9 +23,9 @@ const Cart = () => {
         { cart_code },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      console.log("✅ Panier associé à l'utilisateur connecté.");
+      console.log("Panier associé à l'utilisateur connecté.");
     } catch (err) {
-      console.warn("❌ Impossible d'associer le panier :", err);
+      console.warn(" Impossible d'associer le panier :", err);
     }
   };
 
@@ -52,7 +52,7 @@ const Cart = () => {
         await new Promise((resolve) => setTimeout(resolve, 3000 - elapsed));
       }
 
-      console.log("✅ Panier récupéré :", res.data);
+      console.log(" Panier récupéré :", res.data);
     } catch (err) {
       console.error(" Erreur récupération panier :", err);
       setError("Erreur de chargement du panier.");
@@ -62,7 +62,7 @@ const Cart = () => {
 
   useEffect(() => {
     if (token && cart_code) {
-      associateCartToUser(); // Associe le panier dès le chargement si connecté
+      associateCartToUser(); 
     }
     fetchCart();
   }, []);
@@ -120,7 +120,7 @@ const Cart = () => {
         cart_code: cart_code,
       });
 
-      console.log("🛒 Commande créée :", response.data);
+      console.log(" Commande créée :", response.data);
 
       setCart(null);
       localStorage.removeItem("cart_code");

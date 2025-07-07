@@ -147,12 +147,13 @@ const ProductList = () => {
                 <div className="card-body">
                   <h5 className="card-title">{product.name}</h5>
                   <p className="card-price">{formattedPrice}€</p>
-
-                  <LikeButton
+              <div className="LikeButton-productlist">
+                  <LikeButton 
                     productId={product.id}
                     isLiked={favorites[product.id] || false}
                     toggleFavorite={toggleFavorite}
                   />
+                  </div>
                 </div>
               </div>
             </div>
