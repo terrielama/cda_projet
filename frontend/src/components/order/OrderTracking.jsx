@@ -13,7 +13,7 @@ const OrderTracking = () => {
   const paymentMethod = location.state?.paymentMethod || null;
 
   useEffect(() => {
-    console.log(' location.state:', location.state);
+    console.log('location.state:', location.state);
   }, [location.state]);
 
   useEffect(() => {
@@ -51,6 +51,10 @@ const OrderTracking = () => {
         return method || 'Non spécifié';
     }
   };
+
+  const totalOrderPrice = orderDetails && Array.isArray(orderDetails.items)
+    ? orderDetails.items.reduce((sum, item) => sum + (item.total_price || 0), 0)
+    : 0;
 
   if (loading) return <div className="ordertracking-container">Chargement...</div>;
   if (error) return <div className="ordertracking-container" style={{ color: 'red' }}>Erreur : {error}</div>;
@@ -93,13 +97,16 @@ const OrderTracking = () => {
 
           <h3>Produits :</h3>
           {Array.isArray(orderDetails.items) && orderDetails.items.length > 0 ? (
-            <ul className="ordertracking-product-list">
-              {orderDetails.items.map((item, idx) => (
-                <li key={item.id || idx} className="ordertracking-product-item">
-                  <strong>{item.product_name}</strong> — Quantité : {item.quantity} — Prix total : {item.total_price} €
-                </li>
-              ))}
-            </ul>
+            <>
+              <ul className="ordertracking-product-list">
+                {orderDetails.items.map((item, idx) => (
+                  <li key={item.id || idx} className="ordertracking-product-item">
+                    <strong>{item.product_name}</strong> — Quantité : {item.quantity} — Prix total : {item.total_price} €
+                  </li>
+                ))}
+              </ul>
+              <p className="ordertracking-total"><strong>Total de la commande :</strong> {totalOrderPrice} €</p>
+            </>
           ) : (
             <p className="ordertracking-paragraph">Aucun produit dans cette commande.</p>
           )}
