@@ -543,7 +543,7 @@ def order_details(request, order_id):
                 "price": float(item.product.price) if hasattr(item.product, 'price') else 0,
                 "total_price": float(item.product.price * item.quantity) if hasattr(item.product, 'price') else 0,
                 "product_image": item.product.image.url if item.product.image else None,
-                "size": item.size  # ✅ Ajout du champ size
+                "size": item.size  
             })
     else:
         # fallback : récupérer les OrderItems liés à la commande
@@ -556,7 +556,7 @@ def order_details(request, order_id):
                 "price": float(item.price),
                 "total_price": float(item.price * item.quantity),
                 "product_image": item.product.image.url if item.product.image else None,
-                "size": item.size  # ✅ Ajout du champ size
+                "size": item.size  
             })
 
     print(f"Order {order.id} a {len(order_items)} items retournés.")
@@ -585,8 +585,8 @@ def update_order_status(request, order_id):
     if new_status not in dict(Order.STATUS_CHOICES):  # Vérifie que le statut est valide
         return Response({"error": "Statut invalide"}, status=status.HTTP_400_BAD_REQUEST)
 
-    order.status = new_status  # Met à jour le statut
-    order.save()  # Sauvegarde la commande
+    order.status = new_status  
+    order.save() 
 
     return Response({"message": f"Statut de la commande mis à jour en {new_status}"}, status=status.HTTP_200_OK)
 
