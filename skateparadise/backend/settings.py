@@ -113,7 +113,7 @@ REST_FRAMEWORK = {
 # Configuration des durées de validité des tokens
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),   # Le token d’accès expire après 30 minutes
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),      # Le refresh token est valide pendant 7 jours
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),      # Le refresh token est valide pendant 1 jours
     'ROTATE_REFRESH_TOKENS': False,                   # Ne pas changer le refresh token à chaque usage
     'ALGORITHM': 'HS256',                             # Algorithme de chiffrement utilisé
     'AUTH_HEADER_TYPES': ('Bearer',),                 # Type d’en-tête attendu : Bearer <token>
