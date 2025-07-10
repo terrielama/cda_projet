@@ -1,3 +1,6 @@
+# python manage.py test main.test_profile_unitaire 
+
+
 from rest_framework.test import APITestCase, APIClient
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
