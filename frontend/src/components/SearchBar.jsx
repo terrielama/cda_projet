@@ -14,11 +14,17 @@ const SearchBar = () => {
     if (!isOpen) return;
 
     const timer = setTimeout(() => {
-      if (query.trim()) {
+      const trimmedQuery = query.trim();
+      if (trimmedQuery) {
         setLoading(true);
-        fetch(`http://localhost:8001/products/search/?search=${encodeURIComponent(query)}`)
-          .then(res => res.json())
-          .then(data => setResults(data))
+        fetch(`http://localhost:8001/products/search/?search=${encodeURIComponent(trimmedQuery)}`)
+          .then(res => {
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            return res.json();
+          })
+          .then(data => {
+            setResults(Array.isArray(data) ? data : []);
+          })
           .catch(err => {
             console.error('Erreur API :', err);
             setResults([]);
@@ -54,17 +60,20 @@ const SearchBar = () => {
   return (
     <Wrapper ref={wrapperRef}>
       <SearchBox isOpen={isOpen}>
-        <SearchToggle onClick={() => setIsOpen(prev => !prev)}>
-          <SearchIcon viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <SearchToggle onClick={() => setIsOpen(prev => !prev)} aria-label="Toggle search">
+          <SearchIcon viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
             <path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z" />
           </SearchIcon>
         </SearchToggle>
 
         <SearchInput
           isOpen={isOpen}
+          type="search"
+          aria-label="Rechercher un produit"
           placeholder="Rechercher un produit..."
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={e => setQuery(e.target.value)}
+          autoComplete="off"
         />
       </SearchBox>
 
@@ -73,16 +82,26 @@ const SearchBar = () => {
           {loading && <Message>Chargement...</Message>}
 
           {!loading && results.length > 0 && (
-            <ResultsList>
+            <ResultsList role="listbox" aria-label="Résultats de recherche">
               {results.map(product => (
-                <ResultItem key={product.id} onClick={() => handleSelect(product.id)}>
-                  <strong>{product.name}</strong> – {product.price} €
+                <ResultItem
+                  key={product.id}
+                  onClick={() => handleSelect(product.id)}
+                  role="option"
+                  tabIndex={0}
+                  onKeyDown={e => { if (e.key === 'Enter') handleSelect(product.id); }}
+                >
+                  <strong>{product.name}</strong> – {
+                    typeof product.price === 'number'
+                      ? product.price.toFixed(2)
+                      : (product.price ? product.price : 'N/A')
+                  } €
                 </ResultItem>
               ))}
             </ResultsList>
           )}
 
-          {!loading && query && results.length === 0 && (
+          {!loading && query.trim() && results.length === 0 && (
             <Message>Aucun produit trouvé</Message>
           )}
         </>
@@ -101,7 +120,7 @@ const Wrapper = styled.div`
   margin: 0 auto;
   z-index: 10;
   border: 1px solid #ccc;
-  border-radius:50%;
+  border-radius: 50%;
   margin-right: 7px;
 `;
 
@@ -168,8 +187,9 @@ const ResultItem = styled.li`
   cursor: pointer;
   font-size: 14px;
 
-  &:hover {
+  &:hover, &:focus {
     background: #f0f0f0;
+    outline: none;
   }
 
   &:last-child {

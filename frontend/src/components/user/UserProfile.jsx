@@ -21,7 +21,10 @@ const UserProfile = () => {
 
       try {
         const res = await fetch('http://localhost:8001/user/orders/', {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
         });
 
         if (!res.ok) {
@@ -64,24 +67,35 @@ const UserProfile = () => {
       {orders.length === 0 ? (
         <p className="prf-empty">Aucune commande trouvée.</p>
       ) : (
-        orders.map(order => (
-          <div key={order.id} className="prf-order">
-            <h3 className="prf-order-title">Commande #{order.id}</h3>
-            <p><strong>Status :</strong> {order.status}</p>
-            <p>
-              <strong>Date de création :</strong>{' '}
-              {new Date(order.created_at).toLocaleString('fr-FR')}
-            </p>
-            <p><strong>Méthode de paiement :</strong> {order.payment_method || 'N/A'}</p>
-            <ul className="prf-items">
-              {order.items.map((item, idx) => (
-                <li key={item.id ?? idx}>
-                  {item.name ? `${item.name} — ` : ''}Prix total : {item.total_price} €
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))
+        orders.map(order => {
+          const totalAmount = order.items
+            ? order.items.reduce((sum, item) => sum + parseFloat(item.total_price || 0), 0).toFixed(2)
+            : '0.00';
+
+          return (
+            <div key={order.id} className="prf-order">
+              <h3 className="prf-order-title">Commande #{order.id}</h3>
+              <p><strong>Status :</strong> {order.status}</p>
+              <p>
+                <strong>Date de création :</strong>{' '}
+                {new Date(order.created_at).toLocaleString('fr-FR')}
+              </p>
+              <p><strong>Méthode de paiement :</strong> {order.payment_method || 'N/A'}</p>
+              <ul className="prf-items">
+                {order.items && order.items.length > 0 ? (
+                  order.items.map((item, idx) => (
+                    <li key={item.id ?? idx}>
+                      {item.name ? `${item.name} — ` : ''}Quantité: {item.quantity || 1} — Prix du produit : {item.total_price} €
+                    </li>
+                  ))
+                ) : (
+                  <li>Aucun article</li>
+                )}
+              </ul>
+              <p><strong>Total commande :</strong> {totalAmount} €</p>
+            </div>
+          );
+        })
       )}
 
       <LogoutButton onLogout={handleLogout} />

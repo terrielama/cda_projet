@@ -1,84 +1,128 @@
 import React, { useEffect, useState } from "react";
-import api from "../../api"; // Assure-toi que api est configuré (ex: axios)
+import api from "../../api";
 import { useNavigate } from "react-router-dom";
 import Loader from "../Loader";
 import SMOButton from "./SMOButton";
 
 const Cart = () => {
   const [cart, setCart] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [stockErrors, setStockErrors] = useState({});
   const navigate = useNavigate();
 
-  // Récupérer le panier depuis backend
-  const fetchCart = async () => {
-    const cart_code = localStorage.getItem("cart_code");
-    const token = localStorage.getItem("token");
+  const cart_code = localStorage.getItem("cart_code");
+  const token = localStorage.getItem("access_token");
 
+  const authHeaders = token
+    ? { Authorization: `Bearer ${token}` }
+    : {};
+
+  const associateCartToUser = async () => {
+    if (!cart_code || !token) return;
+
+    try {
+      await api.post(
+        "associate_cart_to_user/",
+        { cart_code },
+        { headers: authHeaders }
+      );
+      console.log(" Panier associé à l'utilisateur connecté.");
+    } catch (err) {
+      console.warn(" Impossible d'associer le panier :", err.response?.data || err.message);
+      if (err.response?.status === 401) {
+        setError("Session expirée. Veuillez vous reconnecter.");
+      }
+    }
+  };
+
+  const fetchCart = async () => {
     if (!cart_code) {
-      console.warn("Aucun cart_code trouvé dans le localStorage.");
-      setLoading(false);
+      setCart(null);
+      setError("Aucun panier trouvé. Ajoutez un produit.");
       return;
     }
 
     try {
-      const res = await api.get(`http://localhost:8001/get_cart?cart_code=${cart_code}`, {
-        headers: { Authorization: token ? `Bearer ${token}` : "" },
+      const startTime = Date.now();
+
+      const res = await api.get(`get_cart?cart_code=${cart_code}`, {
+        headers: authHeaders,
       });
+
       setCart(res.data);
+      setError("");
+      setStockErrors({});
+
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 3000) {
+        await new Promise((resolve) => setTimeout(resolve, 3000 - elapsed));
+      }
+
+      console.log(" Panier récupéré :", res.data);
     } catch (err) {
-      console.error("Erreur récupération panier :", err);
-      setError("Erreur de chargement du panier. Veuillez réessayer.");
-    } finally {
-      setLoading(false);
+      console.error(" Erreur récupération panier :", err.response?.data || err.message);
+      if (err.response?.status === 401) {
+        setError("Session expirée. Veuillez vous reconnecter.");
+      } else {
+        setError("Erreur de chargement du panier.");
+      }
+      setCart(null);
     }
   };
 
   useEffect(() => {
+    if (token && cart_code) {
+      associateCartToUser();
+    }
+  }, [token, cart_code]);
+
+  useEffect(() => {
     fetchCart();
-  }, []);
+  }, [cart_code]);
 
-  // Met à jour la quantité d’un item dans le panier
-  const updateQuantity = async (itemId, delta) => {
-    const cart_code = localStorage.getItem("cart_code");
-    if (!cart_code || !cart) return;
-
-    const item = cart.items.find((i) => i.id === itemId);
-    if (!item) return;
-
-    const newQuantity = item.quantity + delta;
-    if (newQuantity < 1) return; // Option : supprimer à la place
-
+  const increaseItemQuantity = async (itemId) => {
     try {
-      await api.patch(
-        `http://localhost:8001/update_quantity?cart_code=${cart_code}`,
-        { item_id: itemId, quantity: newQuantity }
-      );
+      await api.post("increase_item", { item_id: itemId }, { headers: authHeaders });
+      console.log(`+ Quantité augmentée pour item ${itemId}`);
       fetchCart();
-    } catch (error) {
-      console.error("Erreur mise à jour quantité :", error);
-      setError("Erreur de mise à jour de la quantité.");
+    } catch (err) {
+      console.error(" Erreur augmentation :", err.response?.data || err.message);
+      setStockErrors((prev) => ({
+        ...prev,
+        [itemId]: "Stock insuffisant pour ce produit.",
+      }));
     }
   };
 
-  // Supprime un produit du panier
+  const decreaseItemQuantity = async (itemId) => {
+    try {
+      await api.post("decrease_item", { item_id: itemId }, { headers: authHeaders });
+      console.log(`- Quantité diminuée pour item ${itemId}`);
+      fetchCart();
+    } catch (err) {
+      console.error(" Erreur diminution :", err.response?.data || err.message);
+      setError("Erreur serveur.");
+    }
+  };
+
   const removeProduct = async (itemId) => {
-    const cart_code = localStorage.getItem("cart_code");
     if (!cart_code) return;
 
     try {
       await api.post(
-        `http://localhost:8001/remove_item?cart_code=${cart_code}`,
-        { item_id: itemId }
+        `remove_item?cart_code=${cart_code}`,
+        { item_id: itemId },
+        { headers: authHeaders }
       );
+      console.log(` Produit supprimé : ${itemId}`);
       fetchCart();
     } catch (error) {
-      console.error("Erreur suppression produit :", error);
-      setError("Erreur lors de la suppression du produit.");
+      console.error(" Erreur suppression produit :", error.response?.data || error.message);
+      setError("Erreur lors de la suppression.");
     }
   };
 
-  // Crée une commande
   const handleOrder = async () => {
     if (!cart?.items.length) {
       setError("Votre panier est vide.");
@@ -87,43 +131,26 @@ const Cart = () => {
 
     try {
       setLoading(true);
-      const response = await api.post("http://localhost:8001/create_order", {
-        cart_code: localStorage.getItem("cart_code"),
-      });
-      // Reset panier
+
+      const response = await api.post(
+        "create_order",
+        { cart_code },
+        { headers: authHeaders }
+      );
+
+      console.log("Commande créée :", response.data);
+
       setCart(null);
       localStorage.removeItem("cart_code");
-      // Redirige vers la page commande
+
       setTimeout(() => {
+        setLoading(false);
         navigate(`/commande/${response.data.order_id}`);
       }, 1000);
     } catch (error) {
-      console.error("Erreur serveur commande :", error.response?.data || error.message);
-      setError("Erreur lors de la commande, veuillez réessayer.");
+      console.error(" Erreur commande :", error.response?.data || error.message);
+      setError("Erreur lors de la commande.");
       setLoading(false);
-    }
-  };
-
-  // Fonction exemple pour ajouter un produit au panier
-  const addToCart = async (product) => {
-    const cart_code = localStorage.getItem("cart_code");
-    if (!cart_code) {
-      console.error("Impossible d'ajouter : cartCode manquant dans localStorage");
-      return;
-    }
-    if (!product) {
-      console.error("Impossible d'ajouter : produit manquant");
-      return;
-    }
-
-    try {
-      await api.post(`http://localhost:8001/add_item?cart_code=${cart_code}`, {
-        product_id: product.id,
-        quantity: 1,
-      });
-      fetchCart();
-    } catch (error) {
-      console.error("Erreur ajout au panier :", error);
     }
   };
 
@@ -137,36 +164,47 @@ const Cart = () => {
     <div className="cart-container">
       <h1 className="center-text">Mon Panier</h1>
 
-      {cart?.items.length ? (
+      {cart?.items?.length > 0 ? (
         cart.items.map((item) => (
           <div key={item.id} className="cart-item">
             <img
-        src={
-          item.product.image?.startsWith("http")
-            ? item.product.image
-            : item.product.image
-              ? `http://localhost:8001${item.product.image}`
-              : "/default-image.png"
-        }
-        alt={item.product.name}
-        className="cart-product-image"
-      />
+              src={
+                item.image?.startsWith("http")
+                  ? item.image
+                  : item.image
+                  ? `http://localhost:8001${item.image}`
+                  : "/default-image.png"
+              }
+              alt={item.product.name}
+              className="cart-product-image"
+            />
 
             <div className="product-info">
               <h2>{item.product.name}</h2>
+              {item.size && (
+                <p className="text-sm text-gray-700">
+                  Taille sélectionnée : <strong>{item.size}</strong>
+                </p>
+              )}
               <p>
                 Prix unitaire : {item.product.price} €<br />
                 Quantité : {item.quantity}
               </p>
+              {stockErrors[item.id] && (
+                <p className="error-message">{stockErrors[item.id]}</p>
+              )}
             </div>
 
             <div className="cart-quantity-controls">
-              <button onClick={() => updateQuantity(item.id, -1)}>-</button>
+              <button onClick={() => decreaseItemQuantity(item.id)}>-</button>
               <span>{item.quantity}</span>
-              <button onClick={() => updateQuantity(item.id, 1)}>+</button>
+              <button onClick={() => increaseItemQuantity(item.id)}>+</button>
             </div>
 
-            <button className="remove-button" onClick={() => removeProduct(item.id)}>
+            <button
+              className="remove-button"
+              onClick={() => removeProduct(item.id)}
+            >
               Supprimer
             </button>
           </div>
@@ -179,7 +217,10 @@ const Cart = () => {
         <div className="cart-summary">
           <h2>Total</h2>
           <p>Sous-total : {totalPrice.toFixed(2)} €</p>
-          <p>Livraison : {shippingCost === 0 ? "Gratuite" : `${shippingCost} €`}</p>
+          <p>
+            Livraison :{" "}
+            {shippingCost === 0 ? "Gratuite" : `${shippingCost.toFixed(2)} €`}
+          </p>
           <p>Total à payer : {finalPrice.toFixed(2)} €</p>
 
           <SMOButton onClick={handleOrder} disabled={loading} />

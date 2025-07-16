@@ -2,8 +2,8 @@ from django.shortcuts import render
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Product, Cart, CartItem, Order, OrderItem, User, Favorite
-from .serializers import ProductSerializer, CartItemSerializer, CartSerializer, SimpleCartSerializer, OrderSerializer, UserRegisterSerializer, OrderUpdateSerializer,  FavoriteSerializer
+from .models import Product, Cart, CartItem, Order, OrderItem, User, Favorite, ProductSize
+from .serializers import ProductSerializer, CartItemSerializer, CartSerializer, SimpleCartSerializer, OrderSerializer, UserRegisterSerializer, OrderUpdateSerializer,  FavoriteSerializer, ContactMessageSerializer
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
@@ -12,13 +12,29 @@ from django.contrib.auth import get_user_model
 from rest_framework.exceptions import NotFound
 import traceback
 from django.db.models import Q
+import random
+from django.db.models import F
+from django.dispatch import receiver
+from django.db import transaction
+from django.utils.translation import gettext as _
+import bleach
 
+# -- Sécurité : Nettoyer les champs texte ------
+def clean_input(text):
+    return bleach.clean(text, tags=[], attributes={}, strip=True)
 
 #----- View pour creer un user (Register) ------
 
 @api_view(["POST"])
 def register(request):
-    serializer = UserRegisterSerializer(data=request.data)
+    data = request.data.copy()
+    # Nettoyer les champs texte importants (exemple : username, email)
+    if 'username' in data:
+        data['username'] = clean_input(data['username'])
+    if 'email' in data:
+        data['email'] = clean_input(data['email'])
+
+    serializer = UserRegisterSerializer(data=data)
     if serializer.is_valid():
         try:
             user = serializer.save()
@@ -27,14 +43,10 @@ def register(request):
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
             }, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            print("Erreur lors de la création de l'utilisateur :")
-            print(traceback.format_exc())  # Affiche la stack trace complète
+        except Exception:
             return Response({"error": "Erreur serveur lors de la création de l'utilisateur."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
-        print("Serializer non valide :", serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 
 # ----- View des produits --------------
 @api_view(["GET"])
@@ -45,69 +57,125 @@ def products(request):
 
 
 @api_view(['GET'])
+def search_products(request):
+    search_query = request.GET.get('search', '').strip()
+    if search_query:
+        products = Product.objects.filter(name__icontains=search_query)
+    else:
+        products = Product.objects.none()
+    serializer = ProductSerializer(products, many=True, context={'request': request})
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
 def product_list_by_category(request, category):
     try:
-        search_query = request.GET.get('search', '')
-        
-        # Filtrer d'abord par catégorie
+        search_query = request.GET.get('search', '').strip()
+
+        # Filtrer par catégorie (champ CharField simple, insensible à la casse)
         products = Product.objects.filter(category__iexact=category)
-        
-        # Puis filtrer par nom si "search" est présent
+
+        # Filtrer par nom de produit avec recherche approximative (partielle, insensible à la casse)
         if search_query:
-            products = products.filter(Q(name__icontains=search_query))
+            products = products.filter(name__icontains=search_query)
 
         serializer = ProductSerializer(products, many=True, context={'request': request})
         return Response(serializer.data)
-        
+
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-# ----- Ajouter un produit au panier -----
 
+# ----- Ajouter un produit au panier -----
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def add_item(request):
     item_id = request.data.get('item_id')
-    quantity = int(request.data.get('quantity', 1))
     size = request.data.get('size')
+    cart_code = request.data.get('cart_code')
 
-    if not size:
-        return Response({'error': 'Le champ size est requis.'}, status=400)
+    print("Données reçues:", request.data)  
+    
+    if not item_id:
+        return Response({'error': "L'ID du produit est requis."}, status=400)
+    
+    try:
+        quantity_to_add = int(request.data.get('quantity', 1))
+        if quantity_to_add <= 0:
+            raise ValueError
+    except (TypeError, ValueError):
+        return Response({'error': 'Quantité invalide.'}, status=400)
 
-    # Récupérer ou créer le panier
-    if request.user.is_authenticated:
-        cart, _ = Cart.objects.get_or_create(user=request.user, paid=False)
-    else:
-        cart_code = request.data.get('cart_code')
-        if not cart_code:
-            return Response({'error': 'cart_code requis pour les utilisateurs non connectés'}, status=400)
-        cart, _ = Cart.objects.get_or_create(cart_code=cart_code, user=None, paid=False)
-
-    # Vérifier que le produit existe
     try:
         product = Product.objects.get(id=item_id)
     except Product.DoesNotExist:
-        return Response({'error': 'Produit non trouvé'}, status=404)
+        return Response({'error': 'Produit non trouvé.'}, status=404)
 
-    # Vérifier si le produit (avec la même taille) est déjà dans le panier
-    cart_item, created = CartItem.objects.get_or_create(
-        cart=cart,
-        product=product,
-        size=size,
-        defaults={'quantity': quantity}
-    )
+    # Si produit a des tailles, size est obligatoire
+    if product.sizes and not size:
+        return Response({'error': 'Le champ size est requis pour ce produit.'}, status=400)
 
-    if not created:
-        cart_item.quantity += quantity
-        cart_item.save()
+    # Récupération du panier
+    if request.user.is_authenticated:
+        cart, _ = Cart.objects.get_or_create(user=request.user)  
+    else:
+        if not cart_code:
+            return Response({'error': 'cart_code requis pour les utilisateurs non connectés'}, status=400)
+        cart = Cart.objects.filter(cart_code=cart_code).first()
+        if not cart:
+            cart = Cart.objects.create(cart_code=cart_code, user=None)
+
+    # Cherche s'il y a déjà cet item dans le panier
+    existing_item = CartItem.objects.filter(cart=cart, product=product, size=size).first()
+    current_qty_in_cart = existing_item.quantity if existing_item else 0
+
+    # GESTION STOCK PAR TAILLE
+    if size:
+        try:
+            product_size = ProductSize.objects.get(product=product, size=size)
+        except ProductSize.DoesNotExist:
+            return Response({'error': 'Taille non trouvée pour ce produit.'}, status=400)
+
+        new_total_qty = current_qty_in_cart + quantity_to_add
+
+        # Vérification stock disponible (le stock actuel doit être au moins quantity_to_add)
+        if quantity_to_add > product_size.stock:
+            return Response({'error': f'Stock insuffisant pour la taille {size} : {product_size.stock} disponible.'}, status=400)
+
+        # Mise à jour du panier
+        if existing_item:
+            existing_item.quantity = new_total_qty
+            existing_item.save()
+        else:
+            CartItem.objects.create(cart=cart, product=product, size=size, quantity=quantity_to_add)
+
+        # Mise à jour du stock dans ProductSize
+        product_size.stock -= quantity_to_add
+        product_size.save()
+
+    else:
+        # Produit sans taille : on vérifie le stock global produit
+        new_total_qty = current_qty_in_cart + quantity_to_add
+        if quantity_to_add > product.stock:
+            return Response({'error': f'Stock insuffisant : {product.stock} disponible.'}, status=400)
+
+        if existing_item:
+            existing_item.quantity = new_total_qty
+            existing_item.save()
+        else:
+            CartItem.objects.create(cart=cart, product=product, size=None, quantity=quantity_to_add)
+
+        product.stock -= quantity_to_add
+        product.save()
 
     return Response({'message': 'Item ajouté au panier.'}, status=200)
-# ----- Vérifier si un produit est dans le panier -----
+
 
 @api_view(["GET"])
 def product_in_cart(request):
     cart_code = request.query_params.get("cart_code")
     product_id = request.query_params.get("product_id")
+    size = request.query_params.get("size")  # Ajout du filtre taille
 
     if not product_id:
         return Response({"error": "Le product_id est requis."}, status=400)
@@ -116,21 +184,28 @@ def product_in_cart(request):
         product = Product.objects.get(id=product_id)
 
         if request.user.is_authenticated:
-            cart = Cart.objects.filter(user=request.user, paid=False).first()
+            cart = Cart.objects.filter(user=request.user).first()
         elif cart_code:
-            cart = Cart.objects.filter(cart_code=cart_code, user=None, paid=False).first()
+            cart = Cart.objects.filter(cart_code=cart_code, user=None).first()
         else:
-            return Response({'product_in_cart': False})
+            return Response({'quantity': 0})
 
         if not cart:
-            return Response({'product_in_cart': False})
+            return Response({'quantity': 0})
 
-        exists = CartItem.objects.filter(cart=cart, product=product).exists()
-        return Response({'product_in_cart': exists})
-    
+        # Filtrer sur taille si taille donnée
+        if size:
+            cart_item = CartItem.objects.filter(cart=cart, product=product, size=size).first()
+        else:
+            cart_item = CartItem.objects.filter(cart=cart, product=product).first()
+
+        if cart_item:
+            return Response({'quantity': cart_item.quantity})
+        else:
+            return Response({'quantity': 0})
+
     except Product.DoesNotExist:
-        return Response({'product_in_cart': False})
-
+        return Response({'quantity': 0})
 
 
 # ----- Associer un panier anonyme à un utilisateur connecté -----
@@ -138,35 +213,17 @@ def product_in_cart(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def associate_cart_to_user(request):
+    cart_code = request.data.get('cart_code')
+    if not cart_code:
+        return Response({"error": "Cart code manquant"}, status=400)
+
     try:
-        cart_code = request.data.get('cart_code')
-        user = request.user
-
-        print("== ASSOCIATE USER ==")
-        print(f"Utilisateur connecté : {user} (ID: {user.id})")
-        print(f"Cart_code reçu : {cart_code}")
-
-        if not cart_code:
-            print("❌ Aucun cart_code fourni.")
-            return Response({"error": "Le cart_code est requis."}, status=status.HTTP_400_BAD_REQUEST)
-
-        cart = Cart.objects.filter(cart_code=cart_code, user__isnull=True).first()
-
-        if not cart:
-            print(f"❌ Aucun panier anonyme trouvé pour le cart_code {cart_code}")
-            return Response({"error": "Aucun panier anonyme trouvé avec ce cart_code."}, status=status.HTTP_404_NOT_FOUND)
-
-        print(f"✅ Panier trouvé : {cart}")
-        cart.user = user
+        cart = Cart.objects.get(cart_code=cart_code)
+        cart.user = request.user
         cart.save()
-        print(f"✅ Panier {cart.cart_code} associé à {user.username}")
-
-        return Response({"message": "Panier associé avec succès."}, status=status.HTTP_200_OK)
-
-    except Exception as e:
-        print("❌ Exception attrapée :")
-        traceback.print_exc()
-        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"message": "Panier associé à l'utilisateur"})
+    except Cart.DoesNotExist:
+        return Response({"error": "Panier non trouvé"}, status=404)
 
 # ----- Vue pour obtenir les statistiques du panier -----
 
@@ -180,7 +237,6 @@ def get_cart_stat(request):
         # Récupérer le panier en fonction du cart_code
         cart = Cart.objects.get(cart_code=cart_code, paid=False)
 
-        # Logique pour obtenir des statistiques (par exemple, le nombre d'articles dans le panier et le total)
         total_items = cart.items.count()  # Nombre d'articles
         total_price = sum(item.product.price * item.quantity for item in cart.items.all())  # Total du prix
 
@@ -203,8 +259,8 @@ def get_cart(request):
     if not cart_code:
         return Response({"error": "Cart code manquant"}, status=400)
 
-    # Essayer de récupérer le panier avec le cart_code
-    cart = Cart.objects.filter(cart_code=cart_code, paid=False).first()
+
+    cart = Cart.objects.filter(cart_code=cart_code).first()
 
     if not cart:
         return Response({"error": "Panier vide ou inexistant"}, status=404)
@@ -216,6 +272,94 @@ def get_cart(request):
 
     serializer = CartSerializer(cart)
     return Response(serializer.data)
+
+# ---------  Diminuer la quantité d’un article (Stock)  ---------------
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def decrease_item(request):
+    item_id = request.data.get('item_id')
+    if not item_id:
+        return Response({'error': 'ID requis'}, status=400)
+
+    try:
+        item = CartItem.objects.get(id=item_id)
+    except CartItem.DoesNotExist:
+        return Response({'error': 'Article introuvable'}, status=404)
+
+    # Réajuster le stock du produit
+    if item.size:
+        try:
+            product_size = ProductSize.objects.get(product=item.product, size=item.size)
+            product_size.stock += 1
+            product_size.save()
+        except ProductSize.DoesNotExist:
+            return Response({'error': 'Taille non trouvée.'}, status=400)
+    else:
+        item.product.stock += 1
+        item.product.save()
+
+    # Réduire la quantité ou supprimer l’article du panier
+    if item.quantity > 1:
+        item.quantity -= 1
+        item.save()
+    else:
+        item.delete()
+
+    # Mise à jour de la disponibilité du produit
+    item.product.update_availability()
+
+    return Response({
+        'message': 'Quantité diminuée',
+        'produit': item.product.name,
+        'taille': item.size if item.size else None,
+        'quantité_restante': item.quantity if item.id else 0
+    }, status=200)
+
+
+# --------- Augmenter la quantité d’un article (Stock)  ---------------
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def increase_item(request):
+    item_id = request.data.get('item_id')
+    if not item_id:
+        return Response({'error': 'ID requis'}, status=400)
+
+    try:
+        item = CartItem.objects.get(id=item_id)
+    except CartItem.DoesNotExist:
+        return Response({'error': 'Article introuvable'}, status=404)
+
+    # Vérification du stock disponible
+    if item.size:
+        try:
+            product_size = ProductSize.objects.get(product=item.product, size=item.size)
+            if product_size.stock < 1:
+                return Response({'error': 'Stock insuffisant pour cette taille.'}, status=400)
+            product_size.stock -= 1
+            product_size.save()
+        except ProductSize.DoesNotExist:
+            return Response({'error': 'Taille non trouvée.'}, status=400)
+    else:
+        if item.product.stock < 1:
+            return Response({'error': 'Stock insuffisant pour ce produit.'}, status=400)
+        item.product.stock -= 1
+        item.product.save()
+
+    # Augmenter la quantité
+    item.quantity += 1
+    item.save()
+
+    # Mise à jour de la disponibilité
+    item.product.update_availability()
+
+    return Response({
+        'message': 'Quantité augmentée',
+        'produit': item.product.name,
+        'taille': item.size if item.size else None,
+        'quantité_totale': item.quantity
+    }, status=200)
 
 
 # -----------View du profile d'un user --------
@@ -269,43 +413,54 @@ def remove_item(request):
 @api_view(["POST"])
 def create_order(request):
     cart_code = request.data.get('cart_code')
-    print(f"Création de la commande pour cart_code: {cart_code}")
-
     if not cart_code:
-        return JsonResponse({"error": "Code de panier manquant"}, status=400)
+        return Response({"error": "Code de panier manquant"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
         cart = Cart.objects.get(cart_code=cart_code)
-        print(f"Panier trouvé avec {cart.cart_items.count()} articles")
 
-        if request.user.is_authenticated:
-            order = Order.objects.create(cart=cart, user=request.user)
-            print(f"Commande créée avec user id={request.user.id}")
-        else:
-            order = Order.objects.create(cart=cart)
-            print("Commande créée pour invité")
-
-        # Création des OrderItem à partir des CartItem liés au panier
-        for item in cart.cart_items.all():
-            print(f"Ajout de l'article {item.product.name} x {item.quantity}")
-            order_item = OrderItem.objects.create(
-                order=order,
-                product=item.product,
-                quantity=item.quantity,
-                price=item.product.price
+        with transaction.atomic():
+            order = Order.objects.create(
+                cart=cart,
+                user=request.user if request.user.is_authenticated else None
             )
-            print(f"OrderItem créé : {order_item}")
 
-        print("Tous les articles ont été ajoutés à la commande.")
-        return JsonResponse({"message": "Commande créée avec succès", "order_id": order.id})
-    
+            for item in cart.cart_items.select_related('product').all():
+                product = item.product
+                product.refresh_from_db()
+
+                if product.stock < item.quantity:
+                    raise ValueError(f"Stock insuffisant pour {product.name} (disponible : {product.stock})")
+
+                # Mise à jour atomique du stock
+                product.stock = F('stock') - item.quantity
+                product.save()
+                product.refresh_from_db()
+
+                OrderItem.objects.create(
+                    order=order,
+                    product=product,
+                    quantity=item.quantity,
+                    price=product.price,
+                    size=item.size
+                )
+
+                if product.stock == 0:
+                    product.available = False
+                    product.save()
+
+            return Response({
+                "message": "Commande créée avec succès",
+                "order_id": order.id
+            }, status=status.HTTP_201_CREATED)
+
     except Cart.DoesNotExist:
-        print("Panier non trouvé")
-        return JsonResponse({"error": "Panier non trouvé"}, status=404)
-    
+        return Response({"error": "Panier non trouvé"}, status=status.HTTP_404_NOT_FOUND)
+    except ValueError as ve:
+        return Response({"error": str(ve)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        print(f"Erreur lors de la création de la commande : {e}")
-        return JsonResponse({"error": str(e)}, status=500)
+        return Response({"error": "Erreur serveur: " + str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 # --------------- Assossier commande a un user ------------
 @api_view(['POST'])
@@ -318,6 +473,9 @@ def associate_user_to_order(request):
     print(f"User connecté : {user}")
     print(f"orderId reçu : {order_id}")
 
+    if not order_id:
+        return Response({"error": "orderId manquant dans la requête"}, status=status.HTTP_400_BAD_REQUEST)
+
     try:
         order = Order.objects.get(id=order_id)
         print(f"Commande trouvée : {order}")
@@ -328,7 +486,6 @@ def associate_user_to_order(request):
     except Order.DoesNotExist:
         print("Commande non trouvée")
         return Response({"error": "Commande introuvable"}, status=status.HTTP_404_NOT_FOUND)
-
 
 # ---- View Profile ------
 
@@ -378,9 +535,10 @@ def order_details(request, order_id):
                 "price": float(item.product.price) if hasattr(item.product, 'price') else 0,
                 "total_price": float(item.product.price * item.quantity) if hasattr(item.product, 'price') else 0,
                 "product_image": item.product.image.url if item.product.image else None,
+                "size": item.size  
             })
     else:
-        # fallback : récupérer les OrderItems liés à la commande
+        # Récupérer les OrderItems liés à la commande
         items = order.items.all()
         print(f"Items de la commande directement: {items}")
         for item in items:
@@ -390,6 +548,7 @@ def order_details(request, order_id):
                 "price": float(item.price),
                 "total_price": float(item.price * item.quantity),
                 "product_image": item.product.image.url if item.product.image else None,
+                "size": item.size  
             })
 
     print(f"Order {order.id} a {len(order_items)} items retournés.")
@@ -400,6 +559,7 @@ def order_details(request, order_id):
         },
         status=status.HTTP_200_OK
     )
+
 
 
 
@@ -417,8 +577,8 @@ def update_order_status(request, order_id):
     if new_status not in dict(Order.STATUS_CHOICES):  # Vérifie que le statut est valide
         return Response({"error": "Statut invalide"}, status=status.HTTP_400_BAD_REQUEST)
 
-    order.status = new_status  # Met à jour le statut
-    order.save()  # Sauvegarde la commande
+    order.status = new_status  
+    order.save() 
 
     return Response({"message": f"Statut de la commande mis à jour en {new_status}"}, status=status.HTTP_200_OK)
 
@@ -465,11 +625,11 @@ def update_client_info(request, order_id):
     try:
         order = Order.objects.get(id=order_id)
     except Order.DoesNotExist:
-        return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "Commande introuvable"}, status=status.HTTP_404_NOT_FOUND)
 
     serializer = OrderUpdateSerializer(data=request.data)
     if not serializer.is_valid():
-        print(serializer.errors)  # Affiche les erreurs dans la console
+        print(serializer.errors)  
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     data = serializer.validated_data
@@ -482,7 +642,7 @@ def update_client_info(request, order_id):
 
     order.save()
 
-    return Response({"message": "Order updated successfully"})
+    return Response({"message": "Commande mise à jour avec succès"})
 
 # -------- Fav  ------------------
 
@@ -527,27 +687,67 @@ def product_detail(request, pk):
     return Response(serializer.data)
 
 
-# ------------ Barre de recherche ---------------
+# ------------ Suggestion de produit  ---------------
 
 @api_view(['GET'])
-def search_products(request):
-    query = request.GET.get('search', '')
-    if query:
-        products = Product.objects.filter(name__icontains=query)
-    else:
-        products = Product.objects.all()
-    serializer = ProductSerializer(products, many=True, context={'request': request})
+def product_suggestions(request, id):
+    try:
+        product = Product.objects.get(id=id)
+    except Product.DoesNotExist:
+        return Response({"detail": "Produit non trouvé."}, status=status.HTTP_404_NOT_FOUND)
+    
+    # 1. Cherche produits de la même catégorie (hors le produit courant)
+    suggested_products = Product.objects.filter(
+        category=product.category
+    ).exclude(id=product.id)[:4]
+
+    if suggested_products.count() < 4:
+        # Complète avec produits aléatoires hors ceux déjà pris et hors produit actuel
+        excluded_ids = list(suggested_products.values_list('id', flat=True)) + [product.id]
+        remaining_products = Product.objects.exclude(id__in=excluded_ids)
+        remaining_count = remaining_products.count()
+        if remaining_count > 0:
+            random_needed = 4 - suggested_products.count()
+            random_indexes = random.sample(range(remaining_count), min(random_needed, remaining_count))
+            random_products = [remaining_products[i] for i in random_indexes]
+            suggested_products = list(suggested_products) + random_products
+
+    serializer = ProductSerializer(suggested_products, many=True)
     return Response(serializer.data)
 
 
+@api_view(['GET'])
+def random_products(request):
+    count = Product.objects.count()
+    if count == 0:
+        return Response([], status=status.HTTP_200_OK)
+
+    all_products = list(Product.objects.all())
+    random_indexes = random.sample(range(count), min(4, count))
+    random_products = [all_products[i] for i in random_indexes]
+
+    serializer = ProductSerializer(random_products, many=True)
+    return Response(serializer.data)
 
 
+# -------- Contact Assistance ---------------
+User = get_user_model()
 
-
-
-
-
-
-
-
- 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def contact_message_view(request):
+    serializer = ContactMessageSerializer(data=request.data)
+    if serializer.is_valid():
+        email = serializer.validated_data.get('email')
+        user = None
+        if email:
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                pass
+        if user:
+            serializer.save(user=user)
+        else:
+            serializer.save()
+        return Response({'success': 'Message reçu !'}, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

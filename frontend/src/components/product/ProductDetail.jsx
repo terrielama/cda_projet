@@ -1,360 +1,390 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import images from '../../importImages.js';
-import axios from 'axios';
-import AddButton2 from "./AddButton2.jsx";
-import NextButton from "./NextButton.jsx";
-import PreviousButton from './PreviousButton.jsx';
+import React, { useEffect, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import axios from 'axios'
+import AddButton2 from './AddButton2.jsx'
+import PreviousButton from './PreviousButton.jsx'
+import NextButton from './NextButton.jsx'
+import LikeButton from './LikeButton.jsx'
 
-// Création de l'instance Axios
 const api = axios.create({
-  baseURL: "http://127.0.0.1:8001/",
-});
+  baseURL: 'http://127.0.0.1:8001/',
+})
+
+const generateRandomAlphanumeric = (length = 10) => {
+  const characters =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  return Array.from(
+    { length },
+    () => characters[Math.floor(Math.random() * characters.length)]
+  ).join('')
+}
+
+const getFavoritesFromStorage = () => {
+  const stored = localStorage.getItem('favorites')
+  return stored ? JSON.parse(stored) : {}
+}
+
+const saveFavoritesToStorage = (favorites) => {
+  localStorage.setItem('favorites', JSON.stringify(favorites))
+}
 
 const ProductDetail = () => {
-  const { productId } = useParams();
-  const [product, setProduct] = useState(null);
-  const [quantity, setQuantity] = useState(1);
-  const [size, setSize] = useState(8.25);
-  const [showDetails, setShowDetails] = useState(false);
-  const [message, setMessage] = useState('');
-  const [cartCode, setCartCode] = useState('');
-  const [inCart, setInCart] = useState(false);
-  const [suggestionIndex, setSuggestionIndex] = useState(0);
+  const { id, category } = useParams()
+  const navigate = useNavigate()
 
+  const [product, setProduct] = useState(null)
+  const [suggestions, setSuggestions] = useState([])
+  const [visibleSuggestions, setVisibleSuggestions] = useState([])
+  const [inCart, setInCart] = useState({})
+  const [message, setMessage] = useState('')
+  const [likeMessage, setLikeMessage] = useState('')
+  const [favorites, setFavorites] = useState(getFavoritesFromStorage())
+  const [quantity, setQuantity] = useState(1)
+  const [size, setSize] = useState('')
+  const [showDetails, setShowDetails] = useState(false)
+  const [showBrand, setShowBrand] = useState(false)
+  const [added, setAdded] = useState(false)
+  const [error, setError] = useState('')
+  const [outOfStock, setOutOfStock] = useState(false)
 
-  // Simule les produits — à remplacer par une API réelle plus tard
-  const fetchedProducts  = [
-    {
-      id: 1,
-      name: 'Board ENJOY - KITTEN RIPPER HYBRID - 8.25',
-      price: 65.00,
-      image: images['enjoykitten.jpg'],
-      description: 'Une planche de qualité supérieure pour les skateurs passionnés.',
-      sizes: [8.25, 8.375],
-    },
-    {
-      id: 2,
-      name: 'Board ELEMENT - SWXE X WING - 7.75',
-      price: 69.00,
-      image: images['almost.jpg'],
-      description: 'Planche ELEMENT pour performance et style.',
-      sizes: [7.75, 8.25],
-    },
-    {
-      id: 3,
-      name: 'Board ALMOST - GRADIENT RINGS - 8.25',
-      price: 75.00,
-      image: images['chocolate.jpg'],
-      description: 'Planche ALMOST avec design Gradient Rings.',
-      sizes: [8.25, 8.5],
-    },
-    {
-      id: 4,
-      name: 'Board Chocolate - Lifted Chunk Roberts',
-      price: 80.00,
-      image: images['girlspike.jpg'],
-      description: 'Planche Chocolate robuste et stylée.',
-      sizes: [8.25, 8.375],
-    },
-    {
-      id: 5,
-      name: 'Board Girl - Spike Jonze Photo Series 2.0 Kim Deal',
-      price: 85.00,
-      image: images['almost.jpg'],
-      description: 'Planche Girl avec photo série spéciale Kim Deal.',
-      sizes: [8.25, 8.375],
-    },
-    {
-      id: 6,
-      name: 'Board Magenta - Brush Team Board',
-      price: 60.00,
-      image: images['magenta.jpg'],
-      description: 'Planche Magenta avec design artistique unique.',
-      sizes: [7.75, 8.25],
-    },
-    {
-      id: 7,
-      name: 'Board Baker Brand Logo Black',
-      price: 90.00,
-      image: images['baker.jpg'],
-      description: 'Planche Baker avec logo classique en noir.',
-      sizes: [8.25, 8.5],
-    },
-    {
-      id: 8,
-      name: 'Board Krooked - Team Staten Slick',
-      price: 80.00,
-      image: images['krooked.jpg'],
-      description: 'Planche Krooked pour le team Staten.',
-      sizes: [7.75, 8.0, 8.25],
-    },
-    {
-      id: 9,
-      name: 'Board Poetic Collective - Earth',
-      price: 70.00,
-      image: images['poeticcollective.jpg'],
-      description: 'Planche Poetic Collective Earth Edition.',
-      sizes: [8.25, 8.375],
-    },
-    {
-      id: 10,
-      name: 'Board Polar - Everything Is Normal C',
-      price: 80.00,
-      image: images['polar.jpg'],
-      description: 'Planche Polar avec un design “Everything Is Normal”.',
-      sizes: [8.25, 8.375],
-    },
-    {
-      id: 11,
-      name: 'Board Quasi De Keyzer Mental',
-      price: 110.00,
-      image: images['quasi.jpg'],
-      description: 'Planche Quasi avec design mental unique.',
-      sizes: [8.25, 8.5],
-    },
-    {
-      id: 12,
-      name: 'Board Rassvet - Titaev Pro F24',
-      price: 89.00,
-      image: images['rassvet.jpg'],
-      description: 'Planche Rassvet édition Titaev Pro F24.',
-      sizes: [8.0, 8.25, 8.375],
-    },
-    {
-      id: 13,
-      name: 'Sweatshirt Obey massive graphic',
-      price: 174.99,
-      image: images['obey.jpg'],
-      description: 'Sweat-shirt Obey avec graphisme massif.',
-      sizes: ['S', 'M', 'L'],
-    },
-  ];
-
-  
-
-  // Récupère les détails du produit à l'initialisation
-  useEffect(() => {
-    const code = localStorage.getItem("cart_code");
+  const [cartCode] = useState(() => {
+    let code = localStorage.getItem('cart_code')
     if (!code) {
-      console.warn("Aucun cart_code détecté !");
-    }
-    setCartCode(code);
-
-    const foundProduct = fetchedProducts.find(p => p.id === parseInt(productId));
-    if (foundProduct) {
-      console.log("Produit trouvé :", foundProduct);
-      setProduct(foundProduct);
-      setSize(foundProduct.sizes[0]);
-      setSuggestionIndex(0);  // reset index suggestions à chaque nouveau produit affiché
-
-      if (code) {
-        api.get(`product_in_cart?cart_code=${code}&product_id=${foundProduct.id}`)
-          .then(res => {
-            if (res.data.product_in_cart) {
-              setInCart(true);
-              console.log(`Produit ID ${foundProduct.id} est déjà dans le panier`);
-            } else {
-              console.log(`Produit ID ${foundProduct.id} n'est pas encore dans le panier`);
-            }
-          })
-          .catch(err => {
-            console.error("Erreur vérification panier :", err);
-          });
-      }
+      code = generateRandomAlphanumeric()
+      localStorage.setItem('cart_code', code)
+      console.log('Generated new cart code:', code)
     } else {
-      console.warn("Produit introuvable pour l'ID :", productId);
+      console.log('Loaded cart code from localStorage:', code)
     }
-  }, [productId]);
+    return code
+  })
 
+  // Récupération du produit
+  useEffect(() => {
+    if (!id) return
 
-    // const handleSizeChange = (productId, size) => {
-    //   setSelectedSizes(prev => ({ ...prev, [productId]: size }));
-    //   console.log(`Taille sélectionnée pour le produit ${productId} :`, size);
-    // };
-  
-    // const add_item = (product_id) => {
-    //   const selectedSize = selectedSizes[product_id];
-  
-    //   if (!selectedSize) {
-    //     alert("Veuillez sélectionner une taille !");
-    //     console.warn("Taille manquante pour le produit :", product_id);
-    //     return;
-    //   }
+    console.log('Fetching product with id:', id)
+    api
+      .get(`product/${id}/`)
+      .then((res) => {
+        console.log('Product data received:', res.data)
+        setProduct(res.data)
+        const availableSizes = res.data.available_sizes || []
 
+        if (availableSizes.length > 0) {
+          setSize(availableSizes[0])
+          setOutOfStock(false)
+        } else {
+          setSize('')
+          setOutOfStock(true)
+        }
 
-  // -- Gestion ajout au panier
-  const handleAddToCart = () => {
-    if (!cartCode || !product) {
-      console.error("Impossible d'ajouter : cartCode ou produit manquant");
-      setMessage("Erreur : panier ou produit non défini.");
-      return;
-    }
-
-    const newItem = {
-      cart_code: cartCode,
-      item_id: product.id,
-      quantity: quantity,
-      size: size,
-    };
-
-    console.log("Ajout du produit au panier :", newItem);
-
-    api.post("add_item", newItem)
-      .then(res => {
-        console.log("Réponse ajout :", res.data);
-        setMessage("Produit ajouté au panier !");
-        setInCart(true);
+        setQuantity(1)
+        setMessage('')
+        setAdded(false)
+        setError('')
       })
-      .catch(err => {
-        console.error("Erreur ajout :", err.response ? err.response.data : err.message);
-        setMessage("Erreur lors de l'ajout au panier.");
-      });
-  };
+      .catch((err) => {
+        setProduct(null)
+        console.error('Erreur récupération produit :', err)
+        setError('Erreur lors de la récupération du produit.')
+      })
+  }, [id])
 
-  if (!product) return <div>Chargement...</div>;
+  // Récupération des suggestions
+  useEffect(() => {
+    if (!id) return
 
-  // Filtrer les suggestions : exclure le produit affiché
-  const filteredSuggestions = fetchedProducts.filter(p => p.id !== product.id);
-  console.log("Produits suggérés (filtrés) :", filteredSuggestions);
+    console.log('Fetching suggestions for product id:', id)
+    api
+      .get(`products/${id}/suggestions/`)
+      .then((res) => {
+        console.log('Suggestions data:', res.data)
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          setSuggestions(res.data)
+          setVisibleSuggestions(res.data.slice(0, 4))
+        } else {
+          setSuggestions([])
+          setVisibleSuggestions([])
+        }
+      })
+      .catch((err) => {
+        console.error('Erreur récupération suggestions :', err)
+        setSuggestions([])
+        setVisibleSuggestions([])
+      })
+  }, [id])
 
-  // Nombre de produits affichés simultanément
-  const PRODUCTS_TO_SHOW = 5;
+  const addToCart = () => {
+    setError('')
+    setMessage('')
+    setOutOfStock(false)
 
-  // Calculer la tranche visible en fonction de suggestionIndex
-  // Boucle circulaire sur filteredSuggestions
-  const endIndex = suggestionIndex + PRODUCTS_TO_SHOW;
-  let visibleSuggestions = [];
+    if (!product) return setError('Aucun produit sélectionné.')
+    if (!size) return setError('Veuillez sélectionner une taille.')
+    if (quantity > product.stock) {
+      setOutOfStock(true)
+      return setError(`Stock insuffisant : ${product.stock} disponible.`)
+    }
 
-  if (endIndex <= filteredSuggestions.length) {
-    visibleSuggestions = filteredSuggestions.slice(suggestionIndex, endIndex);
-  } else {
-    // Si dépasse la fin, on boucle au début
-    visibleSuggestions = filteredSuggestions.slice(suggestionIndex).concat(
-      filteredSuggestions.slice(0, endIndex - filteredSuggestions.length)
-    );
+    const payload = {
+      cart_code: cartCode,
+      item_id: Number(product.id),
+      quantity: Number(quantity),
+      size: size,
+    }
+
+    console.log('Adding to cart with payload:', payload)
+
+    api
+      .post('add_item', payload)
+      .then(() => {
+        console.log('Produit ajouté au panier avec succès')
+        setMessage('Produit ajouté au panier !')
+        setAdded(true)
+        setInCart((prev) => ({ ...prev, [product.id]: true }))
+
+        return api.get(`product/${product.id}/`)
+      })
+      .then((res) => {
+        console.log('Produit rechargé après ajout au panier :', res.data)
+        setProduct(res.data)
+        if ((res.data.available_sizes || []).length === 0) {
+          setOutOfStock(true)
+          setError('Stock épuisé !')
+        }
+      })
+      .catch((err) => {
+        console.error("Erreur lors de l'ajout au panier ou rechargement :", err)
+        setError("Erreur lors de l'ajout au panier ou rechargement du produit.")
+      })
   }
-  console.log("Suggestions visibles :", visibleSuggestions);
 
-  // Handlers pour les boutons précédent / suivant
-  const handlePrev = () => {
-    // Décale vers la gauche avec boucle circulaire
-    setSuggestionIndex((prevIndex) => {
-      const newIndex = prevIndex - PRODUCTS_TO_SHOW;
-      return newIndex < 0 ? filteredSuggestions.length + newIndex : newIndex;
-    });
-    console.log("Bouton précédent cliqué, nouvel index :", suggestionIndex);
-  };
+  const toggleFavorite = (productId) => {
+    const updated = { ...favorites, [productId]: !favorites[productId] }
+    setFavorites(updated)
+    saveFavoritesToStorage(updated)
+    setLikeMessage(
+      updated[productId] ? 'Produit liké !' : 'Produit retiré des favoris.'
+    )
+    setTimeout(() => setLikeMessage(''), 1000)
+    console.log(
+      `Favori pour produit ${productId} mis à jour:`,
+      updated[productId]
+    )
+  }
 
   const handleNext = () => {
-    const newIndex = (suggestionIndex + PRODUCTS_TO_SHOW) % filteredSuggestions.length;
-    setSuggestionIndex(newIndex);
-    console.log("Bouton suivant cliqué, nouvel index :", newIndex);
-  };
-  
+    setVisibleSuggestions((prev) => {
+      if (prev.length === 0) return prev
+      const next = [...prev.slice(1), prev[0]]
+      console.log('Suggestions après Next:', next)
+      return next
+    })
+  }
+
+  const handlePrev = () => {
+    setVisibleSuggestions((prev) => {
+      if (prev.length === 0) return prev
+      const prevArr = [prev[prev.length - 1], ...prev.slice(0, -1)]
+      console.log('Suggestions après Prev:', prevArr)
+      return prevArr
+    })
+  }
+
+  const handleSuggestionClick = (productId) => {
+    console.log('Suggestion cliquée, navigation vers produit id:', productId)
+    navigate(`/produit/${productId}`)
+  }
+
+  if (!product) return <div>Chargement du produit...</div>
+
+  const priceFormatted = Number(product.price).toFixed(2)
+  const availableSizes = product.available_sizes || []
 
   return (
     <div className="product-detail-container">
       <div className="product-detail-content">
-        {/* Image produit */}
         <div className="product-image">
-          <img src={product.image} alt={product.name} className="img-fluid" />
+          <img
+            src={`http://127.0.0.1:8001${product.image}`}
+            alt={product.name}
+            onError={(e) => {
+              e.target.src = '/default-image.jpg'
+            }}
+          />
         </div>
 
-        {/* Infos produit */}
         <div className="product-detail-info">
-          <h2 className="product-detail-title">{product.name}</h2>
-          <p className="product-detail-price">{product.price.toFixed(2)}€</p>
+          <h2>{product.name}</h2>
+          <p>Prix: {priceFormatted} €</p>
+          <p>Catégorie: {product.category}</p>
 
-          {/* Sélecteur de taille */}
+          {/* Sélectionner la taille */}
           <div className="product-detail-size-selector">
-           
-            <div className="size-buttons">
-               <p>Taille :</p>
-              {product.sizes.map((s, index) => (
-                <button
-                  key={index}
-                  className={`size-button ${size === s ? 'selected' : ''}`}
-                  onClick={() => setSize(s)}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+            <p>Taille: </p>
+            {Array.isArray(product.sizes) && product.sizes.length > 0 ? (
+              product.sizes.map((s, index) => {
+                const isAvailable = availableSizes.includes(s)
+                return (
+                  <button
+                    key={index}
+                    className={`size-button ${size === s ? 'selected' : ''}`}
+                    onClick={() => {
+                      if (isAvailable) {
+                        setSize(s)
+                        console.log('Taille sélectionnée:', s)
+                      }
+                    }}
+                    disabled={!isAvailable}
+                    style={{
+                      opacity: isAvailable ? 1 : 0.4,
+                      cursor: isAvailable ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    {s}
+                  </button>
+                )
+              })
+            ) : (
+              <p>Aucune taille disponible</p>
+            )}
           </div>
 
-          {/* Sélecteur de quantité */}
           <div className="product-detail-quantity-selector">
-            <p>Quantité :</p>
             <div className="quantity-controls">
-              <button onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
+              <p>Quantité :</p>
+              <button
+                onClick={() => {
+                  const newQty = Math.max(1, quantity - 1)
+                  setQuantity(newQty)
+                  console.log('Quantité diminuée:', newQty)
+                }}
+              >
+                -
+              </button>
               <input
                 type="number"
                 value={quantity}
                 min="1"
-                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                max="99"
+                onChange={(e) => {
+                  const val = Math.max(
+                    1,
+                    Math.min(99, parseInt(e.target.value) || 1)
+                  )
+                  setQuantity(val)
+                  console.log('Quantité modifiée:', val)
+                }}
               />
-              <button onClick={() => setQuantity(quantity + 1)}>+</button>
-            
-            <AddButton2 className="add-to-cart-button" onClick={handleAddToCart}>
-              {inCart ? "Déjà dans le panier" : "Ajouter au panier"}
-            </AddButton2>
+              <button
+                onClick={() => {
+                  const newQty = Math.min(99, quantity + 1)
+                  setQuantity(newQty)
+                  console.log('Quantité augmentée:', newQty)
+                }}
+              >
+                +
+              </button>
             </div>
           </div>
 
-          {/* Détails supplémentaires */}
-          <button className="toggle-details-button" onClick={() => setShowDetails(!showDetails)}>
-            {showDetails ? "Masquer les détails" : "Détails du produit"}
-          </button>
-          {showDetails && <p className="product-detail-description">{product.description}</p>}
+          <div className="add_like_button">
+            <AddButton2
+              onClick={addToCart}
+              disabled={outOfStock}
+              outOfStock={outOfStock}
+            >
+              {outOfStock ? 'Article épuisé' : 'Ajouter au panier'}
+            </AddButton2>
 
-          {/* Message de succès ou erreur */}
+            <div className="Like-button">
+              <LikeButton
+                productId={product.id}
+                isLiked={favorites[product.id] || false}
+                toggleFavorite={toggleFavorite}
+              />
+            </div>
+          </div>
+
+          {outOfStock && (
+            <div className="stock-message">Produit en rupture de stock</div>
+          )}
+
+          <div className="toggle-buttons">
+            <button
+              className="toggle-details-button"
+              onClick={() => {
+                setShowDetails(!showDetails)
+                console.log('Détails du produit affichés:', !showDetails)
+              }}
+            >
+              {showDetails ? 'Masquer les détails' : 'Détails du produit'}
+            </button>
+
+            <button
+              className="toggle-details-button"
+              onClick={() => {
+                setShowBrand(!showBrand)
+                console.log('Marque affichée:', !showBrand)
+              }}
+            >
+              {showBrand ? 'Masquer' : 'Marque du produit'}
+            </button>
+          </div>
+
+          {showDetails && (
+            <p
+              className="product-detail-description"
+              style={{ whiteSpace: 'pre-line' }}
+            >
+              {product.description
+                .split('\n')
+                .map((line) => (line.trim() ? `- ${line.trim()}` : ''))
+                .join('\n')}
+            </p>
+          )}
+
+          {showBrand && (
+            <p className="product-detail-description">
+              A propos de la marque : {product.marque}
+            </p>
+          )}
+
           {message && <div className="success-message">{message}</div>}
+          {likeMessage && <div className="like-message">{likeMessage}</div>}
+          {error && <div className="error-message">{error}</div>}
         </div>
       </div>
 
-      {/* Section produits suggérés */}
-      <div className="suggested-products-section">
-        <h3>VOUS ALLEZ ADORER ÇA</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* Bouton précédent */}
+      {/* Suggestion de produit */}
+      <div className="suggestions-section">
+        <h2>VOUS ALLEZ ADORER ÇA !</h2>
+        <div className="suggestions-carousel">
           <PreviousButton onClick={handlePrev} />
-          {/* Liste des suggestions visibles */}
-          <div
-            className="suggested-products-list"
-            style={{ display: 'flex', overflow: 'hidden', gap: '10px', flexGrow: 1 }}
-          >
-            {visibleSuggestions.map((item) => (
+          <div className="suggestions-list">
+            {visibleSuggestions.map((s) => (
               <div
-                key={item.id}
-                className="suggested-product-card"
-                style={{
-                  flex: '0 0 calc(25% - 10px)', // 4 produits par ligne
-                  border: '1px solid #ccc',
-                  padding: '10px',
-                  boxSizing: 'border-box',
-                  cursor: 'pointer',
-                }}
-                onClick={() => {
-                  console.log("Suggestion cliquée :", item);
-                  // Ici tu peux rediriger vers ce produit, par ex via react-router :
-                  window.location.href = `/produit/${item.id}`;
-                  
-                }}
+                key={s.id}
+                className="suggestion-card"
+                onClick={() => handleSuggestionClick(s.id)}
+                style={{ cursor: 'pointer' }}
               >
-                <img src={item.image} alt={item.name} style={{ width: '100%', height: 'auto' }} />
-                <p style={{ margin: '5px 0' }}>{item.name}</p>
-                <p style={{ fontWeight: 'bold' }}>{item.price.toFixed(2)}€</p>
+                <img
+                  src={`http://127.0.0.1:8001${s.image}`}
+                  alt={s.name}
+                  className="suggestion-image"
+                />
+                <p>{s.name}</p>
+                <p>{Number(s.price).toFixed(2)} €</p>
               </div>
             ))}
           </div>
-
-          {/* Bouton suivant */}
-          <NextButton onClick={handleNext} ></NextButton>
+          <NextButton onClick={handleNext} />
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ProductDetail;
+export default ProductDetail

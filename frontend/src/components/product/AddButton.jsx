@@ -1,11 +1,17 @@
 import React from 'react';
 import styled from 'styled-components';
 
-const AddButton = ({ onClick }) => {
+const AddButton = ({ onClick, disabled = false, children, title, outOfStock = false }) => {
   return (
-    <StyledWrapper>
-      <button type="button" className="addbutton" onClick={onClick}>
-        <span className="addbutton__text">Ajouter au panier</span>
+    <StyledWrapper outOfStock={outOfStock}>
+      <button
+        type="button"
+        className={`addbutton ${outOfStock ? 'outofstock' : ''}`}
+        onClick={disabled ? undefined : onClick}
+        disabled={disabled}
+        title={title}
+      >
+        <span className="addbutton__text">{children || 'Ajouter au panier'}</span>
         <span className="addbutton__icon">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -28,21 +34,29 @@ const AddButton = ({ onClick }) => {
   );
 };
 
+
 const StyledWrapper = styled.div`
   .addbutton {
-  position: relative;
-  width: 155px;
-  height: 40px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  border: 1px solid rgb(52, 151, 77);
-  background-color:rgb(2, 134, 35);
-  border-radius: 5px;
-  margin: 20px auto; 
-  margin-left:30px;
-}
+    position: relative;
+    width: 155px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    border: 1px solid rgb(52, 151, 77);
+    background-color: rgb(2, 134, 35);
+    border-radius: 5px;
+    margin: 20px auto;
+    opacity: 1;
+    transition: opacity 0.3s;
+  }
 
+  .addbutton:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    background-color: #a5d6a7;
+    border-color: #81c784;
+  }
 
   .addbutton,
   .addbutton__icon,
@@ -51,11 +65,26 @@ const StyledWrapper = styled.div`
   }
 
   .addbutton .addbutton__text {
-    transform: translateX(8px); /* réduit pour créer plus d'espace avec l'icône */
+    transform: translateX(8px);
     color: #fff;
     font-weight: 600;
     font-size: 12px;
   }
+
+  .addbutton.outofstock {
+  background-color:rgb(255, 0, 0);
+  border-color: #b71c1c;
+  color: white;
+}
+
+.addbutton.outofstock .addbutton__text {
+  color: white;
+}
+
+.addbutton.outofstock .addbutton__icon {
+  display: none; /* Cache l'icône pour un bouton épuisé */
+}
+
 
   .addbutton .addbutton__icon {
     position: absolute;
@@ -70,30 +99,33 @@ const StyledWrapper = styled.div`
     border-bottom-right-radius: 5px;
   }
 
+  .addbutton:disabled .addbutton__icon {
+    background-color: #81c784;
+  }
 
   .addbutton .svg {
     width: 30px;
     stroke: #fff;
   }
 
-  .addbutton:hover {
+  .addbutton:hover:not(:disabled) {
     background: #34974d;
   }
 
-  .addbutton:hover .addbutton__text {
+  .addbutton:hover:not(:disabled) .addbutton__text {
     color: transparent;
   }
 
-  .addbutton:hover .addbutton__icon {
+  .addbutton:hover:not(:disabled) .addbutton__icon {
     width: 155px;
     transform: translateX(0);
   }
 
-  .addbutton:active .addbutton__icon {
+  .addbutton:active:not(:disabled) .addbutton__icon {
     background-color: #2e8644;
   }
 
-  .addbutton:active {
+  .addbutton:active:not(:disabled) {
     border: 1px solid #2e8644;
   }
 `;

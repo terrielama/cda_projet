@@ -20,7 +20,6 @@ function generateRandomAlphanumeric(length = 12) {
 const FavoritesPage = () => {
   const navigate = useNavigate();
 
-  // Cart code stocké ou généré une fois
   const [cartCode] = useState(() => {
     let code = localStorage.getItem("cart_code");
     if (!code) {
@@ -33,21 +32,18 @@ const FavoritesPage = () => {
     return code;
   });
 
-  // Liste des produits favoris (détails)
   const [favoriteProducts, setFavoriteProducts] = useState([]);
-
-  // Tailles sélectionnées par produit
   const [selectedSizes, setSelectedSizes] = useState({});
-
-  // Id des produits en train d'être retirés (animation)
   const [removingProductIds, setRemovingProductIds] = useState(new Set());
+  const [errorMessage, setErrorMessage] = useState("");
 
-  // Chargement des favoris au montage
   useEffect(() => {
     const storedFavorites = localStorage.getItem("favorites");
     const favorites = storedFavorites ? JSON.parse(storedFavorites) : {};
 
     const likedIds = Object.keys(favorites).filter((id) => favorites[id]);
+    console.log("IDs produits favoris récupérés:", likedIds);
+
     if (likedIds.length === 0) {
       setFavoriteProducts([]);
       return;
@@ -56,81 +52,95 @@ const FavoritesPage = () => {
     Promise.all(
       likedIds.map((id) =>
         api
-          .get(`products/detail/${id}/`)
-          .then((res) => res.data)
-          .catch(() => null)
+          .get(`product/${id}/`)
+          .then((res) => {
+            console.log(`Produit ${id} récupéré:`, res.data);
+            return res.data;
+          })
+          .catch((err) => {
+            console.error(`Erreur récupération produit ${id}:`, err);
+            return null;
+          })
       )
     ).then((products) => {
       const validProducts = products.filter((p) => p !== null);
-      // Corrige les URLs d'images si besoin
       const productsWithFullImage = validProducts.map((p) => ({
         ...p,
         image: p.image.startsWith("http") ? p.image : `http://127.0.0.1:8001${p.image}`,
       }));
+      console.log("Produits favoris valides après filtrage:", productsWithFullImage);
       setFavoriteProducts(productsWithFullImage);
     });
   }, []);
 
-  // Change la taille sélectionnée pour un produit
   const handleSizeChange = (productId, size) => {
+    console.log(`Taille sélectionnée pour produit ${productId}:`, size);
     setSelectedSizes((prev) => ({ ...prev, [productId]: size }));
+    setErrorMessage(""); // Clear error message on new selection
   };
 
-  // Ajoute le produit au panier puis supprime des favoris avec animation
   const handleAddToCart = async (product) => {
+    setErrorMessage("");
     const size = selectedSizes[product.id];
+
     if (product.sizes?.length > 0 && !size) {
       alert("Veuillez choisir une taille avant d'ajouter au panier.");
       return;
     }
 
     try {
-      await api.post("add_item", {
+      const payload = {
         cart_code: cartCode,
         item_id: product.id,
         quantity: 1,
-        size: size || null,
-      });
+      };
+      if (size) payload.size = size;
 
-      // Démarre l'animation de disparition
+      console.log("Requête ajout panier, payload:", payload);
+
+      await api.post("add_item", payload);
+
       setRemovingProductIds((prev) => new Set(prev).add(product.id));
 
-      // Supprime après la fin de l'animation (500ms)
       setTimeout(() => {
-        // Retire le produit de la liste visible
+        console.log(`Produit ${product.id} retiré de la liste des favoris après ajout au panier.`);
         setFavoriteProducts((prev) => prev.filter((p) => p.id !== product.id));
-
-        // Retire de la liste de suppression
         setRemovingProductIds((prev) => {
           const copy = new Set(prev);
           copy.delete(product.id);
           return copy;
         });
 
-        // Met à jour localStorage (supprime des favoris)
         const storedFavorites = localStorage.getItem("favorites");
         const favorites = storedFavorites ? JSON.parse(storedFavorites) : {};
         if (favorites[product.id]) {
           delete favorites[product.id];
           localStorage.setItem("favorites", JSON.stringify(favorites));
+          console.log(`Produit ${product.id} supprimé de localStorage favorites.`);
         }
 
         alert("Produit ajouté au panier !");
       }, 500);
     } catch (error) {
       console.error("Erreur ajout au panier :", error);
-      alert("Erreur lors de l'ajout au panier, veuillez réessayer.");
+      if (error.response && error.response.data && error.response.data.error) {
+        setErrorMessage(error.response.data.error);
+      } else {
+        setErrorMessage("Erreur lors de l'ajout au panier, veuillez réessayer.");
+      }
     }
   };
 
-  // Clique sur image pour aller au détail produit
   const handleProductClick = (productId) => {
+    console.log(`Navigation vers la page produit ${productId}`);
     navigate(`/produit/${productId}`);
   };
 
   return (
     <div className="container-fav">
-      <h2 className="fav-title">Produits Favoris ❤️</h2>
+      <h2 className="fav-title">Mes Produits Favoris</h2>
+
+      {errorMessage && <p style={{ color: "red", marginBottom: "10px" }}>{errorMessage}</p>}
 
       {favoriteProducts.length === 0 ? (
         <p className="no-fav-message">Aucun produit en favori pour le moment.</p>
@@ -142,14 +152,18 @@ const FavoritesPage = () => {
             const cat = product.category?.toLowerCase() || "";
 
             if (cat === "boards") {
-              sizesList = ["7.5", "7.75", "8.0", "8.25"];
+              sizesList = ["7.75", "8.0", "8.25"];
             } else if (cat === "chaussures") {
-              sizesList = ["38", "39", "40", "41", "42", "43", "44"];
+              sizesList = ["39", "40", "41"];
             } else if (cat === "sweats") {
               sizesList = ["S", "M", "L"];
             } else {
               sizesList = product.sizes || [];
             }
+
+            const stockBySize = product.stockBySize || {};
+
+            const isSizeSelectable = sizesList.length > 0;
 
             return (
               <div
@@ -170,18 +184,27 @@ const FavoritesPage = () => {
                     <h5 className="card-title text-uppercase">{product.name}</h5>
                     <p className="card-text">{parseFloat(product.price).toFixed(2)}€</p>
 
-                    {sizesList.length > 0 ? (
+                    {isSizeSelectable ? (
                       <select
                         value={selectedSizes[product.id] || ""}
                         onChange={(e) => handleSizeChange(product.id, e.target.value)}
                         className="select-size"
                       >
                         <option value="">Choisir la taille</option>
-                        {sizesList.map((size) => (
-                          <option key={size} value={size}>
-                            {size}
-                          </option>
-                        ))}
+                        {sizesList.map((size) => {
+                          const stock = stockBySize[size] ?? 1; // 1 par défaut (dispo)
+                          const disabled = stock <= 0;
+                          return (
+                            <option
+                              key={size}
+                              value={size}
+                              disabled={disabled}
+                              style={{ color: disabled ? "gray" : "black" }}
+                            >
+                              {size} {disabled ? "(Rupture)" : ""}
+                            </option>
+                          );
+                        })}
                       </select>
                     ) : (
                       <p className="text-muted">Aucune taille disponible</p>

@@ -8,17 +8,18 @@ import SignInForm from "./components/user/SignInForm.jsx";
 import { AuthProvider } from './components/context/AuthContext.jsx';
 import UserProfile from "./components/user/UserProfile.jsx";
 import OrderTracking from "./components/order/OrderTracking.jsx";
-import OrderConfirmation from "./components/order/OrderConfirmation.jsx";
 // import { CartProvider } from "./components/context/CartContext.jsx";
 import ProductDetail from './components/product/ProductDetail.jsx';
 import FavoritesPage from "./components/product/FavoritesPage.jsx";
+import TermsAndConditions from "./components/TermsAndConditions.jsx";
+import NotFound from './components/NotFound';
+import Contact from "./components/Contact.jsx";
 
 const App = () => {
   return (
     <AuthProvider>
         <BrowserRouter>
           <Routes>
-            
             <Route element={<MainLayout />}>
               <Route path="/" element={<Home />} />
               <Route path="/panier" element={<Cart />} />
@@ -27,9 +28,12 @@ const App = () => {
               <Route path="/connexion" element={<SignInForm />} />
               <Route path="/profile" element={<UserProfile />} />
               <Route path="/orderTracking/:orderId" element={<OrderTracking />} />              
-              <Route path="/orderConfirmation/:orderId" element={<OrderConfirmation />} />
-              <Route path="/produit/:productId" element={<ProductDetail />} />
+              <Route path="/produit/:id" element={<ProductDetail />} />
               <Route path="/favoris" element={<FavoritesPage />} /> 
+              <Route path="/cgv" element={<TermsAndConditions />} />
+              <Route path="/contact" element={<Contact />} />
+              {/* Route 404 */}
+              <Route path="*" element={<NotFound />} />
               </Route>
           </Routes>
         </BrowserRouter>

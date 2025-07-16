@@ -1,9 +1,10 @@
 from rest_framework import serializers
-from .models import Product, Cart, CartItem, Order, OrderItem, User, Category, Favorite, Size
+from .models import Product, Cart, CartItem, Order, OrderItem, User, Category, Favorite, Sizes, ContactMessage
 from main.models import CustomUser  
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 User = get_user_model()  # Récupère dynamiquement le modèle utilisateurCustomUser
+import bleach
 
 # Serializer les models permet de convertir les objets Product en JSON (et vice versa) pour les API.
 # ------------------------------------------------------------------
@@ -11,6 +12,13 @@ User = get_user_model()  # Récupère dynamiquement le modèle utilisateurCustom
 
 
 # ------- Serializer pour le modèle Register-----------
+
+# La fonction sanitize_text utilise bleach.clean() sans autoriser aucune balise ou attribut HTML.  Cela empêche toute injection XSS.
+# Dans create() : néttoyage de tous les champs texte utilisateur.
+# La validation assure qDans create(), nettoyage de tous les champs texte utilisateur.
+# ue password et confirm_password correspondent.
+# set_password() hash le mot de passe proprement avant sauvegarde.
+# Le champ confirm_password est write-only, il ne sera pas retourné dans les réponses API.
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
@@ -32,16 +40,24 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
         return data
 
+    def sanitize_text(self, text):
+        # Supprime toute balise HTML potentiellement dangereuse
+        return bleach.clean(text, tags=[], attributes={}, strip=True)
+
     def create(self, validated_data):
         validated_data.pop('confirm_password')
         password = validated_data.pop('password')
-        
+
+        # Nettoyage des champs sensibles
+        validated_data['username'] = self.sanitize_text(validated_data.get('username', ''))
+        validated_data['first_name'] = self.sanitize_text(validated_data.get('first_name', ''))
+        validated_data['last_name'] = self.sanitize_text(validated_data.get('last_name', ''))
+        validated_data['email'] = self.sanitize_text(validated_data.get('email', ''))
+
         user = User(**validated_data)
         user.set_password(password)
         user.save()
         return user
-
-    
 
 # -----  Serializer pour le modèle catégorie --------
 
@@ -52,9 +68,9 @@ class CategorySerializer(serializers.ModelSerializer):
 
 # ------ Serializer pour le modèle taille -----
 
-class SizeSerializer(serializers.ModelSerializer):
+class SizesSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Size
+        model = Sizes
         fields = ['name']
 
 
@@ -62,11 +78,15 @@ class SizeSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     sizes = serializers.JSONField()
-    image = serializers.SerializerMethodField()  
+    image = serializers.SerializerMethodField()
+    available_sizes = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = ['id', 'name', 'price', 'image', 'sizes', 'category', 'stock', 'description', 'available']
+        fields = [
+            'id', 'name', 'price', 'image', 'sizes', 'available_sizes',
+            'category', 'stock', 'description', 'available','marque'
+        ]
 
     def get_image(self, obj):
         request = self.context.get('request', None)
@@ -75,6 +95,12 @@ class ProductSerializer(serializers.ModelSerializer):
         elif obj.image:
             return obj.image.url
         return None
+
+    def get_available_sizes(self, obj):
+        # Accès via le related_name 'product_sizes'
+        return [
+            str(ps.size) for ps in obj.product_sizes.all() if ps.stock > 0
+        ]
 
     
 
@@ -97,7 +123,7 @@ class CartItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CartItem  # Serializer for CartItem
-        fields = [ "id", "quantity", "product", "total", "image"]
+        fields = [ "id", "quantity", "product", "total", "image", "size"]
 
     def get_total(self, cartitem):
         # Calculates the total price for this cart item
@@ -129,7 +155,7 @@ class SimpleCartSerializer(serializers.ModelSerializer):
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(source='cart_items', many=True, read_only=True)
     sum_total = serializers.SerializerMethodField()
-    num_of_items = serializers.SerializerMethodField()  # Champ pour calculer le nombre d'articles
+    num_of_items = serializers.SerializerMethodField() 
 
     class Meta:
         model = Cart
@@ -158,7 +184,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderItem
-        fields = ['product_name', 'quantity', 'product_price', 'product_image', 'total_price']
+        fields = ['product_name', 'quantity', 'product_price', 'product_image', 'total_price','size']
 
     def get_total_price(self, obj):
         return obj.price * obj.quantity
@@ -169,7 +195,7 @@ class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     user = serializers.SerializerMethodField()
     payment_method = serializers.CharField()
-    cart_code = serializers.CharField(source='cart.cart_code', read_only=True)  # accès via relation cart
+    cart_code = serializers.CharField(source='cart.cart_code', read_only=True) 
 
     class Meta:
         model = Order
@@ -196,11 +222,21 @@ class OrderSerializer(serializers.ModelSerializer):
         }
 
 
-# --- Serializer pour récupérer les données infos  reçues
+# --- Serializer pour récupérer les données infos  reçues ---
 
 class OrderUpdateSerializer(serializers.Serializer):
     first_name = serializers.CharField(required=True, max_length=100)
     last_name = serializers.CharField(required=True, max_length=100)
     address = serializers.CharField(required=True, max_length=255)
+    city = serializers.CharField(required=False, allow_blank=True, max_length=100)   
+    country = serializers.CharField(required=False, allow_blank=True, max_length=100) 
     phone = serializers.CharField(required=True, max_length=20)
     payment_method = serializers.ChoiceField(choices=Order.PAYMENT_METHOD_CHOICES, required=True)
+
+# --- Serializer pour brancher formulaire de contact React au backend ------
+
+class ContactMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactMessage
+        fields = ['id', 'name', 'email', 'subject', 'message', 'created_at']
+        read_only_fields = ['id', 'created_at']

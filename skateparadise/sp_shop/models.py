@@ -1,9 +1,11 @@
-from django.db import models
+from django.db import models, IntegrityError
 from django.utils.text import slugify
 from django.conf import settings  # settings est utilisé pour référencer des paramètres globaux du projet, comme le modèle utilisateur
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
 import uuid
+from django.shortcuts import get_object_or_404
+
 
 
 
@@ -17,13 +19,11 @@ class Category(models.Model):
     
 # ----- Taille de produit ------------
 
-class Size(models.Model):
+class Sizes(models.Model):
     name = models.CharField(max_length=10)
 
-#----------- Définition du modèle Product --------
 
-from django.db import models
-from django.utils.text import slugify
+# ------ Définition du modèle de produit --------
 
 class Product(models.Model):
     CATEGORY = (
@@ -42,17 +42,21 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     image = models.ImageField(upload_to='products/', null=False, default='products/default-image.png')
     category = models.CharField(max_length=50, choices=CATEGORY, default="Boards")
-    stock = models.PositiveIntegerField(default=0)
     description = models.TextField(blank=True, null=True)
+    marque = models.TextField(blank=True, null=True)
     available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    sizes = models.JSONField(null=True, blank=True)
+    sizes = models.JSONField(default=list, blank=True)
+    stock = models.IntegerField(default=0)
 
     def __str__(self):
+        # Affiche le nom et la marque s'il y en a une, sinon juste le nom
+        if self.marque:
+            return f"{self.name} ({self.marque})"
         return self.name
 
     def save(self, *args, **kwargs):
-        # Gestion du slug unique
+        # Création slug unique si vide
         if not self.slug:
             base_slug = slugify(self.name)
             unique_slug = base_slug
@@ -62,22 +66,45 @@ class Product(models.Model):
                 counter += 1
             self.slug = unique_slug
 
-        # Gestion automatique des tailles selon catégorie
-        cat = self.category.lower()
-        if cat == 'boards':
-            self.sizes = ["7.5", "7.75", "8.0", "8.25", "8.5"]
-        elif cat == 'chaussures':
-            self.sizes = ["38", "39", "40", "41", "42", "43", "44"]
-        elif cat == 'sweats':
-            self.sizes = ["XS", "S", "M", "L", "XL"]
-        else:
-            self.sizes = []
-
         super().save(*args, **kwargs)
 
+        # Mise à jour de la disponibilité après sauvegarde
+        self.update_availability(update=True)
+
+    @property
+    def total_stock(self):
+        return sum(size.stock for size in self.product_sizes.all())
+
+    def update_availability(self, update=True):
+        if not self.pk:
+            return
+
+        if self.product_sizes.exists():
+            has_stock = self.product_sizes.filter(stock__gt=0, available=True).exists()
+            self.available = has_stock
+        else:
+            self.available = self.stock > 0
+
+        if update:
+            Product.objects.filter(pk=self.pk).update(available=self.available)
 
 
+class ProductSize(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='product_sizes')
+    size = models.CharField(max_length=10)
+    stock = models.IntegerField(default=0)
+    available = models.BooleanField(default=True)
 
+    class Meta:
+        unique_together = ('product', 'size')
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.product.update_availability(update=True)
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        self.product.update_availability(update=True)
 
 
 #------- Définition du modèle Favori ---------
@@ -99,7 +126,7 @@ class Favorite(models.Model):
 #----------- Définition du modèle Cart (Panier) ------------
 
 class Cart(models.Model):
-    cart_code = models.CharField(max_length=11, unique=True)
+    cart_code = models.CharField(max_length=11)
 
     # settings.AUTH_USER_MODEL permet de référencer dynamiquement le modèle User personnalisé défini dans settings.py
     # on_delete pour que si l'utilisateur est supprimé, son panier l'est aussi
@@ -107,10 +134,6 @@ class Cart(models.Model):
     
     items = models.ManyToManyField('CartItem', related_name='carts', blank=True)
 
-
-
-    # Indique si le panier a été payé. Par défaut, c'est False (non payé).
-    paid = models.BooleanField(default=False)
 
     # Date de création automatique du panier.
     created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
@@ -124,14 +147,28 @@ class Cart(models.Model):
 
 #----------- Définition du modèle CartItem ( Les produits qui sont dans le panier ) ----
 
+
 class CartItem(models.Model):
-    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='cart_items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.IntegerField(default=1)
-    size = models.CharField(max_length=10, null=True, blank=True)
+    cart = models.ForeignKey(
+        'Cart',
+        on_delete=models.CASCADE,
+        related_name='cart_items'
+    )
+    product = models.ForeignKey(
+        'Product',
+        on_delete=models.CASCADE
+    )
+    quantity = models.PositiveIntegerField(default=1)
+    size = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True,
+        help_text="Taille sélectionnée pour ce produit (ex: S, M, L, 42, etc.)"
+    )
 
     def __str__(self):
-        return f"{self.quantity} x {self.product.name} (taille {self.size}) dans le panier {self.cart.id}"
+        size_display = self.size if self.size else "non spécifiée"
+        return f"{self.quantity} x {self.product.name} (taille {size_display}) dans le panier {self.cart.id}"
 
 # ----------- Définition du modèle Order --------------------
 def generate_tracking_code():
@@ -140,25 +177,26 @@ def generate_tracking_code():
 
 class Order(models.Model):
     STATUS_CHOICES = (
-        ('pending', 'En attente'),
-        ('completed', 'Complétée'),
-        ('cancelled', 'Annulée'),
+        ('attente', 'En attente'),
+        ('expédié', 'Expédié'),
+        ('livrée', 'Livrée'),
     )
 
     PAYMENT_METHOD_CHOICES = [
-    ('CB', 'Carte bancaire'),
-    ('PP', 'PayPal'),
+        ('CB', 'Carte bancaire'),
+        ('PP', 'PayPal'),
     ]
 
-
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='attente')
     cart = models.ForeignKey('Cart', related_name='orders', on_delete=models.CASCADE, null=True, blank=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     
-    # # Infos client
+    # Infos client
     first_name = models.CharField(max_length=100, null=True, blank=True)
     last_name = models.CharField(max_length=100, null=True, blank=True)
     address = models.CharField(max_length=255, null=True, blank=True)
+    city = models.CharField(max_length=100, null=True, blank=True)       
+    country = models.CharField(max_length=100, null=True, blank=True)   
     phone = models.CharField(max_length=20, null=True, blank=True)
 
     # Paiement et tracking
@@ -168,14 +206,13 @@ class Order(models.Model):
         default='' 
     )
     tracking_code = models.CharField(
-    max_length=100,
-    default=generate_tracking_code,
-    editable=False,
-    null=False,
-    blank=False,
-    unique=True,
+        max_length=100,
+        default=generate_tracking_code,
+        editable=False,
+        null=False,
+        blank=False,
+        unique=True,
     )
-
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -189,6 +226,7 @@ class Order(models.Model):
         # Calcul du total à partir des items liés
         return sum(item.total_price for item in self.items.all())
 
+
 #----------- Définition du modèle OrderItem --------------------
 
 class OrderItem(models.Model):
@@ -196,11 +234,29 @@ class OrderItem(models.Model):
     product = models.ForeignKey('Product', on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)  # prix unitaire
+    size = models.CharField(max_length=10, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.product.name} - {self.quantity} items"
+        size_text = f" (taille {self.size})" if self.size else ""
+        return f"{self.product.name} - {self.quantity} item(s){size_text}"
 
     @property
     def total_price(self):
         # Prix total par item (quantité * prix unitaire)
         return self.price * self.quantity
+
+# ---- Contact Assistance ------------
+
+from django.conf import settings
+from django.db import models
+
+class ContactMessage(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    name = models.CharField(max_length=100, default='Utilisateur inconnu')               
+    email = models.EmailField(default='Utilisateur@inconnu.com')                      
+    subject = models.CharField(max_length=200, default='Pas de sujet')
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.subject} - {self.user if self.user else self.email}"

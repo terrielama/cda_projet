@@ -65,8 +65,8 @@ const StyledWrapper = styled.div`
     height: 40px;
     cursor: pointer;
     user-select: none;
-    margin-top: -60px;
-    margin-left: 210px;
+    margin-top: -35px;
+    margin-left: 250px;
     padding: 0;
   }
 
