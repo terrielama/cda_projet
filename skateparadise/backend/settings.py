@@ -60,7 +60,8 @@ CORS_ALLOWED_ORIGINS = [FRONTEND_URL] if not DEBUG else [
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Autorise toutes les origines uniquement si DEBUG=True
 CORS_ALLOW_CREDENTIALS = True   # Nécessaire si on utilise des cookies ou headers d'autorisation
 
-
+ALLOWED_HOSTS = ["*", "localhost", "backend", "127.0.0.1"]
+CORS_ALLOW_ALL_ORIGINS = True  # Pour dev uniquement
 
 # URLs & WSGI
 ROOT_URLCONF = 'backend.urls'

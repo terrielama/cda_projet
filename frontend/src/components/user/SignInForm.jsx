@@ -128,7 +128,7 @@ const AuthModal = ({ toggleModal }) => {
 
       toggleModal();
       console.log("Modal fermée.");
-      window.location.reload();
+      
 
     } catch (err) {
       console.error("Erreur lors de la requête :", err.response?.data || err.message);

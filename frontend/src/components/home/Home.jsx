@@ -121,7 +121,7 @@ const Home = () => {
       <div className="brands-container">
         <div className="main-image">
           <img src={vansImage} alt="Vans" />
-          <Link to="/produit/chaussures" className="vans">
+          <Link to="/produits/chaussures" className="vans">
             <button>Voir Les Chaussures</button>
           </Link>
         </div>

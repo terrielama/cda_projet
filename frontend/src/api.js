@@ -1,11 +1,15 @@
-import axios from "axios"
-import {jwtDecode} from "jwt-decode"
+import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 
-export const BASE_URL = "http://127.0.0.1:8001"
-
+// Adapte ceci en fonction de ton environnement Docker ou local
+export const BASE_URL =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1"
+    ? "http://127.0.0.1:8001"
+    : "http://backend:8001";
 
 const api = axios.create({
-  baseURL: "http://localhost:8001",
+  baseURL: BASE_URL,
 });
 
 api.interceptors.request.use((config) => {
