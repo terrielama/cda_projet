@@ -117,12 +117,10 @@ def add_item(request):
 
     # Récupération du panier
     if request.user.is_authenticated:
-        # Suppression de paid=False
         cart, _ = Cart.objects.get_or_create(user=request.user)  
     else:
         if not cart_code:
             return Response({'error': 'cart_code requis pour les utilisateurs non connectés'}, status=400)
-        # Suppression de paid=False
         cart = Cart.objects.filter(cart_code=cart_code).first()
         if not cart:
             cart = Cart.objects.create(cart_code=cart_code, user=None)
@@ -131,7 +129,7 @@ def add_item(request):
     existing_item = CartItem.objects.filter(cart=cart, product=product, size=size).first()
     current_qty_in_cart = existing_item.quantity if existing_item else 0
 
-    # --- GESTION STOCK PAR TAILLE ---
+    # GESTION STOCK PAR TAILLE
     if size:
         try:
             product_size = ProductSize.objects.get(product=product, size=size)
@@ -186,10 +184,8 @@ def product_in_cart(request):
         product = Product.objects.get(id=product_id)
 
         if request.user.is_authenticated:
-            # Suppression de paid=False
             cart = Cart.objects.filter(user=request.user).first()
         elif cart_code:
-            # Suppression de paid=False
             cart = Cart.objects.filter(cart_code=cart_code, user=None).first()
         else:
             return Response({'quantity': 0})
@@ -210,8 +206,6 @@ def product_in_cart(request):
 
     except Product.DoesNotExist:
         return Response({'quantity': 0})
-
-
 
 
 # ----- Associer un panier anonyme à un utilisateur connecté -----
@@ -243,7 +237,6 @@ def get_cart_stat(request):
         # Récupérer le panier en fonction du cart_code
         cart = Cart.objects.get(cart_code=cart_code, paid=False)
 
-        # Logique pour obtenir des statistiques (par exemple, le nombre d'articles dans le panier et le total)
         total_items = cart.items.count()  # Nombre d'articles
         total_price = sum(item.product.price * item.quantity for item in cart.items.all())  # Total du prix
 
@@ -257,7 +250,6 @@ def get_cart_stat(request):
         return Response({"error": "Panier non trouvé"}, status=status.HTTP_404_NOT_FOUND)
 
 # ----- View pour récupérer tous les produits du panier -----
-
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -546,7 +538,7 @@ def order_details(request, order_id):
                 "size": item.size  
             })
     else:
-        # fallback : récupérer les OrderItems liés à la commande
+        # Récupérer les OrderItems liés à la commande
         items = order.items.all()
         print(f"Items de la commande directement: {items}")
         for item in items:

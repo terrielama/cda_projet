@@ -7,7 +7,7 @@ const AddButton2 = ({ onClick, children, outOfStock }) => {
 
   return (
     <StyledWrapper>
-     <button
+    <button
   type="button"
   className="button"
   onClick={disabled ? undefined : onClick}
@@ -106,11 +106,11 @@ const StyledWrapper = styled.div`
     overflow: hidden;
     position: relative;
     transition:
-      width 0.6s ease,
-      border-radius 0.6s ease,
-      background-color 0.3s ease,
-      border-color 0.3s ease,
-      color 0.3s ease;
+      width 1s ease,
+      border-radius 1s ease,
+      background-color 0.6s ease,
+      border-color 0.6s ease,
+      color 0.6s ease;
   }
 
   .button:hover:not(:disabled) {

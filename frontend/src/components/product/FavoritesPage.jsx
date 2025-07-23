@@ -138,7 +138,7 @@ const FavoritesPage = () => {
 
   return (
     <div className="container-fav">
-      <h2 className="fav-title">Produits Favoris ❤️</h2>
+      <h2 className="fav-title">Mes Produits Favoris</h2>
 
       {errorMessage && <p style={{ color: "red", marginBottom: "10px" }}>{errorMessage}</p>}
 
@@ -161,11 +161,6 @@ const FavoritesPage = () => {
               sizesList = product.sizes || [];
             }
 
-            // Exemple : on récupère le stock par taille dans product.stockBySize (objet { taille: stock })
-            // Si pas présent, on considère toutes tailles dispo.
-            // Pour chaque taille, on désactive si stock <= 0
-
-            // On met un fallback vide si pas défini
             const stockBySize = product.stockBySize || {};
 
             const isSizeSelectable = sizesList.length > 0;

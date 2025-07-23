@@ -195,7 +195,7 @@ class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     user = serializers.SerializerMethodField()
     payment_method = serializers.CharField()
-    cart_code = serializers.CharField(source='cart.cart_code', read_only=True)  # accès via relation cart
+    cart_code = serializers.CharField(source='cart.cart_code', read_only=True) 
 
     class Meta:
         model = Order
@@ -222,7 +222,7 @@ class OrderSerializer(serializers.ModelSerializer):
         }
 
 
-# --- Serializer pour récupérer les données infos  reçues
+# --- Serializer pour récupérer les données infos  reçues ---
 
 class OrderUpdateSerializer(serializers.Serializer):
     first_name = serializers.CharField(required=True, max_length=100)
