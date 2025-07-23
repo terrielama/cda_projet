@@ -3,7 +3,6 @@ import os
 from datetime import timedelta
 import django_extensions
 from decouple import config, Csv
-from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
