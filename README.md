@@ -87,10 +87,11 @@ Mobile :
 
 
  - Produit 
-<img width="148" height="317" alt="product" src="https://github.com/user-attachments/assets/23a6a679-361a-459d-8631-8c6e4a6db50b" />
+<img width="148" height="320" alt="product" src="https://github.com/user-attachments/assets/23a6a679-361a-459d-8631-8c6e4a6db50b" />
 
-
-Pour cccéder à l'interface d’administration :
+---
+Optionnel
+Pour acccéder à l'interface d’administration :
 Créer un superutilisateur (admin Django)
 python manage.py createsuperuser
 
@@ -98,6 +99,7 @@ Ensuite se connecter sur :
  http://localhost:8001/admin
 
 <img width="952" height="420" alt="admin" src="https://github.com/user-attachments/assets/f45a974d-d4a2-4740-9bcd-aec7a87b393c" />
+
 
 
 
