@@ -64,14 +64,13 @@ A quoi ressemble le site :
 <img width="900" height="420" alt="home2" src="https://github.com/user-attachments/assets/8244aa5f-74d0-4a04-98b2-c20f7c1cdc3f" />
 
 
+ - Produit
 
- -Produit
-<img width="943" height="420" alt="produit" src="https://github.com/user-attachments/assets/46fbf9a8-1697-499b-973f-55bfd3cc1b84" />
+<img width="900" height="420" alt="produit" src="https://github.com/user-attachments/assets/46fbf9a8-1697-499b-973f-55bfd3cc1b84" />
 
  - Connexion et inscription 
 <img width="900" height="420" alt="connexion" src="https://github.com/user-attachments/assets/f4e87543-c89a-4b86-882c-9f0d211c387e" />
 <img width="900" height="420" alt="inscr" src="https://github.com/user-attachments/assets/67a0b760-4928-45d8-91cc-a8d30a42ae4c" />
-
 
 
  - Panier
@@ -99,5 +98,6 @@ Ensuite se connecter sur :
  http://localhost:8001/admin
 
 <img width="952" height="420" alt="admin" src="https://github.com/user-attachments/assets/f45a974d-d4a2-4740-9bcd-aec7a87b393c" />
+
 
 
