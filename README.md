@@ -77,7 +77,7 @@ A quoi ressemble le site :
 <img width="900" height="420" alt="panier" src="https://github.com/user-attachments/assets/9e74ad6f-69e5-4c2c-a974-e5cbd3213b60" />
 
 
-
+---
 Mobile :
 
  - Accueil
@@ -99,6 +99,7 @@ Ensuite se connecter sur :
  http://localhost:8001/admin
 
 <img width="952" height="420" alt="admin" src="https://github.com/user-attachments/assets/f45a974d-d4a2-4740-9bcd-aec7a87b393c" />
+
 
 
 
