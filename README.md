@@ -5,18 +5,18 @@ Elle permet également la **gestion complète d’un site de vente de produits d
 
 ---
 
-## 🚀 Fonctionnalités principales
+##  Fonctionnalités principales
 
-- 🧾 **Gestion des produits** : ajout, modification, suppression depuis l’admin Django  
-- 🛒 **Panier dynamique** : ajout et suppression d’articles côté client  
-- 👤 **Gestion des utilisateurs** : inscription, connexion, déconnexion  
-- 💳 **Commandes** : création et enregistrement des commandes dans la base de données  
-- ⚙️ **Interface administrateur complète** : gestion des stocks, suivi des commandes  
-- 🌐 **Frontend réactif** avec **React** et **Axios** pour les appels à l’API Django REST  
+-  **Gestion des produits** : ajout, modification, suppression depuis l’admin Django  
+-  **Panier dynamique** : ajout et suppression d’articles côté client  
+-  **Gestion des utilisateurs** : inscription, connexion, déconnexion  
+-  **Commandes** : création et enregistrement des commandes dans la base de données  
+-  **Interface administrateur complète** : gestion des stocks, suivi des commandes  
+-  **Frontend réactif** avec **React** et **Axios** pour les appels à l’API Django REST  
 
 ---
 
-## 🧰 Technologies utilisées
+##  Technologies utilisées
 
 ### Backend :
 - Django  
@@ -102,6 +102,7 @@ Ensuite se connecter sur :
  http://localhost:8001/admin
 
 <img width="952" height="420" alt="admin" src="https://github.com/user-attachments/assets/f45a974d-d4a2-4740-9bcd-aec7a87b393c" />
+
 
 
 
