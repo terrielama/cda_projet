@@ -83,13 +83,14 @@ A quoi ressemble le site :
 Mobile :
 
  - Accueil
-<img width="145" height="320" alt="home1" src="https://github.com/user-attachments/assets/1f9f2b2c-40de-4d92-b4ff-1e8cea4fcb1d" />
+
 <img width="145" height="320" alt="home" src="https://github.com/user-attachments/assets/8e501790-92d5-42fd-82c8-000a92188067" />
+<img width="145" height="320" alt="home1" src="https://github.com/user-attachments/assets/1f9f2b2c-40de-4d92-b4ff-1e8cea4fcb1d" />
 
 
-
- - Produit 
-<img width="148" height="320" alt="product" src="https://github.com/user-attachments/assets/23a6a679-361a-459d-8631-8c6e4a6db50b" />
+ - Produit
+ - 
+<img width="145" height="320" alt="product" src="https://github.com/user-attachments/assets/23a6a679-361a-459d-8631-8c6e4a6db50b" />
 
 ---
 Optionnel
@@ -101,6 +102,7 @@ Ensuite se connecter sur :
  http://localhost:8001/admin
 
 <img width="952" height="420" alt="admin" src="https://github.com/user-attachments/assets/f45a974d-d4a2-4740-9bcd-aec7a87b393c" />
+
 
 
 
